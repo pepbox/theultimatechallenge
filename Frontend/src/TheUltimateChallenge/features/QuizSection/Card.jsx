@@ -144,7 +144,7 @@ const CardList = () => {
   useEffect(() => {
     const fetchQuestions = async () => {
       try {
-        const response = await fetch('http://localhost:3000/api/v1/theultimatechallenge/getquestions');
+        const response = await fetch(`${import.meta.env.VITE_BACKEND_BASE_URL}/api/v1/theultimatechallenge/getquestions`);
         const data = await response.json();
         
         const formattedCards = data.map(question => ({

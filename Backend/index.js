@@ -6,6 +6,7 @@ const { setupSocket } = require('./services/sockets/Socket.js');
 const v1Router = require("./routes/v1/index.js")
 const connectDB = require("./config/db.js")
 const cors = require('cors');
+const path=require("path")
 
 const app = express();
 const server = http.createServer(app);
@@ -19,9 +20,19 @@ app.use(cors({
 app.use(express.json())
 connectDB()
 
+if (process.env.NODE_ENV === "production") {
+  const buildPath = path.join(__dirname, "..", "..", "Frontend", "dist");
+  app.use(express.static(buildPath));
+  app.get("*", (req, res) => {
+    res.sendFile(path.resolve(buildPath, "index.html"));
+  });
+}
+
 app.get('/', (req, res) => {
     res.send('Hello from server');
 });
+
+
 
 app.use("/api/v1",v1Router)
 

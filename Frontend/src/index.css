@@ -1,0 +1,16 @@
+@font-face {
+    font-family: 'B612 Mono';
+    src: url('./assets//fonts/B612Mono-Regular.ttf') ; 
+  }
+
+@font-face {
+    font-family: 'Poppins';
+    src: url('./assets/fonts/Poppins-Regular.ttf'); 
+   
+  }
+
+@import "tailwindcss";
+
+@theme{
+    --font-mono:'B612 Mono', "sans-serif";
+}

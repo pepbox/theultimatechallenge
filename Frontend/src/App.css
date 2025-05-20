@@ -1,0 +1,18 @@
+.capture::-webkit-scrollbar {
+    display: none;
+  }
+  
+.capture {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;     /* Firefox */
+  }
+
+
+ 
+  
+
+ 
+  
+  
+  
+  

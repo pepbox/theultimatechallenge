@@ -20,23 +20,29 @@ app.use(cors({
 app.use(express.json())
 connectDB()
 
-if (process.env.NODE_ENV === "production") {
-  const buildPath = path.join(__dirname, "..", "..", "Frontend", "dist");
-  app.use(express.static(buildPath));
-  app.get("*", (req, res) => {
-    res.sendFile(path.resolve(buildPath, "index.html"));
-  });
-}
 
-app.get('/', (req, res) => {
-    res.send('Hello from server');
-});
+// app.get('/', (req, res) => {
+//     res.send('Hello from server');
+// });
 
 
 
 app.use("/api/v1",v1Router)
 
 setupSocket(io);
+
+
+if (process.env.NODE_ENV === "production") {
+  const buildPath = path.join(__dirname, "..", "Frontend", "dist");
+  app.use(express.static(buildPath));
+  
+  app.use((req, res, next) => {
+    if (req.url.startsWith('/api/')) {
+      return next();
+    }
+    res.sendFile(path.resolve(buildPath, "index.html"));
+  });
+}
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {

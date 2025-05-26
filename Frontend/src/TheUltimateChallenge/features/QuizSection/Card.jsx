@@ -151,6 +151,7 @@ const Card = ({
   );
 };
 
+<<<<<<< HEAD
 const CardList = ({ teamData }) => {
   if (!teamData?.questions?.length) {
     return (
@@ -158,6 +159,48 @@ const CardList = ({ teamData }) => {
         No questions available
       </div>
     );
+=======
+const CardList = () => {
+  const [cards, setCards] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchQuestions = async () => {
+      try {
+        const response = await fetch(`${import.meta.env.VITE_BACKEND_BASE_URL}/api/v1/theultimatechallenge/getquestions`);
+        const data = await response.json();
+        
+        const formattedCards = data.map(question => ({
+          id: question._id,
+          category: question.category,
+          icon: categoryIcons[question.category],
+          points: question.points,
+          level: question.level,
+          difficulty: question.difficulty,
+          difficultyColor: difficultyColors[question.difficulty],
+          status: "Play",
+          answerType: question.answerType,
+          backgroundColor: categoryColors[question.category].backgroundColor,
+          borderColor: categoryColors[question.category].borderColor,
+          headerColor: categoryColors[question.category].headerColor,
+          questionImageUrl: question.questionImageUrl,
+          text: question.text
+        }));
+
+        setCards(formattedCards);
+        setLoading(false);
+      } catch (error) {
+        console.error('Error fetching questions:', error);
+        setLoading(false);
+      }
+    };
+
+    fetchQuestions();
+  }, []);
+
+  if (loading) {
+    return <div>Loading...</div>;
+>>>>>>> b7e7ea776438f41025afa23e0ab94d6cf40b8528
   }
 
   // Filter questions by current level

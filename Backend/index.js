@@ -6,6 +6,7 @@ const { setupSocket } = require('./services/sockets/Socket.js');
 const v1Router = require("./routes/v1/index.js")
 const connectDB = require("./config/db.js")
 const cors = require('cors');
+const path=require("path")
 
 const app = express();
 const server = http.createServer(app);
@@ -24,13 +25,29 @@ app.use(cors({
 app.use(express.json())
 connectDB()
 
-app.get('/', (req, res) => {
-    res.send('Hello from server');
-});
+
+// app.get('/', (req, res) => {
+//     res.send('Hello from server');
+// });
+
+
 
 app.use("/api/v1",v1Router)
 
 setupSocket(io);
+
+
+if (process.env.NODE_ENV === "production") {
+  const buildPath = path.join(__dirname, "..", "Frontend", "dist");
+  app.use(express.static(buildPath));
+  
+  app.use((req, res, next) => {
+    if (req.url.startsWith('/api/')) {
+      return next();
+    }
+    res.sendFile(path.resolve(buildPath, "index.html"));
+  });
+}
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {

@@ -5,7 +5,7 @@ let socket;
 
 export const connectSocket = () => {
   if (!socket) {
-    socket = io('http://localhost:3000/', {
+    socket = io(import.meta.env.VITE_BACKEND_BASE_URL, {
       transports: ['websocket'],
       withCredentials: true,
       autoConnect: false
@@ -15,7 +15,7 @@ export const connectSocket = () => {
       console.log('Connected to socket server with ID:', socket.id);
       try {
         const response = await axios.post(
-          'http://localhost:3000/api/v1/admin/updatesocketid',
+          `${import.meta.env.VITE_BACKEND_BASE_URL}/api/v1/admin/updatesocketid`,
           { socketId: socket.id },
           { withCredentials: true }
         );

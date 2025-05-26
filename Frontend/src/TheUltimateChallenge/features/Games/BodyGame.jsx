@@ -96,7 +96,7 @@ function BodyGame() {
       formData.append('answerFile', selectedFile);
       formData.append('questionId', cardData.id);
 
-      const response = await axios.post('http://localhost:3000/api/v1/theultimatechallenge/uploadanswer', formData, {
+      const response = await axios.post(`${import.meta.env.VITE_BACKEND_BASE_URL}/api/v1/theultimatechallenge/uploadanswer`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
         },

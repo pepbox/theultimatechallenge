@@ -26,7 +26,7 @@ function Login() {
 
             try {
                 setLoading(true);
-                const response = await fetch(`http://localhost:3000/api/v1/theultimatechallenge/totalteams`, {
+                const response = await fetch(`${import.meta.env.VITE_BACKEND_BASE_URL}/api/v1/theultimatechallenge/totalteams`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -69,7 +69,7 @@ function Login() {
             // Get the current socket instance
             const socket = getSocket();
             
-            const response = await fetch('http://localhost:3000/api/v1/theultimatechallenge/createplayer', {
+            const response = await fetch(`${import.meta.env.VITE_BACKEND_BASE_URL}/api/v1/theultimatechallenge/createplayer`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

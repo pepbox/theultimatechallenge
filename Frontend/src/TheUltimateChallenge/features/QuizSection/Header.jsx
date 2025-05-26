@@ -45,7 +45,7 @@ function Header({ teamData }) {
                     </div>
                 </div>
                 <div className='absolute top-[69px] left-1/2 -translate-x-1/2  w-[153px] h-[47px] rounded-b-[20px]  flex flex-col  bg-gradient-to-t from-[#595297]/60 to-[#23203E/70] backdrop-blur-[10px] border-b-[1px] border-white  '>
-                    <h1 className='w-[55px] h-[24px] mt-1 mx-auto font-semibold text-[14px]' style={{ fontFamily: '"B612 Mono", monospace' }}>{teamData.teamInfo.name}</h1>
+                    <h1 className='h-[24px] mt-1 mx-auto font-semibold text-[14px]' style={{ fontFamily: '"B612 Mono", monospace' }}>{teamData.teamInfo.name}</h1>
                     <h1 className='w-[94px] h-[24px] mt-0.5 text-xs mx-auto flex justify-center' style={{ fontFamily: '"B612 Mono", monospace' }}>{`Tasks- ${task.availableQuestions}/${task.totalQuestions}`}</h1>
                 </div>
             </header></>

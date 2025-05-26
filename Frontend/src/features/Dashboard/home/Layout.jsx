@@ -8,6 +8,9 @@ import Table from './Table';
 import LeaderBoard from './LeaderBoard';
 import { GameLevelChangePopup, GameStatusChangePopup, GameTransactionChangePopup } from './Popups.jsx'
 import { UpdatePlayingStatusPopup } from './GameStausPopup.jsx';
+import { useEffect } from 'react';
+import { connectSocket } from '../../../services/sockets/admin.js';
+
 
 
 function Layout() {
@@ -57,6 +60,10 @@ function Layout() {
         console.log('Change cancelled');
         setIsConfirmStatusPopup(false);
     };
+
+    useEffect(()=>{
+         connectSocket()
+    },[])
 
 
 

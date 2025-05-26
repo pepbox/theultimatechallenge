@@ -1,9 +1,9 @@
 import React from 'react'
-import TeamName1 from '../features/teamName/CaptionName'
+import CaptionName1 from '../features/teamName/CaptionName'
 
 function TeamName() {
   return (
-    <TeamName1/>
+    <CaptionName1/>
   )
 }
 

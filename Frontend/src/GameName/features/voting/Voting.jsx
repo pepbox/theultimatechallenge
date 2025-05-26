@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import PlayerAvatar from "../../assets/images/teamPlayers/PlayerAvatar.jpg";
 import CountArrow from "../../assets/images/voting/CountArrow.png";
 import Popup from "./Popup";
+import { useNavigate } from 'react-router-dom';
 
 const Voting = () => {
     const [players, setPlayers] = useState([
@@ -14,6 +15,7 @@ const Voting = () => {
     const [selectedPlayer, setSelectedPlayer] = useState(null);
     const [timeLeft, setTimeLeft] = useState(80);
     const [hasVoted, setHasVoted] = useState(false);
+    const navigate = useNavigate();
 
     React.useEffect(() => {
         const timer = setInterval(() => {
@@ -46,6 +48,9 @@ const Voting = () => {
         );
         setHasVoted(true);
         setShowPopup(false);
+        setTimeout(()=>{
+            navigate("/gamename/captionname")
+        },2000)
     };
 
     const cancelVote = () => {

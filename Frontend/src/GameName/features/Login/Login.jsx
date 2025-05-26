@@ -1,7 +1,9 @@
 import React from 'react'
 import Upload from "../../assets/images/login/upload.png"
+import { useNavigate } from 'react-router-dom';
 
 function Login() {
+  const navigate = useNavigate()
   return (
     <div className='relative flex justify-center items-center h-[100%] w-[100%]   ' style={{ minHeight: `${window.innerHeight}px` }}>
 
@@ -19,7 +21,7 @@ function Login() {
             <input placeholder='Enter your First Name' className='h-[40px] w-[100%] bg-[#D8FEFF]/90 rounded-[4px] pl-3 font-mono text-[12px]' />
             <input placeholder='Enter your Last Name ' className='h-[40px] w-[100%] bg-[#D8FEFF]/90 rounded-[4px] pl-3 font-mono text-[12px]' />
 
-            <button className='w-[100%] h-[40px] rounded-[12px] bg-[#1E89E0] text-white font-mono text-[12px] mt-3'>Start</button>
+            <button className='w-[100%] h-[40px] rounded-[12px] bg-[#1E89E0] text-white font-mono text-[12px] mt-3' onClick={()=> navigate("teamselection")}>Start</button>
           </div>
         </div>
 

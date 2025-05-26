@@ -5,9 +5,15 @@ import { Routes, Route } from 'react-router-dom';
 import Home from './home';
 import GameManager from './GameManager';
 import QuestionForm from './QuestionForm';
+import { useEffect } from 'react';
 
 
 function SuperAdminRoutes() {
+
+
+  useEffect(()=>{
+       
+  },[])
   return (
     
         <div >

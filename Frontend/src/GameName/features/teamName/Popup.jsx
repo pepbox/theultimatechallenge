@@ -1,6 +1,8 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 
 function Popup({ teamName, onClose }) {
+  const navigate = useNavigate()
   return (
     <div className='absolute inset-0 bg-[#192741CC]/80 z-50 backdrop-blur-[1px] flex items-center justify-center'>
       <div className='w-full mx-6'>

@@ -6,19 +6,22 @@ import TeamGames from '../features/Games/TeamGame'
 import MindGame from '../features/Games/MindGame'
 import BodyGame from '../features/Games/BodyGame'
 import TaskComplete from '../features/TaskComplete/TaskComplete'
+import { SessionProvider } from '../components/SessionProvider'
 
 function TheUltimateChallengeRouter() {
   return (
+    <SessionProvider>
     <div>
         <Routes>
-                    <Route path="/" element={<Login />} />
-                    <Route path="/quizsection" element={<QuizCardSection />} />
-                    <Route path="/teamgame" element={<TeamGames />} />
-                    <Route path="/mindgame" element={<MindGame />} />
-                    <Route path="/bodygame" element={<BodyGame />} />
-                    <Route path="/taskcomplete" element={<TaskComplete />} />
+                    <Route path="/login/:sessionId" element={<Login />} />
+                    <Route path="/quizsection/:sessionId" element={<QuizCardSection />} />
+                    <Route path="/teamgame/:sessionId" element={<TeamGames />} />
+                    <Route path="/mindgame/:sessionId" element={<MindGame />} />
+                    <Route path="/bodygame/:sessionId" element={<BodyGame />} />
+                    <Route path="/taskcomplete/:sessionId" element={<TaskComplete />} />
                 </Routes>
     </div>
+    </SessionProvider>
   )
 }
 

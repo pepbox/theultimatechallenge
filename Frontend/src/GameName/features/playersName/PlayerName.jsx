@@ -1,9 +1,18 @@
 import React from 'react'
 import PlayerAvatar from "../../assets/images/teamPlayers/PlayerAvatar.jpg"
 import Overlay from './Overlay';
+import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 function PlayerName() {
     const arr = new Array(10).fill(1);
+    const navigate = useNavigate()
+
+    useEffect(()=>{
+        setTimeout(()=>{
+            navigate("/gamename/voting")
+        },3000)
+    },[])
     return (
         <div className='relative  flex  items-center justify-center' style={{ minHeight: `${window.innerHeight}px` }}>
             {/* <Overlay/> */}

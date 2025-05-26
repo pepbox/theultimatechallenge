@@ -5,8 +5,8 @@ const teamSchema = new mongoose.Schema({
   session: { type: mongoose.Schema.Types.ObjectId, ref: 'TheUltimateChallenge', required: true },
 
   caption: {
-    type: String, // hardcoded for future tracking
-    required: true
+    type: String, 
+    
   },
 
   questionStatus: [{
@@ -17,9 +17,14 @@ const teamSchema = new mongoose.Schema({
     answerUrl: {
       type: String,
       default: null
-    },
-    
-  }]
+    }, 
+    submittedAnswer:{
+      type:String,
+      default:null
+    }  
+  }],
+  teamScore:{type:Number,default : 0},
+  currentLevel:{type:Number,default: 1}
 });
 
 module.exports = mongoose.model('Team', teamSchema);

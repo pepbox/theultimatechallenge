@@ -54,10 +54,10 @@ function GameNameRoutes() {
                 <Route path="/teamresult" element={<TeamResult />} />
                 <Route path="/playername" element={<PlayerName/>} />
                 <Route path="/voting" element={<Voting/>} />
-                <Route path="/playerview" element={<PlayerView/>} />
-                <Route path="/allteams" element={<AllTeams/>} />
                 <Route path="/captionname" element={<CaptionName/>} />
                 <Route path="/teamname" element={<TeamName/>} />
+                <Route path="/playerview" element={<PlayerView/>} />
+                <Route path="/allteams" element={<AllTeams/>} />
             </Routes>
         </div>
     </div>

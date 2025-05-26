@@ -1,203 +1,177 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { getSocket } from '../../../services/sockets/theUltimateChallenge';
 import connectIcon from '../../assets/images/QuizSection/TeamGame/connect.png';
 import groupIcon from '../../assets/images/QuizSection/TeamGame/Group.png';
 import heartBallonIcon from '../../assets/images/QuizSection/TeamGame/heart-ballon.png';
 import playBasketballIcon from '../../assets/images/QuizSection/TeamGame/play-basketball.png';
 import brainIcon from '../../assets/images/QuizSection/TeamGame/brain.png';
-import { useNavigate } from 'react-router-dom';
 
-// Category-based color configuration
-const categoryColors = {
+// Category-based configurations
+const categoryConfig = {
   Collab: {
     backgroundColor: "#95400E4D",
     borderColor: "#95400E",
-    headerColor: "#95400E"
+    headerColor: "#95400E",
+    icon: connectIcon
   },
   Discovery: {
     backgroundColor: "#0795AE4D",
     borderColor: "#0B7D85",
-    headerColor: "#0B7D85"
+    headerColor: "#0B7D85",
+    icon: heartBallonIcon
   },
   "Mind-bender": {
     backgroundColor: "#295B084D",
     borderColor: "#387902",
-    headerColor: "#387902"
+    headerColor: "#387902",
+    icon: brainIcon
   },
   "Team Work": {
     backgroundColor: "#BA27324D",
     borderColor: "#9C2A2A",
-    headerColor: "#9C2A2A"
+    headerColor: "#9C2A2A",
+    icon: playBasketballIcon
   }
 };
 
-// Category-based icon configuration
-const categoryIcons = {
-  Collab: connectIcon,
-  Discovery: heartBallonIcon,
-  "Mind-bender": brainIcon,
-  "Team Work": playBasketballIcon
+// Status configurations
+const statusConfig = {
+  available: {
+    color: "#00C853",
+    text: "Play >",
+    className: "w-[71px]"
+  },
+  attending: {
+    color: "#FFC107",
+    text: "In Progress",
+    className: "w-[110px]"
+  },
+  done: {
+    color: "#2196F3",
+    text: "Completed",
+    className: "w-[95px]"
+  }
 };
 
-// Difficulty-based color configuration
-const difficultyColors = {
-  easy: "#00C853",
-  medium: "#FFEB3B",
-  difficult: "#F44336"
-};
-
-const Card = ({ 
+const Card = ({
   id,
-  category, 
-  icon, 
-  points, 
-  level, 
-  difficulty, 
-  status, 
+  category,
+  points,
+  level,
+  difficulty,
+  status,
   answerType,
-  backgroundColor, 
-  borderColor, 
-  headerColor,
   questionImageUrl,
-  text
+  text,
+  currentPlayer,
+  pointsEarned
 }) => {
   const navigate = useNavigate();
+  const socket = getSocket();
+  const { sessionId } = useParams();
 
-  const getStatusButton = () => {
-    const navigateTo = answerType === "text" ? "/mindgame" : "/bodygame";
-    
+  const config = categoryConfig[category] || categoryConfig["Mind-bender"];
+
+  const handleQuestionStart = () => {
+    // Emit socket event to update question status
+    socket.emit("start-question", { questionId: id });
+
+    // Navigate to appropriate game page
+    const gameType = answerType === "text" ? "mindgame" : "bodygame";
+    navigate(`/${gameType}/${sessionId}`, {
+      state: {
+        id,
+        category,
+        points,
+        level,
+        difficulty,
+        answerType,
+        questionImageUrl,
+        text
+      }
+    });
+  };
+
+  const StatusButton = () => {
+    const { color, text: btnText, className } = statusConfig[status] || statusConfig.available;
+
     return (
-      <div 
-        className='w-[71px] h-[24px] bg-[#FFFFFF] rounded-[4px] mt-1 mx-auto flex items-center' 
-        onClick={() => navigate(navigateTo, { 
-          state: { 
-            id,
-            category, 
-            points, 
-            level, 
-            difficulty, 
-            answerType,
-            questionImageUrl,
-            text
-          }
-        })}
+      <div
+        className={`${className} h-[24px] bg-white rounded-[4px] mt-1 mx-auto flex items-center ${status === 'available' ? 'cursor-pointer' : ''}`}
+        onClick={status === 'available' ? handleQuestionStart : undefined}
       >
-        <div className='w-[12px] h-[12px] rounded-full bg-[#00C853] ml-1'></div>
-        <p className='text-black text-[12px] ml-1 '>Play &gt;</p>
+        <div className='w-[12px] h-[12px] rounded-full ml-1' style={{ backgroundColor: color }} />
+        <p className='text-black text-[12px] ml-1'>{btnText}</p>
       </div>
     );
   };
 
   return (
-    <div 
+    <div
       className="h-[154px] rounded-[19px] shadow border backdrop-blur-[1px]"
-      style={{ 
-        backgroundColor: backgroundColor, 
-        borderColor: borderColor 
+      style={{
+        backgroundColor: config.backgroundColor,
+        borderColor: config.borderColor
       }}
     >
-      <div 
+      <div
         className='relative h-[44px] w-full rounded-t-[19px] flex justify-center items-center'
-        style={{ backgroundColor: headerColor }}
+        style={{ backgroundColor: config.headerColor }}
       >
-        <div><h1 className='font-bold text-[#FFFFFF]/70 text-[14px] tracking-[6px] text-center'>{category}</h1></div>
-        <div className='absolute bottom-[-16px] w-[32px] h-[32px] rounded-full bg-white flex justify-around items-center'> 
-          <img src={icon} alt={category} className='w-6 h-6' />
+        <h1 className='font-bold text-[#FFFFFF]/70 text-[14px] tracking-[6px] text-center'>
+          {category}
+        </h1>
+        <div className='absolute bottom-[-16px] w-[32px] h-[32px] rounded-full bg-white flex justify-around items-center'>
+          <img src={config.icon} alt={category} className='w-6 h-6' />
         </div>
       </div>
-      
+
       <div className='w-[138px] h-[48px] mx-auto mt-[22px] flex gap-1 flex-col'>
         <div className='flex h-[22px] items-center w-[138px] justify-between'>
-          <p className='text-[12px] text-[#FFFFFF] tracking-[-10%]' style={{ wordSpacing: -3 }}>Points to gain </p>
-          <h2 className='text-[14px] text-[#FFFFFF] font-bold'>{points}</h2>
+          <p className='text-[12px] text-white tracking-[-10%]' style={{ wordSpacing: -3 }}>
+            Points to gain
+          </p>
+          <h2 className='text-[14px] text-white font-bold'>
+            {pointsEarned > 0 ? pointsEarned : points}
+          </h2>
         </div>
         <div className='flex h-[22px] items-center w-[138px] justify-between'>
-          <p className='text-[12px] text-[#FFFFFF] tracking-[-10%]' style={{ wordSpacing: -3 }}>
-            <span>{difficulty}</span> Level
+          <p className='text-[12px] text-white tracking-[-10%] capitalize' style={{ wordSpacing: -3 }}>
+            {difficulty} Level
           </p>
-          <img src={groupIcon} className='w-[41.16px] h-[24px]' alt='difficulty meter'/>
+          <img src={groupIcon} className='w-[41.16px] h-[24px]' alt='difficulty meter' />
         </div>
       </div>
-      
+
       <div className='w-[154px]'>
-        {status === "Play" && getStatusButton()}
-        {status === "In Progress" && (
-          <div className='w-[110px] h-[24px] bg-[#FFFFFF] rounded-[4px] mt-1 mx-auto flex items-center'>
-            <div className='w-[12px] h-[12px] rounded-full bg-[#FFC107] ml-1'></div>
-            <p className='text-black text-[12px] ml-1 '>In Progress</p>
-          </div>
-        )}
-        {status === "Completed" && (
-          <div className='w-[95px] h-[24px] bg-[#FFFFFF] rounded-[4px] mt-1 mx-auto flex items-center'>
-            <div className='w-[12px] h-[12px] rounded-full bg-[#2196F3] ml-1'></div>
-            <p className='text-black text-[12px] ml-1 '>Completed</p>
-          </div>
-        )}
+        <StatusButton />
       </div>
     </div>
   );
 };
 
-const CardList = () => {
-  const [cards, setCards] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchQuestions = async () => {
-      try {
-        const response = await fetch('http://localhost:3000/api/v1/theultimatechallenge/getquestions');
-        const data = await response.json();
-        
-        const formattedCards = data.map(question => ({
-          id: question._id,
-          category: question.category,
-          icon: categoryIcons[question.category],
-          points: question.points,
-          level: question.level,
-          difficulty: question.difficulty,
-          difficultyColor: difficultyColors[question.difficulty],
-          status: "Play",
-          answerType: question.answerType,
-          backgroundColor: categoryColors[question.category].backgroundColor,
-          borderColor: categoryColors[question.category].borderColor,
-          headerColor: categoryColors[question.category].headerColor,
-          questionImageUrl: question.questionImageUrl,
-          text: question.text
-        }));
-
-        setCards(formattedCards);
-        setLoading(false);
-      } catch (error) {
-        console.error('Error fetching questions:', error);
-        setLoading(false);
-      }
-    };
-
-    fetchQuestions();
-  }, []);
-
-  if (loading) {
-    return <div>Loading...</div>;
+const CardList = ({ teamData }) => {
+  if (!teamData?.questions?.length) {
+    return (
+      <div className="flex justify-center items-center h-[calc(100vh-136px)] text-white">
+        No questions available
+      </div>
+    );
   }
+
+  // Filter questions by current level
+  const currentLevelQuestions = teamData.questions.filter(
+    q => q.level === teamData.teamInfo.currentLevel
+  );
 
   return (
     <div className='capture flex justify-center mt-[126px] h-[calc(100vh-136px)] overflow-scroll'>
       <div className="grid grid-cols-[154px_154px] gap-[19px] auto-rows-[154px] mb-2">
-        {cards.map(card => (
+        {currentLevelQuestions.map(question => (
           <Card
-            key={card.id}
-            id={card.id}
-            category={card.category}
-            icon={card.icon}
-            points={card.points}
-            level={card.level}
-            difficulty={card.difficulty}
-            status={card.status}
-            answerType={card.answerType}
-            backgroundColor={card.backgroundColor}
-            borderColor={card.borderColor}
-            headerColor={card.headerColor}
-            questionImageUrl={card.questionImageUrl}
-            text={card.text}
+            key={question.id}
+            {...question}
           />
         ))}
       </div>
@@ -205,6 +179,6 @@ const CardList = () => {
   );
 };
 
-export default function QuizCardSection() {
-  return <CardList />;
+export default function QuizCardSection({ teamData }) {
+  return <CardList teamData={teamData} />;
 }

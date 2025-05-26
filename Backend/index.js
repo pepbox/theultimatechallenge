@@ -10,9 +10,14 @@ const cors = require('cors');
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
+const socketinit = require("./services/sockets/Socket.js")
+const cookieParser = require('cookie-parser');
+
+
+app.use(cookieParser());
 
 app.use(cors({
-  origin: '*',
+  origin: ['http://localhost:5173','http://localhost:4173'],
   credentials: true // if you plan to send cookies or auth headers
 }));
 

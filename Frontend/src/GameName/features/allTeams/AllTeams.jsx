@@ -1,10 +1,12 @@
 import React, { useState } from 'react'
 import PlayerAvatar from "../../assets/images/teamPlayers/PlayerAvatar.jpg"
 import Crown from "../../assets/images/playerNames/Crown.png"
+import { useNavigate } from 'react-router-dom';
 
 function AllTeams() {
     const arr = new Array(10).fill(1);
     const [viewTeam, setViewTeam] = useState(true)
+    const navigate = useNavigate();
 
     const teams = [
         { id: 1, name: "Team 1- Team Name" },
@@ -25,7 +27,7 @@ function AllTeams() {
                 <div className='w-[100%]'>
                     <div className='flex'>
 
-                        {<p1 className="text-white text-[24px]">&lt;</p1>}
+                        {<p1 className="text-white text-[24px]" onClick={()=> navigate("/gamename/playerview")}>&lt;</p1>}
                         <p className='text-[20px] font-bold font-mono text-white text-center self-center w-full'>All Teams</p>
                     </div>
 

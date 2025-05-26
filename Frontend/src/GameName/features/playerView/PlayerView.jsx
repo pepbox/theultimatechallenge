@@ -1,11 +1,13 @@
 import React, { useState } from 'react'
 import PlayerAvatar from "../../assets/images/teamPlayers/PlayerAvatar.jpg"
 import Crown from "../../assets/images/playerNames/Crown.png"
+import { useNavigate } from 'react-router-dom';
 
 
 function PlayerView() {
     const arr = new Array(10).fill(1);
     const [viewTeam,setViewTeam]= useState(true)
+    const navigate = useNavigate()
     return (
         <div className=' flex  items-center justify-center' style={{ minHeight: `${window.innerHeight}px` }}>
             
@@ -45,7 +47,7 @@ function PlayerView() {
                         </div>
                     </div>))}
                 </div>
-               { viewTeam && <button className='fixed bottom-6 left-1/2 transform -translate-x-1/2 w-[100%] max-w-sm  bg-white text-black h-[40px] rounded-[12px] text-center font-mono'>
+               { viewTeam && <button className='fixed bottom-6 left-1/2 transform -translate-x-1/2 w-[100%] max-w-sm  bg-white text-black h-[40px] rounded-[12px] text-center font-mono' onClick={()=>navigate("/gamename/allteams")}>
                     View all Teams
                 </button>}
 

@@ -1,10 +1,11 @@
 import React from 'react'
 import Check from "../../assets/images/Result/Check.png"
 import Star from "../../assets/images/Result/Star.png"
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 
 function TaskComplete() {
     const navigate = useNavigate()
+    const {sessionId} = useParams()
     return (
         <div
             className="relative flex justify-center items-center font-mono"
@@ -31,7 +32,7 @@ function TaskComplete() {
                 </div>
             </div>
             <div className='absolute bottom-[40px] w-full flex items-center justify-center'>
-                <button className='w-[327px] h-[40px] bg-[#FCA61E] rounded-[12px]' onClick={() => navigate("/quizsection")} >
+                <button className='w-[327px] h-[40px] bg-[#FCA61E] rounded-[12px]' onClick={() => navigate(`/quizsection/${sessionId}`)} >
                     <div className='flex justify-center gap-[7px] z-10'>
                         <h1 className='text-[#111111] font-bold text-[16px]'>Continue with Tasks</h1>
                     </div>

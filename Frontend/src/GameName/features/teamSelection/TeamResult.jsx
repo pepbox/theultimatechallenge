@@ -1,6 +1,8 @@
 import React from 'react'
+import { useNavigate } from 'react-router-dom'
 
 function TeamResult() {
+    const navigate = useNavigate()
     return (
 
         <div className='relative  flex  items-center justify-center' style={{ minHeight: `${window.innerHeight}px` }}>
@@ -19,6 +21,7 @@ function TeamResult() {
                     </div>
                 </div>
                 <button
+                onClick={()=> navigate("/gamename/playername")}
                     className='bg-[#1E89E0] w-full h-[40px] font-mono text-[12px] text-white rounded-[12px] mt-4'
                 >View Team
                 </button>

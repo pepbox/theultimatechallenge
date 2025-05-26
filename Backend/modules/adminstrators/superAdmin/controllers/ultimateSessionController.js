@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 const TheUltimateChallenge = require('../../../theUltimateChallenge/models/TheUltimateChallenge');
 const SessionHistory = require('../../../../models/sessionHistorySchema');
 const Question = require('../../../theUltimateChallenge/models/questionSchema');
-
+const Admin = require('../../admin/models/adminSchema');
 
 const createSession = async (req, res) => {
   try {
@@ -125,14 +125,26 @@ const createSession = async (req, res) => {
     // Save session history
     await sessionHistory.save();
 
+    // Create admin entry
+    const newAdmin = new Admin({
+      adminName: admin,
+      session: savedSession._id.toString(),
+      passCode: password,
+      // socketId can be added later when the admin connects
+    });
+
+    // Save admin
+    await newAdmin.save();
+
     // Return success response
     return res.status(201).json({
       success: true,
       data: {
         session: savedSession,
-        sessionHistory
+        sessionHistory,
+        admin: newAdmin
       },
-      message: 'Session created successfully'
+      message: 'Session and admin created successfully'
     });
 
   } catch (error) {

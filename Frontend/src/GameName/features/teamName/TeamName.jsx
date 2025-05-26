@@ -1,21 +1,31 @@
 import React, { useState } from 'react';
 import Popup from "./Popup";
+import { useNavigate } from 'react-router-dom';
 
 function TeamName() {
     const [teamName, setTeamName] = useState('');
     const [showPopup, setShowPopup] = useState(false);
+
+    const navigate = useNavigate()
 
     const handleSubmit = (e) => {
         e.preventDefault();
         if (teamName.trim()) {
             setShowPopup(true);
         }
+        
     };
+
+    const handleClose = ()=>{
+            setShowPopup(false);
+            navigate("/gamename/playerview")
+    }
+    
 
     return (
         <>
             <div className='relative flex items-center justify-center' style={{ minHeight: `${window.innerHeight}px` }}>
-                {showPopup && <Popup teamName={teamName} onClose={() => setShowPopup(false)} />}
+                {showPopup && <Popup teamName={teamName} onClose={handleClose} />}
                 <div className='w-[100%] flex flex-col items-center justify-between py-10 mx-6' style={{ minHeight: `${window.innerHeight}px` }}>
                     <div className='w-[100%] flex flex-col gap-3'>
                         <h1 className='font-bold text-[24px] font-mono text-white text-center'>Name your Team</h1>

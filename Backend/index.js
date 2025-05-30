@@ -6,7 +6,7 @@ const { setupSocket } = require('./services/sockets/Socket.js');
 const v1Router = require("./routes/v1/index.js")
 const connectDB = require("./config/db.js")
 const cors = require('cors');
-const path = require("path")
+// Removed path module to avoid path-to-regexp conflicts
 
 const app = express();
 const server = http.createServer(app);
@@ -30,7 +30,7 @@ app.use("/api/v1", v1Router)
 setupSocket(io);
 
 if (process.env.NODE_ENV === "production") {
-  const buildPath = path.join(__dirname, "..", "Frontend", "dist");
+  const buildPath = __dirname + "/../Frontend/dist";
   
   // Serve static files with proper MIME types
   app.use(express.static(buildPath, {
@@ -50,7 +50,7 @@ if (process.env.NODE_ENV === "production") {
       return res.status(404).json({ error: 'API route not found' });
     }
     
-    res.sendFile(path.resolve(buildPath, "index.html"));
+    res.sendFile(buildPath + "/index.html");
   });
 }
 

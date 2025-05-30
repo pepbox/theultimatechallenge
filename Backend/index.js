@@ -24,17 +24,16 @@ app.use(cors({
 app.use(express.json())
 connectDB()
 
-// API routes FIRST
-app.use("/api/v1", v1Router)
-
-setupSocket(io);
-
 if (process.env.NODE_ENV === "production") {
   const buildPath = path.join(__dirname, "../Frontend/dist");
   
-  // Serve static files with proper MIME types
+  // Debug: Log the build path to make sure it's correct
+  console.log('Serving static files from:', buildPath);
+  
+  // Serve static files FIRST - before any other routes
   app.use(express.static(buildPath, {
     setHeaders: (res, filePath) => {
+      console.log('Serving static file:', filePath); // Debug log
       if (filePath.endsWith('.js')) {
         res.setHeader('Content-Type', 'application/javascript');
       } else if (filePath.endsWith('.css')) {
@@ -44,20 +43,24 @@ if (process.env.NODE_ENV === "production") {
       }
     }
   }));
+}
+
+// API routes AFTER static files
+app.use("/api/v1", v1Router)
+
+setupSocket(io);
+
+if (process.env.NODE_ENV === "production") {
+  const buildPath = path.join(__dirname, "../Frontend/dist");
   
-  // Catch-all handler LAST: send back React's index.html file for non-API and non-static routes
-  app.use((req, res, next) => {
-    // Skip API routes (though they should be handled above)
-    if (req.url.startsWith('/api/')) {
-      return res.status(404).json({ error: 'API route not found' });
-    }
-    
-    // Skip static files (they should be served above)
-    if (req.url.includes('.')) {
+  // Handle React Router - only for non-file requests
+  app.get(/^(?!\/api).*/, (req, res) => {
+    // If the request has a file extension, it's likely a missing static file
+    if (path.extname(req.path)) {
       return res.status(404).send('File not found');
     }
     
-    // Serve React app for all other routes
+    // Otherwise, serve the React app
     res.sendFile(path.join(buildPath, "index.html"));
   });
 }

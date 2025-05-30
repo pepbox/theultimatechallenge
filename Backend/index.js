@@ -6,14 +6,13 @@ const { setupSocket } = require('./services/sockets/Socket.js');
 const v1Router = require("./routes/v1/index.js")
 const connectDB = require("./config/db.js")
 const cors = require('cors');
-const path=require("path")
+const path = require("path")
 
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 const socketinit = require("./services/sockets/Socket.js")
 const cookieParser = require('cookie-parser');
-
 
 app.use(cookieParser());
 
@@ -25,26 +24,32 @@ app.use(cors({
 app.use(express.json())
 connectDB()
 
-
-// app.get('/', (req, res) => {
-//     res.send('Hello from server');
-// });
-
-
-
-app.use("/api/v1",v1Router)
+// API routes
+app.use("/api/v1", v1Router)
 
 setupSocket(io);
 
-
 if (process.env.NODE_ENV === "production") {
   const buildPath = path.join(__dirname, "..", "Frontend", "dist");
-  app.use(express.static(buildPath));
   
-  app.use((req, res, next) => {
-    if (req.url.startsWith('/api/')) {
-      return next();
+  // Serve static files with proper MIME types
+  app.use(express.static(buildPath, {
+    setHeaders: (res, path) => {
+      if (path.endsWith('.js')) {
+        res.setHeader('Content-Type', 'application/javascript');
+      } else if (path.endsWith('.css')) {
+        res.setHeader('Content-Type', 'text/css');
+      }
     }
+  }));
+  
+  // Catch-all handler: send back React's index.html file for non-API routes
+  app.get('*', (req, res) => {
+    // Skip API routes
+    if (req.url.startsWith('/api/')) {
+      return res.status(404).json({ error: 'API route not found' });
+    }
+    
     res.sendFile(path.resolve(buildPath, "index.html"));
   });
 }

@@ -14,9 +14,13 @@ function Layout() {
   const { sessionId } = useParams();
 
   useEffect(() => {
+    const handleResize = () => setWindowHeight(window.innerHeight);
+    window.addEventListener('resize', handleResize);
+
     const onTeamData = (data) => {
       console.log('Team data received:', data);
       setTeamData(data);
+      setOverlayToggle(data.teamInfo.isPaused)
     };
 
     const onError = (err) => {
@@ -24,7 +28,12 @@ function Layout() {
       setError(err.message || 'Socket error occurred');
     };
 
-    // Request team data immediately
+    const onPauseUpdated = (data) => {
+      console.log('Session pause status updated:', data.isPaused);
+      setOverlayToggle(data.isPaused);
+    };
+
+    // Emit request for team data
     socket.emit("request-team-data", (response) => {
       if (response.success) {
         setTeamData(response.data);
@@ -33,16 +42,16 @@ function Layout() {
       }
     });
 
-    // Set up listeners
+    // Register event listeners
     socket.on("team-data", onTeamData);
     socket.on("error", onError);
-
-    const handleResize = () => setWindowHeight(window.innerHeight);
-    window.addEventListener('resize', handleResize);
+    socket.on("session-pause-updated", onPauseUpdated);
 
     return () => {
+      // Cleanup all listeners
       socket.off("team-data", onTeamData);
       socket.off("error", onError);
+      socket.off("session-pause-updated", onPauseUpdated);
       window.removeEventListener('resize', handleResize);
     };
   }, [socket]);
@@ -58,7 +67,7 @@ function Layout() {
   return (
     <div className="relative flex justify-center font-mono" style={{ minHeight: `${windowHeight}px` }}>
       {overlayToggle && <Overlay />}
-      <Header teamData={teamData}/>
+      <Header teamData={teamData} />
       <Card teamData={teamData} socket={socket} />
     </div>
   );

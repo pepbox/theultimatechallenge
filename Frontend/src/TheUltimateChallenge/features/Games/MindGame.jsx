@@ -3,33 +3,6 @@ import { ChevronLeft } from 'lucide-react';
 import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import { getSocket } from '../../../services/sockets/theUltimateChallenge';
 import axios from 'axios';
-import Modal from 'react-modal';
-
-// Set modal root for accessibility
-Modal.setAppElement('#root');
-
-// Custom modal styles
-const customModalStyles = {
-  content: {
-    top: '50%',
-    left: '50%',
-    right: 'auto',
-    bottom: 'auto',
-    marginRight: '-50%',
-    transform: 'translate(-50%, -50%)',
-    backgroundColor: '#1E1E1E',
-    border: '2px solid #295B08',
-    borderRadius: '20px',
-    padding: '24px',
-    maxWidth: '90%',
-    width: '400px',
-    color: 'white'
-  },
-  overlay: {
-    backgroundColor: 'rgba(0, 0, 0, 0.75)',
-    zIndex: 1000
-  }
-};
 
 function MindGame() {
   const navigate = useNavigate();
@@ -40,34 +13,59 @@ function MindGame() {
   const [answer, setAnswer] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(null);
-  const [showWrongAnswerModal, setShowWrongAnswerModal] = useState(false);
-  const [pointsEarned, setPointsEarned] = useState(0);
+  const [showWrongAnswerPopup, setShowWrongAnswerPopup] = useState(false);
+  const [pointsDeducted, setPointsDeducted] = useState(0);
   const socket = getSocket();
 
+  
+
   // Clean up socket on unmount
-  useEffect(() => {
-    return () => {
-      if (socket && cardData?.id) {
-        socket.emit("reset-question-status", { questionId: cardData.id });
-        socket.off('error');
-      }
+ useEffect(() => {
+  const onPauseUpdated = (data) => {
+    console.log('Session pause status updated:', data.isPaused);
+    if (data.isPaused) {
+      navigate(`/theultimatechallenge/quizsection/${sessionId}`);
+    }
+  };
+
+  socket.on("session-pause-updated", onPauseUpdated);
+
+ 
+
+  const onTeamData = (data) => {
+    console.log(data.teamInfo.currentLevel)
+    console.log(location.state.level)
+      if( data.teamInfo.currentLevel!==location.state.level){
+           navigate(`/theultimatechallenge/quizsection/${sessionId}`)
+      };
     };
-  }, [socket, cardData?.id]);
+
+     socket.on("team-data", onTeamData);
+
+  return () => {
+    if (socket && cardData?.id) {
+      socket.emit("reset-question-status", { questionId: cardData.id });
+      socket.off('error');
+      socket.off("team-data", onTeamData);
+      socket.off("session-pause-updated", onPauseUpdated);
+    }
+  };
+}, [socket, cardData?.id, navigate, sessionId]);
 
   // Validate card data on load
   useEffect(() => {
     if (!cardData || !cardData.questionImageUrl || !cardData.text || !cardData.id) {
-      navigate(`/quizsection/${sessionId}`);
+      navigate(`/theultimatechallenge/quizsection/${sessionId}`);
     }
   }, [cardData, navigate, sessionId]);
 
   const resetQuestionStatus = () => {
     if (socket && cardData?.id) {
       socket.emit("reset-question-status", { questionId: cardData.id }, (response) => {
-        navigate(`/quizsection/${sessionId}`);
+        navigate(`/theultimatechallenge/quizsection/${sessionId}`);
       });
     } else {
-      navigate(`/quizsection/${sessionId}`);
+      navigate(`/theultimatechallenge/quizsection/${sessionId}`);
     }
   };
 
@@ -84,7 +82,7 @@ function MindGame() {
     setSubmitError(null);
 
     try {
-      const response = await axios.post(`${import.meta.env.VITE_BACKEND_BASE_URL}/api/v1/theultimatechallenge/uploadtextanswer`, {
+      const response = await axios.post('http://localhost:3000/api/v1/theultimatechallenge/uploadtextanswer', {
         questionId: cardData.id,
         answer: answer.trim()
       }, {
@@ -93,8 +91,7 @@ function MindGame() {
 
       if (response.data.success) {
         if (response.data.isCorrect) {
-          setPointsEarned(response.data.pointsEarned);
-          navigate(`/taskcomplete/${sessionId}`, { 
+          navigate(`/theultimatechallenge/taskcomplete/${sessionId}`, { 
             state: { 
               pointsEarned: response.data.pointsEarned,
               message: 'Correct Answer!',
@@ -102,7 +99,8 @@ function MindGame() {
             } 
           });
         } else {
-          setShowWrongAnswerModal(true);
+          setPointsDeducted(response.data.pointsEarned);
+          setShowWrongAnswerPopup(true);
         }
       } else {
         setSubmitError(response.data.error || 'Submission failed');
@@ -121,8 +119,15 @@ function MindGame() {
     }
   };
 
-  const closeWrongAnswerModal = () => {
-    setShowWrongAnswerModal(false);
+  const handleContinueWithTasks = () => {
+    if (socket && cardData?.id) {
+      socket.emit("reset-question-status", { questionId: cardData.id }, (response) => {
+        navigate(`/theultimatechallenge/quizsection/${sessionId}`);
+      });
+    } else {
+      navigate(`/theultimatechallenge/quizsection/${sessionId}`);
+    }
+    setShowWrongAnswerPopup(false);
     setAnswer('');
   };
 
@@ -211,32 +216,28 @@ function MindGame() {
         </p>
       </div>
 
-      {/* Wrong Answer Modal */}
-      <Modal
-        isOpen={showWrongAnswerModal}
-        onRequestClose={closeWrongAnswerModal}
-        style={customModalStyles}
-        contentLabel="Wrong Answer"
-      >
-        <div className="flex flex-col items-center">
-          <h2 className="text-2xl font-bold mb-4 text-red-500">Incorrect Answer</h2>
-          <p className="mb-6 text-center">That's not the correct answer. Please try again!</p>
-          <div className="flex gap-4">
+      {/* Wrong Answer Popup */}
+      {showWrongAnswerPopup && (
+        <div className="fixed inset-0 flex items-center justify-center z-[1000] bg-black/75">
+          <div className="bg-gradient-to-b from-[#E5FFD4]/20 to-[#D4E5FF]/20 border-2 border-white/20 rounded-2xl p-6 w-[90%] max-w-sm flex flex-col items-center backdrop-blur-3xl">
+            <h2 className="text-white text-xl font-bold mb-2 text-center">
+              You've given a wrong answer.
+            </h2>
+            <p className="text-white text-3xl font-bold mb-4">
+              {pointsDeducted} Points
+            </p>
+            <p className="text-white text-sm mb-6 text-center">
+              This task can't be retried - but your journey continues.
+            </p>
             <button
-              onClick={closeWrongAnswerModal}
-              className="px-6 py-2 bg-[#295B08] text-white rounded-lg hover:bg-[#1e4005] transition-colors"
+              onClick={handleContinueWithTasks}
+              className="bg-[#F5A623] text-black font-bold py-2 px-6 rounded-full hover:bg-[#e0891c] transition-colors"
             >
-              Try Again
-            </button>
-            <button
-              onClick={handlePlayLater}
-              className="px-6 py-2 border border-white text-white rounded-lg hover:bg-white/10 transition-colors"
-            >
-              Play Later
+              Continue with Tasks
             </button>
           </div>
         </div>
-      </Modal>
+      )}
     </div>
   );
 }

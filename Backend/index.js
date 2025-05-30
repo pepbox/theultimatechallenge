@@ -3,16 +3,15 @@ const http = require('http');
 require('dotenv').config();
 const { Server } = require('socket.io');
 const { setupSocket } = require('./services/sockets/Socket.js');
-const v1Router = require("./routes/v1/index.js")
-const connectDB = require("./config/db.js")
+const v1Router = require("./routes/v1/index.js");
+const connectDB = require("./config/db.js");
 const cors = require('cors');
-const path = require('path');
+const path = require("path");
+const cookieParser = require('cookie-parser');
 
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
-const socketinit = require("./services/sockets/Socket.js")
-const cookieParser = require('cookie-parser');
 
 app.use(cookieParser());
 
@@ -91,5 +90,7 @@ if (process.env.NODE_ENV === "production") {
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+  console.log(`Server running on port ${PORT}`);
 });
+
+

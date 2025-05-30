@@ -1,90 +1,69 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Close } from '@mui/icons-material';
-import { CircularProgress, Checkbox } from '@mui/material';
+import { Checkbox } from '@mui/material';
 
-const QuestionsSelector = ({ onClose, selectedQuestions, onQuestionsSelected, maxQuestionsPerLevel, numberOfLevels, isCustomSelectionAllowed }) => {
+const QuestionsSelector = ({ onClose, selectedQuestions, onQuestionsSelected, maxQuestionsPerLevel, numberOfLevels, isCustomSelectionAllowed, allQuestions }) => {
   const [activeTab, setActiveTab] = useState(1);
-  const [questions, setQuestions] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [selections, setSelections] = useState(selectedQuestions);
-  const [error, setError] = useState(null);
 
   useEffect(() => {
-    const fetchQuestions = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const response = await fetch(`${import.meta.env.VITE_BACKEND_BASE_URL}/api/v1/theultimatechallenge/getquestions`);
-        
-        if (!response.ok) {
-          throw new Error('Failed to fetch questions');
-        }
-        
-        const data = await response.json();
-        setQuestions(data);
-        
-        if (!isCustomSelectionAllowed) {
-          const newSelections = {};
-          for (let level = 1; level <= numberOfLevels; level++) {
-            const levelQuestions = data
-              .filter(q => q.level === level)
-              .slice(0, maxQuestionsPerLevel);
-            newSelections[level] = levelQuestions;
-          }
-          setSelections(newSelections);
-          Object.entries(newSelections).forEach(([level, questions]) => {
-            onQuestionsSelected(parseInt(level), questions);
-          });
-        }
-      } catch (err) {
-        console.error('Error fetching questions:', err);
-        setError(err.message);
-      } finally {
-        setLoading(false);
+    if (!isCustomSelectionAllowed && allQuestions.length > 0) {
+      const newSelections = {};
+      for (let level = 1; level <= numberOfLevels; level++) {
+        newSelections[level] = allQuestions
+          .filter((q) => q.level === level)
+          .slice(0, maxQuestionsPerLevel);
       }
-    };
-
-    fetchQuestions();
-  }, [maxQuestionsPerLevel, numberOfLevels, isCustomSelectionAllowed]);
+      setSelections(newSelections);
+    } else {
+      setSelections(selectedQuestions);
+    }
+  }, [allQuestions, maxQuestionsPerLevel, numberOfLevels, isCustomSelectionAllowed]);
 
   const handleTabChange = (tabNumber) => {
     setActiveTab(tabNumber);
   };
 
   const handleCheckboxChange = (question) => {
-    if (!isCustomSelectionAllowed) return;
+    if (!isCustomSelectionAllowed) {
+      return; // Prevent changes in automatic selection mode
+    }
 
     const currentLevelSelections = [...(selections[activeTab] || [])];
-    const questionIndex = currentLevelSelections.findIndex(q => q._id === question._id);
-    
+    const questionIndex = currentLevelSelections.findIndex((q) => q._id === question._id);
+
     if (questionIndex >= 0) {
       currentLevelSelections.splice(questionIndex, 1);
     } else if (currentLevelSelections.length < maxQuestionsPerLevel) {
       currentLevelSelections.push(question);
     }
-    
+
     const updatedSelections = {
       ...selections,
-      [activeTab]: currentLevelSelections
+      [activeTab]: currentLevelSelections,
     };
-    
+
     setSelections(updatedSelections);
     onQuestionsSelected(activeTab, currentLevelSelections);
   };
 
   const isQuestionSelected = (questionId) => {
-    return (selections[activeTab] || []).some(q => q._id === questionId);
+    return (selections[activeTab] || []).some((q) => q._id === questionId);
+  };
+
+  const isQuestionEnabled = (questionId) => {
+    return isCustomSelectionAllowed || isQuestionSelected(questionId);
   };
 
   const filteredQuestions = useMemo(() => {
-    return questions.filter(q => q.level === activeTab);
-  }, [questions, activeTab]);
+    return allQuestions.filter((q) => q.level === activeTab);
+  }, [allQuestions, activeTab]);
 
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-xl font-bold">Questions</h2>
-        <button 
+        <button
           onClick={onClose}
           className="p-1 rounded-full hover:bg-gray-100"
         >
@@ -111,20 +90,9 @@ const QuestionsSelector = ({ onClose, selectedQuestions, onQuestionsSelected, ma
         </ul>
       </div>
 
-      {loading ? (
+      {allQuestions.length === 0 ? (
         <div className="text-center py-10">
-          <CircularProgress />
           <p>Loading questions...</p>
-        </div>
-      ) : error ? (
-        <div className="text-center py-10 text-red-500">
-          <p>Error: {error}</p>
-          <button 
-            onClick={() => window.location.reload()}
-            className="mt-4 px-4 py-2 bg-gray-100 rounded hover:bg-gray-200"
-          >
-            Retry
-          </button>
         </div>
       ) : (
         <div className="overflow-auto max-h-96">
@@ -155,10 +123,10 @@ const QuestionsSelector = ({ onClose, selectedQuestions, onQuestionsSelected, ma
                     <Checkbox
                       checked={isQuestionSelected(question._id)}
                       onChange={() => handleCheckboxChange(question)}
-                      disabled={!isCustomSelectionAllowed}
+                      disabled={!isQuestionEnabled(question._id)}
                       sx={{
-                        color: !isCustomSelectionAllowed ? 'grey' : 'default',
-                        cursor: !isCustomSelectionAllowed ? 'not-allowed' : 'pointer'
+                        color: !isQuestionEnabled(question._id) ? 'grey' : 'default',
+                        cursor: !isQuestionEnabled(question._id) ? 'not-allowed' : 'pointer',
                       }}
                     />
                   </td>

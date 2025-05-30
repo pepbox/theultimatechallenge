@@ -9,7 +9,7 @@ function TeamGames() {
 
     const handleClick = () => {
         if (fileUploaded) {
-            navigate("/mindgame")
+            navigate("/theultimatechallenge/mindgame")
         } else {
             fileInputRef.current.click();
         }

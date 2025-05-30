@@ -88,7 +88,7 @@ function Login() {
             
             if (data.success) {
               
-                    window.location.assign(`/quizsection/${sessionId}`);
+                    window.location.assign(`/theultimatechallenge/quizsection/${sessionId}`);
               
                 
             } else {

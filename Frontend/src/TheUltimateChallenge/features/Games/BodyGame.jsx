@@ -4,6 +4,7 @@ import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import { getSocket } from '../../../services/sockets/theUltimateChallenge';
 import axios from 'axios';
 import Modal from 'react-modal';
+import Overlay from '../QuizSection/Overlay';
 
 // Set modal root for accessibility
 Modal.setAppElement('#root');
@@ -22,15 +23,40 @@ function BodyGame() {
   const [previewUrl, setPreviewUrl] = useState(null);
   const socket = getSocket();
 
+
+
   // Clean up socket on unmount
-  useEffect(() => {
-    return () => {
-      if (socket && cardData?.id) {
-        socket.emit("reset-question-status", { questionId: cardData.id });
-        socket.off('error');
-      }
+ useEffect(() => {
+  const onPauseUpdated = (data) => {
+    console.log('Session pause status updated:', data.isPaused);
+    if (data.isPaused) {
+      navigate(`/theultimatechallenge/quizsection/${sessionId}`);
+    }
+  };
+
+  socket.on("session-pause-updated", onPauseUpdated);
+
+ 
+
+  const onTeamData = (data) => {
+    console.log(data.teamInfo.currentLevel)
+    console.log(location.state.level)
+      if( data.teamInfo.currentLevel!==location.state.level){
+           navigate(`/theultimatechallenge/quizsection/${sessionId}`)
+      };
     };
-  }, [socket, cardData?.id]);
+
+     socket.on("team-data", onTeamData);
+
+  return () => {
+    if (socket && cardData?.id) {
+      socket.emit("reset-question-status", { questionId: cardData.id });
+      socket.off('error');
+      socket.off("team-data", onTeamData);
+      socket.off("session-pause-updated", onPauseUpdated);
+    }
+  };
+}, [socket, cardData?.id, navigate, sessionId]);
 
   // Validate card data on load
   useEffect(() => {
@@ -55,10 +81,10 @@ function BodyGame() {
   const resetQuestionStatus = () => {
     if (socket && cardData?.id) {
       socket.emit("reset-question-status", { questionId: cardData.id }, (response) => {
-        navigate(`/quizsection/${sessionId}`);
+        navigate(`/theultimatechallenge/quizsection/${sessionId}`);
       });
     } else {
-      navigate(`/quizsection/${sessionId}`);
+      navigate(`/theultimatechallenge/quizsection/${sessionId}`);
     }
   };
 
@@ -75,7 +101,7 @@ function BodyGame() {
       return;
     }
 
-    
+
 
     setSelectedFile(file);
     setFileUploaded(true);
@@ -104,7 +130,7 @@ function BodyGame() {
       });
 
       if (response.data.success) {
-        navigate(`/taskcomplete/${sessionId}`, {
+        navigate(`/theultimatechallenge/taskcomplete/${sessionId}`, {
           state: {
             pointsEarned: response.data.pointsEarned,
             message: 'File uploaded successfully!',
@@ -126,6 +152,7 @@ function BodyGame() {
 
   return (
     <div className='mx-[26px] flex flex-col justify-between font-mono' style={{ height: `${window.innerHeight}px` }}>
+     
       <div className='mb-[26px] flex flex-col h-[100%] pt-[26px]'>
         {/* Header */}
         <div className='text-white w-full h-[36px] flex justify-between items-center'>
@@ -133,7 +160,7 @@ function BodyGame() {
             <ChevronLeft className='text-white text-2xl' />
             <h1 className='text-[16px] font-mono'>{cardData.category} Game</h1>
           </div>
-          <button 
+          <button
             className='text-white border-[1px] rounded-[12px] w-[108px] h-[32px] border-white text-[14px]'
             onClick={handlePlayLater}
           >
@@ -148,9 +175,9 @@ function BodyGame() {
               Image Failed to Load
             </div>
           ) : (
-            <img 
+            <img
               src={cardData.questionImageUrl}
-              className='rounded-[20px] w-full h-full object-cover' 
+              className='rounded-[20px] w-full h-full object-cover'
               alt="question"
               onError={() => setImageError(true)}
             />
@@ -173,7 +200,7 @@ function BodyGame() {
           </div>
         </div>
 
-       
+
       </div>
 
       {/* Submit Area */}
@@ -183,8 +210,8 @@ function BodyGame() {
             {submitError}
           </div>
         )}
-        
-        <button 
+
+        <button
           className='w-full h-[40px] bg-[#BA2732] rounded-[12px] mb-2 disabled:opacity-50 flex items-center justify-center gap-2'
           onClick={fileUploaded ? handleSubmit : () => fileInputRef.current.click()}
           disabled={isSubmitting}
@@ -203,7 +230,7 @@ function BodyGame() {
             </>
           )}
         </button>
-        
+
         <input
           type="file"
           ref={fileInputRef}
@@ -212,8 +239,8 @@ function BodyGame() {
           accept="image/*,video/*"
           capture="environment"
         />
-        
-       
+
+
       </div>
     </div>
   );

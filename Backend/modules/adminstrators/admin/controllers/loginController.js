@@ -8,43 +8,46 @@ const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '1d';
 
 const loginAdmin = async (req, res) => {
   try {
-    const { adminName, sessionId, passCode } = req.body;
+    const { sessionId, passCode } = req.body;
+
+    console.log(typeof passCode)
+    console.log(sessionId)
 
     // Validate input
-    if (!adminName || !sessionId || !passCode) {
+    if (!sessionId || !passCode) {
       return res.status(400).json({
         success: false,
-        error: 'Please provide adminName, sessionId, and passCode'
+        error: 'Please provide sessionId and passCode'
       });
     }
 
-    // Find the admin by adminName and session ID
-    const admin = await Admin.findOne({ 
-      adminName,
-      session: sessionId 
-    });
-
-    if (!admin) {
-      return res.status(401).json({
+    // Validate passCode format (should be 4 digits)
+    if (!/^\d{4}$/.test(passCode)) {
+      return res.status(400).json({
         success: false,
-        error: 'Invalid credentials - admin not found'
+        error: 'PassCode must be exactly 4 digits'
       });
     }
 
-    // Verify passCode
-    if (admin.passCode !== passCode) {
-      return res.status(401).json({
-        success: false,
-        error: 'Invalid credentials - wrong passCode'
-      });
-    }
-
-    // Verify the session exists
+    // Verify the session exists first
     const session = await TheUltimateChallenge.findById(sessionId);
     if (!session) {
       return res.status(404).json({
         success: false,
         error: 'Session not found'
+      });
+    }
+
+    // Find the admin by session ID and passCode
+    const admin = await Admin.findOne({ 
+      session: sessionId,
+      passCode: passCode 
+    });
+
+    if (!admin) {
+      return res.status(401).json({
+        success: false,
+        error: 'Invalid credentials - wrong passcode'
       });
     }
 
@@ -84,6 +87,15 @@ const loginAdmin = async (req, res) => {
 
   } catch (error) {
     console.error('Error in admin login:', error);
+    
+    // Handle specific MongoDB errors
+    if (error.name === 'CastError') {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid session ID format'
+      });
+    }
+    
     return res.status(500).json({
       success: false,
       error: 'Internal server error'
@@ -178,8 +190,63 @@ const updateSocketId = async (req, res) => {
   }
 };
 
+// Additional helper function to validate admin session
+const validateAdminSession = async (req, res) => {
+  try {
+    // Get JWT token from cookie
+    const token = req.cookies.adminToken;
+    if (!token) {
+      return res.status(401).json({
+        success: false,
+        error: 'No authentication token provided'
+      });
+    }
+
+    // Verify JWT token
+    let decoded;
+    try {
+      decoded = jwt.verify(token, JWT_SECRET);
+    } catch (error) {
+      return res.status(401).json({
+        success: false,
+        error: 'Invalid or expired token'
+      });
+    }
+
+    // Find admin and session
+    const admin = await Admin.findById(decoded.adminId);
+    const session = await TheUltimateChallenge.findById(decoded.sessionId);
+
+    if (!admin || !session) {
+      return res.status(404).json({
+        success: false,
+        error: 'Admin or session not found'
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        adminName: admin.adminName,
+        sessionId: session._id,
+        companyName: session.companyName,
+        isValid: true
+      },
+      message: 'Admin session is valid'
+    });
+
+  } catch (error) {
+    console.error('Error in validating admin session:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Internal server error'
+    });
+  }
+};
+
 module.exports = {
   loginAdmin,
   logoutAdmin,
-  updateSocketId
+  updateSocketId,
+  validateAdminSession
 };

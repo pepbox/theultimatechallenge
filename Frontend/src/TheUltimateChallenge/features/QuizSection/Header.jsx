@@ -33,9 +33,9 @@ function Header({ teamData }) {
                         <h1 className='font-mono text-sm' style={{ fontFamily: '"B612 Mono", monospace' }} >{teamData.teamInfo.teamScore}</h1>
                     </div>
                 </div>
-                <div className='absolute top-[52px] right-[24px] w-[108px] h-[32px] rounded-[20px] flex items-center   bg-gradient-to-l from-[#595297] to-[#23203E]/70 backdrop-blur-[10px] z-10'>
+                <div className='absolute top-[52px] right-[24px] w-[130px] h-[32px] rounded-[20px] flex items-center   bg-gradient-to-l from-[#595297] to-[#23203E]/70 backdrop-blur-[10px] z-10'>
                     <div className='mx-auto flex gap-2 py-1 pl-2 pr-1 items-center'>
-                        <h1 className='text-sm' style={{ fontFamily: '"B612 Mono", monospace' }} >Level-<span>{teamData.teamInfo.currentLevel}</span></h1>
+                        <h1 className='text-sm' style={{ fontFamily: '"B612 Mono", monospace' }} >Level <span className='text-lg'>:</span><span>{teamData.teamInfo.currentLevel}</span></h1>
                         <img
                             src={Energy}
                             className="h-6 w-6"

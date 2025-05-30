@@ -2,7 +2,9 @@ import React from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { getSocket } from '../../../services/sockets/theUltimateChallenge';
 import connectIcon from '../../assets/images/QuizSection/TeamGame/connect.png';
-import groupIcon from '../../assets/images/QuizSection/TeamGame/Group.png';
+import EasyMeter from '../../assets/images/QuizSection/TeamGame/EasyMeter.png';
+import MediumMeter from '../../assets/images/QuizSection/TeamGame/MediumMeter.png';
+import HardMeter from '../../assets/images/QuizSection/TeamGame/HardMeter.png';
 import heartBallonIcon from '../../assets/images/QuizSection/TeamGame/heart-ballon.png';
 import playBasketballIcon from '../../assets/images/QuizSection/TeamGame/play-basketball.png';
 import brainIcon from '../../assets/images/QuizSection/TeamGame/brain.png';
@@ -35,6 +37,13 @@ const categoryConfig = {
   }
 };
 
+// Difficulty meter configurations
+const difficultyMeterConfig = {
+  easy: EasyMeter,
+  medium: MediumMeter,
+  hard: HardMeter
+};
+
 // Status configurations
 const statusConfig = {
   available: {
@@ -43,7 +52,7 @@ const statusConfig = {
     className: "w-[71px]"
   },
   attending: {
-    color: "#FFC107",
+    color: "#F43844",
     text: "In Progress",
     className: "w-[110px]"
   },
@@ -65,13 +74,17 @@ const Card = ({
   questionImageUrl,
   text,
   currentPlayer,
-  pointsEarned
+  pointsEarned,
+  isPaused
 }) => {
   const navigate = useNavigate();
   const socket = getSocket();
   const { sessionId } = useParams();
 
   const config = categoryConfig[category] || categoryConfig["Mind-bender"];
+  
+  // Get the appropriate difficulty meter image
+  const difficultyMeterImage = difficultyMeterConfig[difficulty?.toLowerCase()] || difficultyMeterConfig.easy;
 
   const handleQuestionStart = () => {
     // Emit socket event to update question status
@@ -79,7 +92,7 @@ const Card = ({
 
     // Navigate to appropriate game page
     const gameType = answerType === "text" ? "mindgame" : "bodygame";
-    navigate(`/${gameType}/${sessionId}`, {
+    navigate(`/theultimatechallenge/${gameType}/${sessionId}`, {
       state: {
         id,
         category,
@@ -88,7 +101,8 @@ const Card = ({
         difficulty,
         answerType,
         questionImageUrl,
-        text
+        text,
+        
       }
     });
   };
@@ -140,7 +154,7 @@ const Card = ({
           <p className='text-[12px] text-white tracking-[-10%] capitalize' style={{ wordSpacing: -3 }}>
             {difficulty} Level
           </p>
-          <img src={groupIcon} className='w-[41.16px] h-[24px]' alt='difficulty meter' />
+          <img src={difficultyMeterImage} className='w-[41.16px] h-[24px]' alt='difficulty meter' />
         </div>
       </div>
 
@@ -152,6 +166,7 @@ const Card = ({
 };
 
 const CardList = ({ teamData }) => {
+ 
   if (!teamData?.questions?.length) {
     return (
       <div className="flex justify-center items-center h-[calc(100vh-136px)] text-white">
@@ -160,7 +175,7 @@ const CardList = ({ teamData }) => {
     );
   }
 
-  // Filter questions by current level
+
   const currentLevelQuestions = teamData.questions.filter(
     q => q.level === teamData.teamInfo.currentLevel
   );
@@ -172,6 +187,7 @@ const CardList = ({ teamData }) => {
           <Card
             key={question.id}
             {...question}
+            
           />
         ))}
       </div>
@@ -180,5 +196,6 @@ const CardList = ({ teamData }) => {
 };
 
 export default function QuizCardSection({ teamData }) {
+ 
   return <CardList teamData={teamData} />;
 }

@@ -20,7 +20,6 @@ export const connectSocket = () => {
           { withCredentials: true }
         );
         console.log('Socket ID updated:', response.data);
-        
       } catch (error) {
         console.error('Error updating socket ID:', error.response?.data || error.message);
       }
@@ -40,7 +39,7 @@ export const connectSocket = () => {
 
 export const getSocket = () => {
   if (!socket) {
-    throw new Error('Socket not initialized');
+    return connectSocket(); // Fallback to connect if not initialized
   }
   return socket;
 };

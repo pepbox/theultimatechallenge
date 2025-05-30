@@ -32,7 +32,7 @@ function TaskComplete() {
                 </div>
             </div>
             <div className='absolute bottom-[40px] w-full flex items-center justify-center'>
-                <button className='w-[327px] h-[40px] bg-[#FCA61E] rounded-[12px]' onClick={() => navigate(`/quizsection/${sessionId}`)} >
+                <button className='w-[327px] h-[40px] bg-[#FCA61E] rounded-[12px]' onClick={() => navigate(`/theultimatechallenge/quizsection/${sessionId}`)} >
                     <div className='flex justify-center gap-[7px] z-10'>
                         <h1 className='text-[#111111] font-bold text-[16px]'>Continue with Tasks</h1>
                     </div>

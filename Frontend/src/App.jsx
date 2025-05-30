@@ -17,7 +17,7 @@ function App() {
   return (
     <>
     <Routes>
-      <Route path='/*' element={<TheUltimateChallengeRoutes/>}/>
+      <Route path='/theultimatechallenge/*' element={<TheUltimateChallengeRoutes/>}/>
       <Route path='/admin/*' element={<AdminRoutes/>}/>
       <Route path='/gamename/*' element={<GameNameRoutes/>}/>
       <Route path='/superadmin/*' element={<SuperAdminRoutes/>}/>

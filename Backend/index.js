@@ -27,19 +27,43 @@ connectDB()
 if (process.env.NODE_ENV === "production") {
   const buildPath = path.join(__dirname, "../Frontend/dist");
   
-  // Debug: Log the build path to make sure it's correct
+  // Debug: Log the build path and check what files exist
   console.log('Serving static files from:', buildPath);
   
-  // Serve static files FIRST - before any other routes
+  const fs = require('fs');
+  try {
+    console.log('Files in dist:', fs.readdirSync(buildPath));
+    if (fs.existsSync(path.join(buildPath, 'assets'))) {
+      console.log('Files in assets:', fs.readdirSync(path.join(buildPath, 'assets')));
+    } else {
+      console.log('Assets folder does not exist!');
+    }
+  } catch (err) {
+    console.log('Error reading directory:', err.message);
+  }
+  
+  // Add request logging to see what's being requested
+  app.use((req, res, next) => {
+    if (!req.url.startsWith('/api')) {
+      console.log('REQUEST:', req.method, req.url);
+    }
+    next();
+  });
+  
+  // Serve static files FIRST - try multiple approaches
+  app.use(express.static(buildPath));
+  app.use('/assets', express.static(path.join(buildPath, 'assets')));
+  
+  // Additional debugging for static files
   app.use(express.static(buildPath, {
     setHeaders: (res, filePath) => {
-      console.log('Serving static file:', filePath); // Debug log
+      console.log('Serving static file:', filePath);
       if (filePath.endsWith('.js')) {
         res.setHeader('Content-Type', 'application/javascript');
+        res.setHeader('Cache-Control', 'no-cache');
       } else if (filePath.endsWith('.css')) {
         res.setHeader('Content-Type', 'text/css');
-      } else if (filePath.endsWith('.html')) {
-        res.setHeader('Content-Type', 'text/html');
+        res.setHeader('Cache-Control', 'no-cache');
       }
     }
   }));

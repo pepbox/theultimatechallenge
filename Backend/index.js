@@ -34,10 +34,10 @@ if (process.env.NODE_ENV === "production") {
   
   // Serve static files with proper MIME types
   app.use(express.static(buildPath, {
-    setHeaders: (res, path) => {
-      if (path.endsWith('.js')) {
+    setHeaders: (res, filePath) => {
+      if (filePath.endsWith('.js')) {
         res.setHeader('Content-Type', 'application/javascript');
-      } else if (path.endsWith('.css')) {
+      } else if (filePath.endsWith('.css')) {
         res.setHeader('Content-Type', 'text/css');
       }
     }

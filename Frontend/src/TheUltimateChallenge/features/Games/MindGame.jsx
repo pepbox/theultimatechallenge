@@ -17,40 +17,46 @@ function MindGame() {
   const [pointsDeducted, setPointsDeducted] = useState(0);
   const socket = getSocket();
 
-  
-
   // Clean up socket on unmount
- useEffect(() => {
-  const onPauseUpdated = (data) => {
-    console.log('Session pause status updated:', data.isPaused);
-    if (data.isPaused) {
-      navigate(`/theultimatechallenge/quizsection/${sessionId}`);
-    }
-  };
-
-  socket.on("session-pause-updated", onPauseUpdated);
-
- 
-
-  const onTeamData = (data) => {
-    console.log(data.teamInfo.currentLevel)
-    console.log(location.state.level)
-      if( data.teamInfo.currentLevel!==location.state.level){
-           navigate(`/theultimatechallenge/quizsection/${sessionId}`)
-      };
+  useEffect(() => {
+    const onPauseUpdated = (data) => {
+      if (data.isPaused) {
+        navigate(`/theultimatechallenge/quizsection/${sessionId}`);
+      }
     };
 
-     socket.on("team-data", onTeamData);
+    const onTeamData = (data) => {
+      if (data.teamInfo.currentLevel !== location.state.level) {
+        navigate(`/theultimatechallenge/quizsection/${sessionId}`);
+      }
+    };
 
-  return () => {
-    if (socket && cardData?.id) {
-      socket.emit("reset-question-status", { questionId: cardData.id });
-      socket.off('error');
-      socket.off("team-data", onTeamData);
-      socket.off("session-pause-updated", onPauseUpdated);
-    }
-  };
-}, [socket, cardData?.id, navigate, sessionId]);
+    const onQuestionStatusChanged = (data) => {
+      if (data.questionId === cardData?.id) {
+        navigate(`/theultimatechallenge/quizsection/${sessionId}`);
+      }
+    };
+
+    const onAdminUpdatedTotalScore = (data) => {
+      navigate(`/theultimatechallenge/quizsection/${sessionId}`);
+    };
+
+    socket.on("session-pause-updated", onPauseUpdated);
+    socket.on("team-data", onTeamData);
+    socket.on("question-status-changed-by-admin", onQuestionStatusChanged);
+    socket.on("admin-updated-total-score", onAdminUpdatedTotalScore);
+
+    return () => {
+      if (socket && cardData?.id) {
+        socket.emit("reset-question-status", { questionId: cardData.id });
+        socket.off('error');
+        socket.off("team-data", onTeamData);
+        socket.off("session-pause-updated", onPauseUpdated);
+        socket.off("question-status-changed-by-admin", onQuestionStatusChanged);
+        socket.off("admin-updated-total-score", onAdminUpdatedTotalScore);
+      }
+    };
+  }, [socket, cardData?.id, navigate, sessionId]);
 
   // Validate card data on load
   useEffect(() => {
@@ -99,7 +105,7 @@ function MindGame() {
             } 
           });
         } else {
-          setPointsDeducted(response.data.pointsEarned);
+          setPointsDeducted(Math.abs(response.data.pointsEarned));
           setShowWrongAnswerPopup(true);
         }
       } else {
@@ -120,13 +126,7 @@ function MindGame() {
   };
 
   const handleContinueWithTasks = () => {
-    if (socket && cardData?.id) {
-      socket.emit("reset-question-status", { questionId: cardData.id }, (response) => {
-        navigate(`/theultimatechallenge/quizsection/${sessionId}`);
-      });
-    } else {
-      navigate(`/theultimatechallenge/quizsection/${sessionId}`);
-    }
+    navigate(`/theultimatechallenge/quizsection/${sessionId}`);
     setShowWrongAnswerPopup(false);
     setAnswer('');
   };
@@ -224,7 +224,7 @@ function MindGame() {
               You've given a wrong answer.
             </h2>
             <p className="text-white text-3xl font-bold mb-4">
-              {pointsDeducted} Points
+              -{pointsDeducted} Points
             </p>
             <p className="text-white text-sm mb-6 text-center">
               This task can't be retried - but your journey continues.

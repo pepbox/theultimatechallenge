@@ -23,45 +23,51 @@ function BodyGame() {
   const [previewUrl, setPreviewUrl] = useState(null);
   const socket = getSocket();
 
-
-
   // Clean up socket on unmount
- useEffect(() => {
-  const onPauseUpdated = (data) => {
-    console.log('Session pause status updated:', data.isPaused);
-    if (data.isPaused) {
-      navigate(`/theultimatechallenge/quizsection/${sessionId}`);
-    }
-  };
-
-  socket.on("session-pause-updated", onPauseUpdated);
-
- 
-
-  const onTeamData = (data) => {
-    console.log(data.teamInfo.currentLevel)
-    console.log(location.state.level)
-      if( data.teamInfo.currentLevel!==location.state.level){
-           navigate(`/theultimatechallenge/quizsection/${sessionId}`)
-      };
+  useEffect(() => {
+    const onPauseUpdated = (data) => {
+      if (data.isPaused) {
+        navigate(`/theultimatechallenge/quizsection/${sessionId}`);
+      }
     };
 
-     socket.on("team-data", onTeamData);
+    const onTeamData = (data) => {
+      if (data.teamInfo.currentLevel !== location.state.level) {
+        navigate(`/theultimatechallenge/quizsection/${sessionId}`);
+      }
+    };
 
-  return () => {
-    if (socket && cardData?.id) {
-      socket.emit("reset-question-status", { questionId: cardData.id });
-      socket.off('error');
-      socket.off("team-data", onTeamData);
-      socket.off("session-pause-updated", onPauseUpdated);
-    }
-  };
-}, [socket, cardData?.id, navigate, sessionId]);
+    const onQuestionStatusChanged = (data) => {
+      if (data.questionId === cardData?.id) {
+        navigate(`/theultimatechallenge/quizsection/${sessionId}`);
+      }
+    };
+
+    const onAdminUpdatedTotalScore = (data) => {
+      navigate(`/theultimatechallenge/quizsection/${sessionId}`);
+    };
+
+    socket.on("session-pause-updated", onPauseUpdated);
+    socket.on("team-data", onTeamData);
+    socket.on("question-status-changed-by-admin", onQuestionStatusChanged);
+    socket.on("admin-updated-total-score", onAdminUpdatedTotalScore);
+
+    return () => {
+      if (socket && cardData?.id) {
+        socket.emit("reset-question-status", { questionId: cardData.id });
+        socket.off('error');
+        socket.off("team-data", onTeamData);
+        socket.off("session-pause-updated", onPauseUpdated);
+        socket.off("question-status-changed-by-admin", onQuestionStatusChanged);
+        socket.off("admin-updated-total-score", onAdminUpdatedTotalScore);
+      }
+    };
+  }, [socket, cardData?.id, navigate, sessionId]);
 
   // Validate card data on load
   useEffect(() => {
     if (!cardData || !cardData.questionImageUrl || !cardData.text || !cardData.id) {
-      navigate(`/quizsection/${sessionId}`);
+      navigate(`/theultimatechallenge/quizsection/${sessionId}`);
     }
   }, [cardData, navigate, sessionId]);
 
@@ -100,8 +106,6 @@ function BodyGame() {
       setSubmitError('Please upload an image (JPEG, PNG, GIF) or video (MP4, MOV)');
       return;
     }
-
-
 
     setSelectedFile(file);
     setFileUploaded(true);
@@ -152,7 +156,6 @@ function BodyGame() {
 
   return (
     <div className='mx-[26px] flex flex-col justify-between font-mono' style={{ height: `${window.innerHeight}px` }}>
-     
       <div className='mb-[26px] flex flex-col h-[100%] pt-[26px]'>
         {/* Header */}
         <div className='text-white w-full h-[36px] flex justify-between items-center'>
@@ -199,8 +202,6 @@ function BodyGame() {
             <h1 className='text-[20px] text-white text-center'>Points: {cardData.points}</h1>
           </div>
         </div>
-
-
       </div>
 
       {/* Submit Area */}
@@ -239,8 +240,6 @@ function BodyGame() {
           accept="image/*,video/*"
           capture="environment"
         />
-
-
       </div>
     </div>
   );

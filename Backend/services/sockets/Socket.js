@@ -7,7 +7,7 @@ const Question = require("../../modules/theUltimateChallenge/models/questionSche
 const TheUltimateChallenge = require("../../modules/theUltimateChallenge/models/TheUltimateChallenge");
 const Admin = require("../../modules/adminstrators/admin/models/adminSchema");
 
-let ioInstance ;
+let ioInstance;
 
 function setupSocket(io) {
     io.on('connection', (socket) => {
@@ -81,7 +81,7 @@ function setupSocket(io) {
                         currentLevel: team.currentLevel,
                         teamScore: team.teamScore,
                         caption: team.caption,
-                        isPaused: session.isPaused // Added isPaused field
+                        isPaused: session.isPaused
                     },
                     questions: questionData
                 };
@@ -186,7 +186,7 @@ function setupSocket(io) {
                         currentLevel: updatedTeam.currentLevel,
                         teamScore: updatedTeam.teamScore,
                         caption: updatedTeam.caption,
-                        isPaused: session.isPaused // Added isPaused field
+                        isPaused: session.isPaused
                     },
                     questions: questionData
                 };
@@ -195,6 +195,61 @@ function setupSocket(io) {
                 teamSocketIds.forEach(socketId => {
                     io.to(socketId).emit("team-data", payload);
                 });
+
+                // 7. Emit all-teams-data to admin
+                const teams = await Team.find({ session: session._id }).populate({
+                    path: "questionStatus.question",
+                    model: "Question"
+                });
+
+                const teamData = await Promise.all(teams.map(async (t) => {
+                    const players = await Player.find({ team: t._id });
+                    const qData = t.questionStatus.map(q => ({
+                        id: q.question._id,
+                        text: q.question.text,
+                        level: q.question.level,
+                        category: q.question.category,
+                        answerType: q.question.answerType,
+                        questionImageUrl: q.question.questionImageUrl,
+                        points: q.question.points,
+                        difficulty: q.question.difficulty,
+                        status: q.status,
+                        currentPlayer: q.currentPlayer,
+                        pointsEarned: q.pointsEarned,
+                        answerUrl: q.answerUrl,
+                        submittedAnswer: q.submittedAnswer
+                    }));
+
+                    return {
+                        teamInfo: {
+                            id: t._id,
+                            name: t.name,
+                            currentLevel: t.currentLevel,
+                            teamScore: t.teamScore,
+                            caption: t.caption,
+                            isPaused: session.isPaused
+                        },
+                        players: players.map(p => ({
+                            id: p._id,
+                            name: p.name,
+                            isCaption: p.isCaption
+                        })),
+                        questions: qData
+                    };
+                }));
+
+                const allTeamsPayload = {
+                    sessionId: session._id,
+                    isPaused: session.isPaused,
+                    currentLevel: session.currentLevel,
+                    teams: teamData
+                };
+
+                // Find admin and emit to their socket
+                const admin = await Admin.findOne({ session: session._id });
+                if (admin && admin.socketId) {
+                    io.to(admin.socketId).emit("all-teams-data", allTeamsPayload);
+                }
 
                 if (callback) callback({ success: true });
 
@@ -298,7 +353,7 @@ function setupSocket(io) {
                         currentLevel: updatedTeam.currentLevel,
                         teamScore: updatedTeam.teamScore,
                         caption: updatedTeam.caption,
-                        isPaused: session.isPaused // Added isPaused field
+                        isPaused: session.isPaused
                     },
                     questions: questionData
                 };
@@ -307,6 +362,61 @@ function setupSocket(io) {
                 teamSocketIds.forEach(socketId => {
                     io.to(socketId).emit("team-data", payload);
                 });
+
+                // 7. Emit all-teams-data to admin
+                const teams = await Team.find({ session: session._id }).populate({
+                    path: "questionStatus.question",
+                    model: "Question"
+                });
+
+                const teamData = await Promise.all(teams.map(async (t) => {
+                    const players = await Player.find({ team: t._id });
+                    const qData = t.questionStatus.map(q => ({
+                        id: q.question._id,
+                        text: q.question.text,
+                        level: q.question.level,
+                        category: q.question.category,
+                        answerType: q.question.answerType,
+                        questionImageUrl: q.question.questionImageUrl,
+                        points: q.question.points,
+                        difficulty: q.question.difficulty,
+                        status: q.status,
+                        currentPlayer: q.currentPlayer,
+                        pointsEarned: q.pointsEarned,
+                        answerUrl: q.answerUrl,
+                        submittedAnswer: q.submittedAnswer
+                    }));
+
+                    return {
+                        teamInfo: {
+                            id: t._id,
+                            name: t.name,
+                            currentLevel: t.currentLevel,
+                            teamScore: t.teamScore,
+                            caption: t.caption,
+                            isPaused: session.isPaused
+                        },
+                        players: players.map(p => ({
+                            id: p._id,
+                            name: p.name,
+                            isCaption: p.isCaption
+                        })),
+                        questions: qData
+                    };
+                }));
+
+                const allTeamsPayload = {
+                    sessionId: session._id,
+                    isPaused: session.isPaused,
+                    currentLevel: session.currentLevel,
+                    teams: teamData
+                };
+
+                // Find admin and emit to their socket
+                const admin = await Admin.findOne({ session: session._id });
+                if (admin && admin.socketId) {
+                    io.to(admin.socketId).emit("all-teams-data", allTeamsPayload);
+                }
 
                 if (callback) callback({ success: true });
 
@@ -409,7 +519,7 @@ function setupSocket(io) {
                 const allTeamsPayload = {
                     sessionId: decoded.sessionId,
                     isPaused: session.isPaused,
-                    currentLevel: session.currentLevel, // Assuming session has currentLevel
+                    currentLevel: session.currentLevel,
                     teams: teamData
                 };
 
@@ -426,8 +536,7 @@ function setupSocket(io) {
             }
         });
 
-
-         socket.on("request-all-teams-data", async (callback) => {
+        socket.on("request-all-teams-data", async (callback) => {
             try {
                 // 1. Extract JWT from cookie
                 const cookies = socket.handshake.headers.cookie;
@@ -580,7 +689,7 @@ function setupSocket(io) {
                             currentLevel: team.currentLevel,
                             teamScore: team.teamScore,
                             caption: team.caption,
-                            isPaused: session.isPaused // Added isPaused field
+                            isPaused: session.isPaused
                         },
                         questions: questionData
                     };
@@ -598,6 +707,4 @@ function setupSocket(io) {
     });
 }
 
-
-
-module.exports = { setupSocket , ioInstance};
+module.exports = { setupSocket, ioInstance };

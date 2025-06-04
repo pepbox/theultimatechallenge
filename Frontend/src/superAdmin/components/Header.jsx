@@ -11,7 +11,7 @@ function Header() {
           <div className='flex gap-[40px]'>
 
             <div className='flex items-center text-[16px] text-[#111111]'>
-              <h1 className='text-[24px] font-bold'>Pepbox Super Admin</h1>
+              <h1 className='text-[24px] font-bold'>Super Admin</h1>
             </div>
             <div>
               <TextField

@@ -1,11 +1,11 @@
-import { FormControlLabel, Switch } from '@mui/material'
-import React, { useRef, useState, useEffect } from 'react'
+import { FormControlLabel, Switch } from '@mui/material';
+import React, { useRef, useState, useEffect } from 'react';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
 import Table from './Table';
 import LeaderBoard from './LeaderBoard';
-import { GameLevelChangePopup, GameStatusChangePopup, GameTransactionChangePopup } from './Popups.jsx'
+import { GameLevelChangePopup, GameStatusChangePopup, GameTransactionChangePopup } from './Popups.jsx';
 import { connectSocket, getSocket } from '../../../services/sockets/admin.js';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -42,7 +42,7 @@ function Layout() {
         socket.on("session-pause-updated", (data) => {
             gameStatus.current = data.isPaused;
             setDisplayStatus(data.isPaused);
-            console.log("Session pause status updated:", data.isPaused);
+            // console.log("Session pause status updated:", data.isPaused);
         });
 
         return () => {
@@ -68,7 +68,7 @@ function Layout() {
 
                 if (response.data.success) {
                     setGameLevel(pendingLevelChange);
-                    console.log(`Team levels updated to ${pendingLevelChange}`);
+                    // console.log(`Team levels updated to ${pendingLevelChange}`);
                 } else {
                     console.error("Error updating game level:", response.data.error);
                     setGameLevel(gameLevel); // Revert on error
@@ -93,7 +93,7 @@ function Layout() {
             if (socketRef.current) {
                 socketRef.current.emit("toggle-session-pause", { isPaused: pendingStatusChange }, (response) => {
                     if (response.success) {
-                        console.log("Session pause status toggled:", response.isPaused);
+                        // console.log("Session pause status toggled:", response.isPaused);
                         gameStatus.current = response.isPaused; // Update only on success
                         setDisplayStatus(response.isPaused);
                     } else {
@@ -163,7 +163,7 @@ function Layout() {
                 <div>
                     <div className='h-[60px] flex items-center'>
                         <div className='flex items-center gap-7 text-[16px] text-[#111111]'>
-                            <h1 className='text-[24px] font-bold'>Pepbox Admin</h1>
+                            <h1 className='text-[24px] font-bold'>Admin</h1>
                             <button className='text-black'>Home</button>
                         </div>
                     </div>
@@ -172,18 +172,18 @@ function Layout() {
             <div className='bg-[#FCA61E]/10 h-[72px]'>
                 <div className='w-[80%] h-[100%] mx-auto flex items-center justify-between'>
                     <div className='w-[337px] h-[40px] flex gap-[16px] text-[16px]'>
-                        <button className='bg-[#111111] h-[40px] w-[146px] rounded-[8px] text-white hover:scale-105 transform transition-transform duration-200'>Create Teams</button>
-                        <button className='bg-[#111111] h-[40px] w-[175px] rounded-[8px] text-white hover:scale-105 transform transition-transform duration-200'>Create Game Link</button>
+                        <button className='bg-[#111111] h-[40px] w-[146px] rounded-[8px] text-white hover:scale-105 transform transition-transform duration-200'>Reset Session</button>
+                        <button className='bg-[#111111] h-[40px] w-[175px] rounded-[8px] text-white hover:scale-105 transform transition-transform duration-200'>End Session</button>
                     </div>
                     <div>
-                        <h1 className='font-bold text-[24px]'>Manage PepBox 3-4-25 Teams</h1>
+                        <h1 className='font-bold text-[24px]'>Admin Panel</h1>
                     </div>
                     <div className={`relative w-[32px] h-[32px] rounded-full flex justify-center items-center ${settingOpen ? 'bg-[#1111111A]/50' : ""}`} onClick={() => isSettingOpen((prev) => !prev)}>
                         <MoreVertIcon className='w-[32px] h-[32px] hover:scale-115 transform transition-transform duration-200' />
                         {settingOpen && <div className='absolute w-[176px] h-[150px] bg-white shadow-md rounded-[12px] top-full mt-2 font-sans flex flex-col gap-[8px] p-[8px] z-10'>
                             <div className='w-[160px] h-[40px] font-medium flex justify-between hover:bg-slate-100 rounded-md px-2'>
                                 <div className='self-center'>History</div>
-                                <div className='self-center'>&gt;:</div>
+                                <div className='self-center'>&gt;</div>
                             </div>
                             <div className='w-[160px] h-[40px] font-medium flex items-center px-2 hover:bg-slate-100 rounded-md'>
                                 Export
@@ -215,7 +215,7 @@ function Layout() {
                     <FormControlLabel
                         control={
                             <Switch 
-                                checked={displayStatus} 
+                                checked={!displayStatus} 
                                 onChange={handleGameStatusChange}
                                 disabled={pendingStatusChange !== null} // Disable during pending change
                             />
@@ -238,7 +238,12 @@ function Layout() {
                 </div>
             </div>
             <div className='w-[80%] mx-auto flex'>
-                <Table gameStatusRef={gameStatus} onLevelChange={handleLevelUpdate} pendingStatusChange={pendingStatusChange} />
+                <Table 
+                    gameStatusRef={gameStatus} 
+                    onLevelChange={handleLevelUpdate} 
+                    pendingStatusChange={pendingStatusChange} 
+                    transactionsEnabled={transactionsEnabled} 
+                />
                 <LeaderBoard timerIsOpen={timerIsOpen} />
             </div>
 
@@ -260,7 +265,7 @@ function Layout() {
                 onConfirm={confirmTransactionChange}
             />
         </div>
-    )
+    );
 }
 
-export default Layout
+export default Layout;

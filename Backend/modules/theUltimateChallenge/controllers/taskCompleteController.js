@@ -93,6 +93,61 @@ const emitAllTeamsData = async (sessionId, io) => {
   }
 };
 
+// Helper function to emit team data to all players in the team
+const emitTeamDataToPlayers = async (teamId, sessionId, io) => {
+  try {
+    const team = await Team.findById(teamId).populate({
+      path: 'questionStatus.question',
+      model: 'Question',
+    });
+    if (!team) {
+      console.error('Team not found for emitting team data:', teamId);
+      return;
+    }
+
+    const session = await TheUltimateChallenge.findById(sessionId);
+    if (!session) {
+      console.error('Session not found for emitting team data:', sessionId);
+      return;
+    }
+
+    const players = await Player.find({ team: team._id });
+    const questionData = team.questionStatus.map((q) => ({
+      id: q.question._id,
+      text: q.question.text,
+      level: q.question.level,
+      category: q.question.category,
+      answerType: q.question.answerType,
+      questionImageUrl: q.question.questionImageUrl,
+      points: q.question.points,
+      difficulty: q.question.difficulty,
+      status: q.status,
+      currentPlayer: q.currentPlayer,
+      pointsEarned: q.pointsEarned,
+      answerUrl: q.answerUrl,
+      submittedAnswer: q.submittedAnswer,
+    }));
+
+    const payload = {
+      teamInfo: {
+        name: team.name,
+        currentLevel: team.currentLevel,
+        teamScore: team.teamScore,
+        caption: team.caption,
+        isPaused: session.isPaused,
+      },
+      questions: questionData,
+    };
+
+    const teamSocketIds = players.map((p) => p.socketId).filter((id) => id);
+    teamSocketIds.forEach((socketId) => {
+      io.to(socketId).emit('team-data', payload);
+    });
+  } catch (err) {
+    console.error('Error emitting team data to players:', err);
+  }
+};
+
 const uploadFileAnswer = async (req, res) => {
   try {
     // Verify token
@@ -167,9 +222,10 @@ const uploadFileAnswer = async (req, res) => {
       await Team.updateOne({ _id: team._id }, { $inc: { currentLevel: 1 } });
     }
 
-    // Emit updated team data to admin
+    // Emit updated team data to admin and players
     const io = req.app.get("socketService");
     await emitAllTeamsData(team.session, io);
+    await emitTeamDataToPlayers(team._id, team.session, io);
 
     res.status(200).json({
       success: true,
@@ -218,47 +274,47 @@ const submitTextAnswer = async (req, res) => {
     const isCorrect =
       question.correctAnswer &&
       question.correctAnswer.toLowerCase().trim() === answer.toLowerCase().trim();
-    const pointsEarned = isCorrect ? question.points : 0;
+    const pointsEarned = isCorrect ? question.points : -10; // Deduct 10 points for wrong answer
 
-    // Only update status and submittedAnswer if the answer is correct
-    if (isCorrect) {
-      await Team.updateOne(
-        { _id: team._id, 'questionStatus.question': questionId },
-        {
-          $set: {
-            'questionStatus.$.status': 'done',
-            'questionStatus.$.pointsEarned': pointsEarned,
-            'questionStatus.$.submittedAnswer': answer.trim(),
-          },
-          $inc: {
-            teamScore: pointsEarned,
-          },
-        }
-      );
-
-      // Check if all questions in current level are done
-      const currentLevelQuestions = team.questionStatus.filter(
-        (q) => question.level === team.currentLevel && q.status === 'done'
-      );
-      const totalLevelQuestions = team.questionStatus.filter(
-        (q) => question.level === team.currentLevel
-      );
-
-      // If all questions in current level are done, increment level
-      if (currentLevelQuestions.length === totalLevelQuestions.length && team.currentLevel < 3) {
-        await Team.updateOne({ _id: team._id }, { $inc: { currentLevel: 1 } });
+    // Update team questionStatus and score
+    await Team.updateOne(
+      { _id: team._id, 'questionStatus.question': questionId },
+      {
+        $set: {
+          'questionStatus.$.status': 'done', // Set to 'done' regardless of correctness
+          'questionStatus.$.pointsEarned': pointsEarned,
+          'questionStatus.$.submittedAnswer': answer.trim(),
+          'questionStatus.$.currentPlayer': null,
+        },
+        $inc: {
+          teamScore: pointsEarned,
+        },
       }
+    );
 
-      // Emit updated team data to admin
-      const io = req.app.get("socketService");
-      await emitAllTeamsData(team.session, io);
+    // Check if all questions in current level are done
+    const currentLevelQuestions = team.questionStatus.filter(
+      (q) => question.level === team.currentLevel && q.status === 'done'
+    );
+    const totalLevelQuestions = team.questionStatus.filter(
+      (q) => question.level === team.currentLevel
+    );
+
+    // If all questions in current level are done, increment level
+    if (currentLevelQuestions.length === totalLevelQuestions.length && team.currentLevel < 3) {
+      await Team.updateOne({ _id: team._id }, { $inc: { currentLevel: 1 } });
     }
+
+    // Emit updated team data to admin and players
+    const io = req.app.get("socketService");
+    await emitAllTeamsData(team.session, io);
+    await emitTeamDataToPlayers(team._id, team.session, io);
 
     return res.status(200).json({
       success: true,
       isCorrect,
       pointsEarned,
-      message: isCorrect ? 'Correct answer!' : 'Incorrect answer',
+      message: isCorrect ? 'Correct answer!' : 'Incorrect answer, 10 points deducted',
     });
   } catch (err) {
     console.error('Text answer submission error:', err);

@@ -72,6 +72,7 @@ if (process.env.NODE_ENV === "production") {
 app.use("/api/v1", v1Router)
 
 setupSocket(io);
+app.set('socketService', io);
 
 if (process.env.NODE_ENV === "production") {
   const buildPath = path.join(__dirname, "../Frontend/dist");

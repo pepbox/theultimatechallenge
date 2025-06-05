@@ -12,8 +12,6 @@ import SuperAdminRoutes from "./superAdmin/pages/SuperAdminRoutes.jsx"
 function App() {
 
 
-   
-
   return (
     <>
     <Routes>

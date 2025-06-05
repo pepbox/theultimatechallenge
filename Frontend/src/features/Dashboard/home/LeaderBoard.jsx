@@ -9,44 +9,45 @@ const LeaderBoard = ({ timerIsOpen }) => {
   const [topTeams, setTopTeams] = useState([]);
   const socket = getSocket();
 
+  
+
+  const processTeamData = (data) => {
+    const sortedTeams = data.teams
+      .sort((a, b) => b.teamInfo.teamScore - a.teamInfo.teamScore)
+      .slice(0, 3)
+      .map((team, index) => ({
+        id: team.teamInfo.id,
+        name: team.teamInfo.name,
+        score: team.teamInfo.teamScore,
+        rank: index + 1,
+      }));
+    setTopTeams(sortedTeams);
+  };
+
   useEffect(() => {
+    console.log("LeaderBoard component mounted, socket:", socket);
+    
     // Request team data when component mounts
     socket.emit("request-all-teams-data", (response) => {
-      
       if (response.success) {
-        // Sort teams by score and select top 3
-        const sortedTeams = response.data.teams
-          .sort((a, b) => b.teamInfo.teamScore - a.teamInfo.teamScore)
-          .slice(0, 3)
-          .map((team, index) => ({
-            id: team.teamInfo.id,
-            name: team.teamInfo.name,
-            score: team.teamInfo.teamScore,
-            rank: index + 1,
-          }));
-        setTopTeams(sortedTeams);
+        processTeamData(response.data);
       } else {
         console.error("Error fetching team data:", response.error);
       }
     });
 
-    // Listen for real-time team data updates
-    socket.on("all-teams-data", (data) => {
-      const sortedTeams = data.teams
-        .sort((a, b) => b.teamInfo.teamScore - a.teamInfo.teamScore)
-        .slice(0, 3)
-        .map((team, index) => ({
-          id: team.teamInfo.id,
-          name: team.teamInfo.name,
-          score: team.teamInfo.teamScore,
-          rank: index + 1,
-        }));
-      setTopTeams(sortedTeams);
-    });
+    // Store handler reference to ensure proper cleanup
+    const handleTeamDataUpdate = (data) => {
+      console.log("Received updated team data: IN LEADERBOARD", data);
+      processTeamData(data);
+    };
 
-    // Cleanup socket listener on component unmount
+    // Listen for real-time team data updates
+    socket.on("all-teams-data", handleTeamDataUpdate);
+
+    // Cleanup - remove only this specific handler
     return () => {
-      socket.off("all-teams-data");
+      socket.off("all-teams-data", handleTeamDataUpdate);
     };
   }, [socket]);
 

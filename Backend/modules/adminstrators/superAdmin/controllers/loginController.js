@@ -56,4 +56,39 @@ const loginSuperAdmin = async (req, res) => {
 };
 
 
-module.exports={loginSuperAdmin}
+const createSuperAdmin = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    
+    if (!email || !password) {
+      return res.status(400).json({ message: 'Email and password are required.' });
+    }
+
+    
+    const existingAdmin = await SuperAdmin.findOne({ email });
+    if (existingAdmin) {
+      return res.status(409).json({ message: 'SuperAdmin with this email already exists.' });
+    }
+
+    
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    
+    const newAdmin = new SuperAdmin({
+      email,
+      password: hashedPassword
+    });
+
+    await newAdmin.save();
+
+    res.status(201).json({ message: 'SuperAdmin created successfully.' });
+  } catch (error) {
+    console.error('Error creating SuperAdmin:', error);
+    res.status(500).json({ message: 'Internal server error.' });
+  }
+};
+
+
+
+module.exports={loginSuperAdmin,createSuperAdmin};

@@ -103,7 +103,7 @@ export default function AdminLogin() {
     const passCode = otp.join('');
     
     try {
-      const response = await fetch(`${import.meta.env.BACKEND_BASE_URL}/api/v1/admin/login`, {
+      const response = await fetch(`${import.meta.env.VITE.BACKEND_BASE_URL}/api/v1/admin/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -88,7 +88,7 @@ function MindGame() {
     setSubmitError(null);
 
     try {
-      const response = await axios.post(`${import.meta.env.BACKEND_BASE_URL}/api/v1/theultimatechallenge/uploadtextanswer`, {
+      const response = await axios.post(`${import.meta.env.VITE.BACKEND_BASE_URL}/api/v1/theultimatechallenge/uploadtextanswer`, {
         questionId: cardData.id,
         answer: answer.trim()
       }, {

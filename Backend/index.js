@@ -25,23 +25,6 @@ connectDB()
 
 if (process.env.NODE_ENV === "production") {
   const buildPath = path.join(__dirname, "../Frontend/dist");
-  
-  // Debug: Log the build path and check what files exist
-  console.log('Serving static files from:', buildPath);
-  
-  const fs = require('fs');
-  try {
-    console.log('Files in dist:', fs.readdirSync(buildPath));
-    if (fs.existsSync(path.join(buildPath, 'assets'))) {
-      console.log('Files in assets:', fs.readdirSync(path.join(buildPath, 'assets')));
-    } else {
-      console.log('Assets folder does not exist!');
-    }
-  } catch (err) {
-    console.log('Error reading directory:', err.message);
-  }
-  
-  // Add request logging to see what's being requested
   app.use((req, res, next) => {
     if (!req.url.startsWith('/api')) {
       console.log('REQUEST:', req.method, req.url);
@@ -56,7 +39,6 @@ if (process.env.NODE_ENV === "production") {
   // Additional debugging for static files
   app.use(express.static(buildPath, {
     setHeaders: (res, filePath) => {
-      console.log('Serving static file:', filePath);
       if (filePath.endsWith('.js')) {
         res.setHeader('Content-Type', 'application/javascript');
         res.setHeader('Cache-Control', 'no-cache');

@@ -11,7 +11,7 @@ const theUltimateChallengeSchema = new mongoose.Schema({
   questionsPerLevel: { type: Number, max: 13, required: true },
   isCustomQuestionSelection: { type: Boolean, default: false },
   isPaused:{type:Boolean,default:true},
-  
+  sessionEnded: { type: Boolean, default: false },
   selectedQuestions: {
     1: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Question' }],
     2: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Question' }],

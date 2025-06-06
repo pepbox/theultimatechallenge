@@ -1,14 +1,53 @@
-import React, { useState } from 'react';
-import { TextField, Button } from '@mui/material';
-import CachedRoundedIcon from '@mui/icons-material/CachedRounded';
-import LiveCard from './LiveCard';
-import GameHistory from './GameHistory';
-import Header from '../../components/Header';
-import CreateSessionPopup from './CreateSessionPopup';
+import React, { useEffect, useState } from "react";
+import { TextField, Button } from "@mui/material";
+import CachedRoundedIcon from "@mui/icons-material/CachedRounded";
+import LiveCard from "./LiveCard";
+import GameHistory from "./GameHistory";
+import Header from "../../components/Header";
+import CreateSessionPopup from "./CreateSessionPopup";
+import axios from "axios";
 
 function Homepage() {
   const [createSessionOpen, setCreateSessionOpen] = useState(false);
-  const [activeGame, setActiveGame] = useState('ultimate-challenge');
+  const [activeGame, setActiveGame] = useState("ultimate-challenge");
+  const [liveGames, setLiveGames] = useState([]);
+  const [filteredLiveGames, setFilteredLiveGames] = useState([]);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  useEffect(() => {
+    const fetchLiveGames = async () => {
+      try {
+        const response = await axios.get(
+          `${
+            import.meta.env.VITE_BACKEND_BASE_URL
+          }/api/v1/superadmin/fetchlivegames`
+        );
+        if (!response.data.success) {
+          throw new Error("Failed to fetch live games");
+        }
+
+        setLiveGames(response.data.data);
+        setFilteredLiveGames(response.data.data);
+      } catch (error) {
+        console.error("Error fetching live games:", error);
+      }
+    };
+
+    fetchLiveGames();
+  }, []);
+
+  useEffect(() => {
+    const filteredLiveGames = liveGames.filter((game) => {
+      if (searchQuery === "") return true;
+      const gameName = game.companyName.toLowerCase();
+      const adminName = game.admin.toLowerCase();
+      return (
+        gameName.includes(searchQuery.toLowerCase()) ||
+        adminName.includes(searchQuery.toLowerCase())
+      );
+    });
+    setFilteredLiveGames(filteredLiveGames);
+  }, [searchQuery]);
 
   // const handleCreateSession = async (formData) => {
   //   try {
@@ -34,39 +73,41 @@ function Homepage() {
   // };
 
   return (
-    <div className='relative font-sans max-w-[1440px] w-[100%] mx-auto mb-10'>
-      <Header/>
-      <div className='bg-[#FCA61E]/10 h-[72px]'>
-        <div className='w-[80%] h-full mx-auto flex items-center'>
-          <div className='h-full w-full '>
-            <h1 className='h-full font-bold text-[24px] flex items-center justify-center'>
+    <div className="relative font-sans max-w-[1440px] w-[100%] mx-auto mb-10">
+      <Header searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
+      <div className="bg-[#FCA61E]/10 h-[72px]">
+        <div className="w-[80%] h-full mx-auto flex items-center">
+          <div className="h-full w-full ">
+            <h1 className="h-full font-bold text-[24px] flex items-center justify-center">
               Game Master Console
             </h1>
           </div>
-          <div className='ml-4'>
+          {/* <div className="ml-4">
             <CachedRoundedIcon />
-          </div>
+          </div> */}
         </div>
       </div>
-      
-      <div className='flex w-[85%] mx-auto '>
-        <div className='w-[80%]'>
-          <h1 className='font-bold text-[16px] my-3'>Games</h1>
-          <div className='flex gap-2'>
-            <div className='w-[305px] h-[112px] bg-[#8C8C8C1A] rounded-[20px] p-4 '>
-              <div><p className='font-bold text-[16px]'>The Ultimate Challenge</p></div>
-              <button 
-                className='w-[100%] h-[34px] rounded-[12px] border mt-4 hover:bg-gray-100'
+
+      <div className="flex w-[85%] mx-auto ">
+        <div className="w-[80%]">
+          <h1 className="font-bold text-[16px] my-3">Games</h1>
+          <div className="flex gap-2">
+            <div className="w-[305px] h-[112px] bg-[#8C8C8C1A] rounded-[20px] p-4 ">
+              <div>
+                <p className="font-bold text-[16px]">The Ultimate Challenge</p>
+              </div>
+              <button
+                className="w-[100%] h-[34px] cursor-pointer rounded-[12px] border mt-4 hover:bg-gray-100"
                 onClick={() => {
-                  setActiveGame('ultimate-challenge');
+                  setActiveGame("ultimate-challenge");
                   setCreateSessionOpen(true);
                 }}
               >
                 Create New Session
               </button>
             </div>
-            
-            <div className='w-[305px] h-[112px] bg-[#8C8C8C1A] rounded-[20px] p-4 '>
+
+            {/* <div className='w-[305px] h-[112px] bg-[#8C8C8C1A] rounded-[20px] p-4 '>
               <div><p className='font-bold text-[16px]'>Team Naming</p></div>
               <button 
                 className='w-[100%] h-[34px] rounded-[12px] border mt-4 hover:bg-gray-100'
@@ -77,36 +118,42 @@ function Homepage() {
               >
                 Create New Session
               </button>
-            </div>
+            </div> */}
           </div>
 
-          <div className='font-sans font-bold my-3'>Live Games</div>
-          <div className='flex gap-3 flex-wrap'>
-            {[1,2,3,4,5,6].map((i) => <LiveCard key={i} />)}
+          <div className="font-sans font-bold my-3">Live Games</div>
+          <div className="flex gap-3 flex-wrap">
+            {filteredLiveGames.length ? (
+              filteredLiveGames.map((game, index) => (
+                <LiveCard key={index} game={game} />
+              ))
+            ) : (
+              <div>No Games Found</div>
+            )}
           </div>
-          
-          <div className='font-bold font-sans text-[16px] my-3'>Game History</div>
-          <GameHistory/>
+
+          {/* <div className='font-bold font-sans text-[16px] my-3'>Game History</div> */}
+          {/* <GameHistory/> */}
         </div>
-        
-        <div className='w-[20%]'>
-          <div className='h-[64px] bg-[#B3D7FF] rounded-[16px] my-4 flex items-center'>
-            <div className='w-[100%] px-4 text-[16px] flex justify-between'>
+
+        <div className="w-[20%]">
+          <div className="h-[64px] bg-[#B3D7FF] rounded-[16px] my-4 flex items-center">
+            <div className="w-[100%] px-4 text-[16px] flex justify-between">
               <p>Live Games</p>
-              <p>2</p>
+              <p>{liveGames.length}</p>
             </div>
           </div>
-          <div className='h-[64px] bg-[#FBF3B9] rounded-[16px] my-4 flex items-center'>
-            <div className='w-[100%] px-4 text-[16px] flex justify-between'>
+          <div className="h-[64px] bg-[#FBF3B9] rounded-[16px] my-4 flex items-center">
+            <div className="w-[100%] px-4 text-[16px] flex justify-between">
               <p>Active Players</p>
-              <p>1234</p>
+              <p>{liveGames.length ? liveGames.reduce((a,b)=>a+b.playerCount, 0):0}</p>
             </div>
           </div>
         </div>
       </div>
 
       {/* Create Session Popup */}
-      <CreateSessionPopup 
+      <CreateSessionPopup
         isOpen={createSessionOpen}
         onClose={() => setCreateSessionOpen(false)}
         // onSubmit={handleCreateSession}

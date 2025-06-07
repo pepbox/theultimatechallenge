@@ -5,7 +5,6 @@ const handleGetAllLiveGames = async (req,res) => {
     try {
         const allGames = await TheUltimateChallenge.find({ sessionEnded: false }).sort({ createdAt: -1 })
 
-        console.log("All live games fetched:", allGames);
         if( !allGames || allGames.length === 0) {
             return res.status(404).json({
                 success: false,

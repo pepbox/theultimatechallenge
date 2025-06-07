@@ -6,6 +6,7 @@ const TheUltimateChallenge = require('../models/TheUltimateChallenge');
 const Admin = require('../../adminstrators/admin/models/adminSchema');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
+const sharp = require('sharp');
 
 // Configure S3
 const s3 = new AWS.S3({
@@ -178,11 +179,37 @@ const uploadFileAnswer = async (req, res) => {
     if (!questionStatus) return res.status(404).json({ error: 'Question not assigned to team' });
     if (questionStatus.status === 'done') return res.status(400).json({ error: 'Question already answered' });
 
+
+
+    if (req.file && req.file.mimetype.startsWith('image/')) {
+      try {
+        let quality = 90;
+        let compressedBuffer;
+
+        do {
+          compressedBuffer = await sharp(req.file.buffer)
+            .jpeg({ quality })
+            .toBuffer();
+          quality -= 10;
+        } while (compressedBuffer.length > 2 * 1024 * 1024 && quality > 10);
+
+        req.file.buffer = compressedBuffer;
+        req.file.size = compressedBuffer.length;
+      } catch (error) {
+        console.log('Image compression error:', error);
+        return res.status(400).json({ error: 'Image compression failed' });
+      }
+    }
+
+
     // Upload file to S3
     const file = req.file;
     const fileExtension = file.originalname.split('.').pop();
     const uniqueId = crypto.randomBytes(8).toString('hex');
     const s3Key = `answers/${uniqueId}.${fileExtension}`;
+
+
+
 
     await s3.upload({
       Bucket: process.env.AWS_S3_BUCKET_NAME,

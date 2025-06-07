@@ -12,7 +12,7 @@ const initialFormData = {
   numberOfTeams: 100,
   numberOfLevels: 2,
   questionsPerLevel: 13,
-  isCustomQuestionSelection: false,
+  isCustomQuestionSelection: true,
   selectedQuestions: {},
 };
 

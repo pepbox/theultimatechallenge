@@ -6,6 +6,12 @@ import GameHistory from "./GameHistory";
 import Header from "../../components/Header";
 import CreateSessionPopup from "./CreateSessionPopup";
 import axios from "axios";
+import { styled } from "@mui/material/styles";
+
+const RotatingIcon = styled(CachedRoundedIcon)(({ rotating }) => ({
+  transition: 'transform 1s ease',
+  transform: rotating ? 'rotate(360deg)' : 'rotate(0deg)',
+}));
 
 function Homepage() {
   const [createSessionOpen, setCreateSessionOpen] = useState(false);
@@ -13,26 +19,32 @@ function Homepage() {
   const [liveGames, setLiveGames] = useState([]);
   const [filteredLiveGames, setFilteredLiveGames] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
-  useEffect(() => {
-    const fetchLiveGames = async () => {
-      try {
-        const response = await axios.get(
-          `${
-            import.meta.env.VITE_BACKEND_BASE_URL
-          }/api/v1/superadmin/fetchlivegames`
-        );
-        if (!response.data.success) {
-          throw new Error("Failed to fetch live games");
-        }
-
-        setLiveGames(response.data.data);
-        setFilteredLiveGames(response.data.data);
-      } catch (error) {
-        console.error("Error fetching live games:", error);
+  const fetchLiveGames = async () => {
+    setLoading(true);
+    setLiveGames([]);
+    setFilteredLiveGames([]); 
+    try {
+      const response = await axios.get(
+        `${
+          import.meta.env.VITE_BACKEND_BASE_URL
+        }/api/v1/superadmin/fetchlivegames`
+      );
+      if (!response.data.success) {
+        throw new Error("Failed to fetch live games");
       }
-    };
 
+      setLiveGames(response.data.data);
+      setFilteredLiveGames(response.data.data);
+    } catch (error) {
+      console.error("Error fetching live games:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+  useEffect(() => {
     fetchLiveGames();
   }, []);
 
@@ -48,6 +60,15 @@ function Homepage() {
     });
     setFilteredLiveGames(filteredLiveGames);
   }, [searchQuery]);
+  const handleRefresh = () => {
+    setIsRefreshing(true);
+    fetchLiveGames().finally(() => {
+      // Reset the refreshing state after a delay to complete the animation
+      setTimeout(() => {
+        setIsRefreshing(false);
+      }, 1000); // 1 second for full rotation
+    });
+  };
 
   // const handleCreateSession = async (formData) => {
   //   try {
@@ -76,15 +97,14 @@ function Homepage() {
     <div className="relative font-sans max-w-[1440px] w-[100%] mx-auto mb-10">
       <Header searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
       <div className="bg-[#FCA61E]/10 h-[72px]">
-        <div className="w-[80%] h-full mx-auto flex items-center">
-          <div className="h-full w-full ">
+        <div className="w-[80%] h-full mx-auto flex items-center">          <div className="h-full w-full ">
             <h1 className="h-full font-bold text-[24px] flex items-center justify-center">
               Game Master Console
             </h1>
           </div>
-          {/* <div className="ml-4">
-            <CachedRoundedIcon />
-          </div> */}
+          <div className="ml-4 cursor-pointer" onClick={handleRefresh}>
+            <RotatingIcon rotating={isRefreshing ? 1 : 0} />
+          </div>
         </div>
       </div>
 
@@ -123,7 +143,7 @@ function Homepage() {
 
           <div className="font-sans font-bold my-3">Live Games</div>
           <div className="flex gap-3 flex-wrap">
-            {filteredLiveGames.length ? (
+            {loading ? <p>Loading...</p> : filteredLiveGames.length ? (
               filteredLiveGames.map((game, index) => (
                 <LiveCard key={index} game={game} />
               ))
@@ -146,7 +166,11 @@ function Homepage() {
           <div className="h-[64px] bg-[#FBF3B9] rounded-[16px] my-4 flex items-center">
             <div className="w-[100%] px-4 text-[16px] flex justify-between">
               <p>Active Players</p>
-              <p>{liveGames.length ? liveGames.reduce((a,b)=>a+b.playerCount, 0):0}</p>
+              <p>
+                {liveGames.length
+                  ? liveGames.reduce((a, b) => a + b.playerCount, 0)
+                  : 0}
+              </p>
             </div>
           </div>
         </div>

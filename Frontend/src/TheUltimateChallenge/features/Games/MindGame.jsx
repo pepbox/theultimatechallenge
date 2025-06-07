@@ -134,7 +134,7 @@ function MindGame() {
   if (!cardData) return null;
 
   return (
-    <div className='mx-[26px] flex flex-col justify-between font-mono' style={{ height: `${window.innerHeight}px` }}>
+    <div className='mx-[26px] flex flex-col justify-between font-mono' style={{ minHeight: `${window.innerHeight}px` }}>
       <div className='mb-[26px] flex flex-col h-[100%] pt-[26px]'>
         {/* Header */}
         <div className='text-white w-full h-[36px] flex justify-between items-center'>

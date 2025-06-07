@@ -19,7 +19,11 @@ router.post('/totalteams', getNumberOfTeams);
 router.post('/createplayer',joinSession)
 router.post("/updatesocketid",updateSocketId)
 
-const upload = multer();
+const upload = multer({
+  limits: {
+    fileSize: 20 * 1024 * 1024,
+  }
+});
 router.post('/uploadanswer', upload.single('answerFile'), uploadFileAnswer);
 router.post('/uploadtextanswer', upload.single('answerFile'), submitTextAnswer);
 

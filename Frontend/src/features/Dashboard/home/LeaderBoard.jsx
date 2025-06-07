@@ -134,9 +134,9 @@ const LeaderBoard = ({ timerIsOpen }) => {
         </div>
 
         {/* View All */}
-        <div className="text-center mb-4">
+        {/* <div className="text-center mb-4">
           <span className="text-gray-600 cursor-pointer">View All &gt;</span>
-        </div>
+        </div> */}
       </div>
     </div>
   );

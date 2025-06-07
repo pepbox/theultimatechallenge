@@ -6,14 +6,30 @@ const Admin = require("../models/adminSchema");
 const updateQuestionStatus = async (req, res) => {
   try {
     const io = req.app.get("socketService"); // Use socketService from app
-    const { teamId, questionId } = req.body;
+    const { teamId, changes } = req.body;
 
     // Validate input
-    if (!teamId || !questionId) {
+    if (!teamId || !changes || !Array.isArray(changes) || changes.length === 0) {
       return res.status(400).json({
         success: false,
-        error: "Team ID and Question ID are required",
+        error: "Team ID and changes array are required",
       });
+    }
+
+    // Validate each change object
+    for (const change of changes) {
+      if (!change.questionId || !change.newStatus) {
+        return res.status(400).json({
+          success: false,
+          error: "Each change must have questionId and newStatus",
+        });
+      }
+      if (!['available', 'attending'].includes(change.newStatus)) {
+        return res.status(400).json({
+          success: false,
+          error: "Invalid status. Must be 'available' or 'attending'",
+        });
+      }
     }
 
     // Find the team
@@ -37,28 +53,59 @@ const updateQuestionStatus = async (req, res) => {
       });
     }
 
-    // Find and update the question status
-    const questionStatus = team.questionStatus.find(
-      (qs) => qs.question._id.toString() === questionId
-    );
-    if (!questionStatus) {
-      return res.status(404).json({
-        success: false,
-        error: "Question not found for this team",
-      });
+    // Process each change
+    const updatedQuestions = [];
+    const errors = [];
+
+    for (const change of changes) {
+      try {
+        // Find the question status
+        const questionStatus = team.questionStatus.find(
+          (qs) => qs.question._id.toString() === change.questionId
+        );
+        
+        if (!questionStatus) {
+          errors.push(`Question ${change.questionId} not found for this team`);
+          continue;
+        }
+
+        // Only allow changes from 'attending' status
+        if (questionStatus.status !== "attending") {
+          errors.push(`Question ${change.questionId} is not in attending status`);
+          continue;
+        }
+
+        // Update status
+        const oldStatus = questionStatus.status;
+        questionStatus.status = change.newStatus;
+        
+        // Clear current player if setting to available
+        if (change.newStatus === 'available') {
+          questionStatus.currentPlayer = null;
+        }
+
+        updatedQuestions.push({
+          questionId: change.questionId,
+          oldStatus,
+          newStatus: change.newStatus,
+          question: questionStatus.question
+        });
+
+      } catch (error) {
+        errors.push(`Error updating question ${change.questionId}: ${error.message}`);
+      }
     }
 
-    if (questionStatus.status !== "attending") {
+    // If there are errors and no successful updates, return error
+    if (errors.length > 0 && updatedQuestions.length === 0) {
       return res.status(400).json({
         success: false,
-        error: "Question is not in attending status",
+        error: "No questions could be updated",
+        details: errors,
       });
     }
 
-    // Update status to available and clear current player
-    questionStatus.status = "available";
-    questionStatus.currentPlayer = null;
-
+    // Save the team with all changes
     await team.save();
 
     // Prepare team-data payload
@@ -98,15 +145,17 @@ const updateQuestionStatus = async (req, res) => {
       io.to(socketId).emit("team-data", teamPayload);
     });
 
-    // Emit question-status-changed-by-admin to all team members
-    const questionStatusPayload = {
-      teamId: team._id,
-      questionId: questionStatus.question._id,
-      status: questionStatus.status,
-      message: `Question ${questionStatus.question._id} status changed to available by admin`,
-    };
-    teamSocketIds.forEach((socketId) => {
-      io.to(socketId).emit("question-status-changed-by-admin", questionStatusPayload);
+    // Emit question-status-changed-by-admin for each updated question
+    updatedQuestions.forEach((update) => {
+      const questionStatusPayload = {
+        teamId: team._id,
+        questionId: update.questionId,
+        status: update.newStatus,
+        message: `Question ${update.questionId} status changed to ${update.newStatus} by admin`,
+      };
+      teamSocketIds.forEach((socketId) => {
+        io.to(socketId).emit("question-status-changed-by-admin", questionStatusPayload);
+      });
     });
 
     // Prepare all-teams-data payload
@@ -166,15 +215,29 @@ const updateQuestionStatus = async (req, res) => {
       io.to(admin.socketId).emit("all-teams-data", allTeamsPayload);
     }
 
-    return res.status(200).json({
+    // Prepare response
+    const response = {
       success: true,
-      message: "Question status updated successfully",
-    });
+      message: `Successfully updated ${updatedQuestions.length} question(s)`,
+      updated: updatedQuestions.map(u => ({
+        questionId: u.questionId,
+        newStatus: u.newStatus
+      }))
+    };
+
+    // Include errors if any (partial success)
+    if (errors.length > 0) {
+      response.warnings = errors;
+      response.message += ` with ${errors.length} error(s)`;
+    }
+
+    return res.status(200).json(response);
+
   } catch (error) {
-    console.error("Error updating question status:", error);
+    console.error("Error updating multiple question statuses:", error);
     return res.status(500).json({
       success: false,
-      error: error.message || "Failed to update question status",
+      error: error.message || "Failed to update question statuses",
     });
   }
 };

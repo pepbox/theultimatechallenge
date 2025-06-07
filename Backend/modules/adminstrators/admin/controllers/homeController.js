@@ -95,10 +95,50 @@ const changeTeamLevels = async (req, res) => {
 
     } catch (err) {
         console.error('Error updating team levels:', err);
-        return res.status(500).json({ 
-            error: err.message || 'Failed to update team levels' 
+        return res.status(500).json({
+            error: err.message || 'Failed to update team levels'
         });
     }
 };
 
-module.exports = { changeTeamLevels };
+
+const getGameSettingsData = async (req, res) => {
+    try {
+        const token = req.cookies.adminToken;
+        if (!token) {
+            return res.status(401).json({ error: 'Admin token missing' });
+        }
+
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+        const { sessionId } = req.query;
+        if (!sessionId) {
+            return res.status(400).json({ error: 'sessionId is required' });
+        }
+
+        const session = await TheUltimateChallenge.findById(sessionId);
+
+        if (!session) {
+            return res.status(404).json({ error: 'Session not found' });
+        }
+
+        return res.status(200).json({
+            success: true,
+            data: {
+                sessionId: session._id,
+                numberOfLevels: session.numberOfLevels,
+                isPaused:session.isPaused,
+                adminName: session.admin,
+                sessionName:session.companyName
+            }
+        });
+    }
+    catch (err) {
+        console.error('Error fetching game settings data:', err);
+        return res.status(500).json({
+            error: err.message || 'Failed to fetch game settings data'
+        });
+    }
+}
+
+module.exports = { getGameSettingsData, changeTeamLevels };

@@ -60,21 +60,21 @@ const createSuperAdmin = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    
+
     if (!email || !password) {
       return res.status(400).json({ message: 'Email and password are required.' });
     }
 
-    
+
     const existingAdmin = await SuperAdmin.findOne({ email });
     if (existingAdmin) {
       return res.status(409).json({ message: 'SuperAdmin with this email already exists.' });
     }
 
-    
+
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    
+
     const newAdmin = new SuperAdmin({
       email,
       password: hashedPassword
@@ -90,5 +90,64 @@ const createSuperAdmin = async (req, res) => {
 };
 
 
+const validateSuperAdmin = async (req, res) => {
+  try {
+    const token = req.cookies.token;
 
-module.exports={loginSuperAdmin,createSuperAdmin};
+    if (!token) {
+      return res.status(401).json({ success: false, message: 'No token provided' });
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    const superAdmin = await SuperAdmin.findById(decoded.id);
+    if (!superAdmin) {
+      return res.status(404).json({ success: false, message: 'Superadmin not found' });
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        id: superAdmin._id,
+        email: superAdmin.email
+      },
+      message: 'Superadmin is valid'
+    });
+
+  } catch (error) {
+    console.error("Validation error:", error);
+    if (error.name === 'TokenExpiredError') {
+      return res.status(401).json({ success: false, message: 'Token expired' });
+    } else if (error.name === 'JsonWebTokenError') {
+      return res.status(401).json({ success: false, message: 'Invalid token' });
+    }
+  }
+};
+
+
+const logoutSuperAdmin = (req, res) => {
+  try {
+    // Clear the adminToken cookie
+    res.clearCookie('token', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict'
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: 'Superadmin logged out successfully'
+    });
+  } catch (error) {
+    console.error('Error in admin logout:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Internal server error'
+    });
+  }
+};
+
+
+
+
+module.exports = { loginSuperAdmin, validateSuperAdmin, createSuperAdmin ,logoutSuperAdmin};

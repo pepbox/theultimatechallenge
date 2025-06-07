@@ -3,16 +3,32 @@ import React from "react";
 import SearchIcon from "@mui/icons-material/Search";
 import LogoutIcon from "@mui/icons-material/Logout";
 import { useNavigate } from "react-router-dom";
+import { resetSuperAdminState } from "../../redux/superadmin/superAdminSlice";
+import axios from "axios";
+import { useDispatch } from "react-redux";
 
 function Header({ searchQuery, setSearchQuery }) {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const handleSearchChange = (event) => {
     setSearchQuery(event.target.value);
   };
 
-  const handleLogout = () => {
-    navigate("/superadmin/login");
-  }
+  const handleLogout = async () => {
+    try {
+      const response = await axios.get(
+        `${import.meta.env.VITE_BACKEND_BASE_URL}/api/v1/superadmin/logout`,
+        { withCredentials: true }
+      );
+      if (response.status === 200) {
+        dispatch(resetSuperAdminState());
+        navigate(`/superadmin/login`);
+      }
+    } catch (error) {
+      console.error("Logout error:", error);
+      navigate(`/superadmin/login`);
+    }
+  };
   return (
     <>
       <div className="w-[80%] mx-auto">

@@ -35,25 +35,83 @@ ${sessionData.adminPassword && `Admin Password: ${sessionData.adminPassword}`}`;
     window.open(whatsappUrl, "_blank");
   };
 
-  const handleDownloadQR = async (link, type) => {
+  const generateCustomQRCode = async (link, type) => {
     try {
       // Generate QR code as a data URL
       const qrDataUrl = await QRCode.toDataURL(link, {
         width: 300,
-        margin: 2,
+        margin: 1,
+        color: {
+          dark: '#000000',
+          light: '#FFFFFF'
+        }
       });
 
-      const date = new Date().toISOString().split("T")[0];
-      const downloadLink = document.createElement("a");
-      downloadLink.href = qrDataUrl;
-      downloadLink.download = `${type}-${sessionData.sessionName}-${date}-qr-code.png`; // e.g., player-qr-code.png or admin-qr-code.png
-      document.body.appendChild(downloadLink);
-      downloadLink.click();
-      document.body.removeChild(downloadLink);
+      // Create a canvas to combine QR code with text
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      
+      // Set canvas dimensions (wider to accommodate text)
+      const canvasWidth = 400;
+      const canvasHeight = 480;
+      canvas.width = canvasWidth;
+      canvas.height = canvasHeight;
+
+      // Fill white background
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+
+      // Load the QR code image
+      const qrImage = new Image();
+      qrImage.onload = () => {
+        // Calculate QR code position (centered horizontally, with space for text)
+        const qrSize = 300;
+        const qrX = (canvasWidth - qrSize) / 2;
+        const qrY = 120; // Leave space at top for text
+
+        // Draw QR code
+        ctx.drawImage(qrImage, qrX, qrY, qrSize, qrSize);
+
+        // Set text properties
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#000000';
+
+        // Draw "Admin" or "User" text
+        ctx.font = 'bold 20px Arial';
+        const userTypeText = type === 'admin' ? 'ADMIN' : 'USER';
+        ctx.fillText(userTypeText, canvasWidth / 2, 30);
+
+        // Draw "The Ultimate Team Challenge" title
+        ctx.font = 'bold 24px Arial';
+        ctx.fillText('The Ultimate Team Challenge', canvasWidth / 2, 65);
+
+        // Draw session name
+        ctx.font = 'bold 18px Arial';
+        ctx.fillText(sessionData.sessionName, canvasWidth / 2, 95);
+
+        // Convert canvas to blob and download
+        canvas.toBlob((blob) => {
+          const url = URL.createObjectURL(blob);
+          const date = new Date().toISOString().split("T")[0];
+          const downloadLink = document.createElement("a");
+          downloadLink.href = url;
+          downloadLink.download = `${type}-${sessionData.sessionName}-${date}-qr-code.png`;
+          document.body.appendChild(downloadLink);
+          downloadLink.click();
+          document.body.removeChild(downloadLink);
+          URL.revokeObjectURL(url);
+        }, 'image/png');
+      };
+
+      qrImage.src = qrDataUrl;
     } catch (error) {
       console.error("Error generating QR code:", error);
       alert("Failed to generate QR code. Please try again.");
     }
+  };
+
+  const handleDownloadQR = async (link, type) => {
+    await generateCustomQRCode(link, type);
   };
 
   const handleClose = () => {

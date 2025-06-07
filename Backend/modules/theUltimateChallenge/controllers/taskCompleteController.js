@@ -308,7 +308,7 @@ const submitTextAnswer = async (req, res) => {
       { _id: team._id, 'questionStatus.question': questionId },
       {
         $set: {
-          'questionStatus.$.status': 'done', // Set to 'done' regardless of correctness
+          'questionStatus.$.status': isCorrect? "done":"available", // Set to 'done' regardless of correctness
           'questionStatus.$.pointsEarned': pointsEarned,
           'questionStatus.$.submittedAnswer': answer.trim(),
           'questionStatus.$.currentPlayer': null,

@@ -13,7 +13,7 @@ const AuthWrapper = ({ children, role }) => {
     if (adminAuthenticated && sessionId === adminSessionId) {
       return children;
     } else {
-      return <Navigate to={`/admin/login/${sessionId}/`} />;
+      return <Navigate to={`/admin/${sessionId}/login`} />;
     }
   }
 

@@ -15,6 +15,8 @@ import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { CachedRounded } from "@mui/icons-material";
 import SuccessPopup from "../../../superAdmin/features/home/SuccessPopup.jsx";
+import { useDispatch } from "react-redux";
+import { resetAdminState } from "../../../redux/admin/adminSlice.js";
 
 const RotatingIcon = styled(CachedRounded)(({ rotating }) => ({
   transition: "transform 1s ease",
@@ -30,6 +32,7 @@ function Layout() {
   const { sessionId } = useParams();
   const tableRef = useRef(null);
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   const [sessionInfoModal,setSessionInfoModal] = useState(false);
 
@@ -207,13 +210,14 @@ function Layout() {
     try {
       const response = await axios.get(
         `${import.meta.env.VITE_BACKEND_BASE_URL}/api/v1/admin/logout`
-      );
+      ,{withCredentials:true});
       if (response.status === 200) {
-        navigate(`/admin/login/${sessionId}`);
+        dispatch(resetAdminState())
+        navigate(`/admin/${sessionId}/login`);
       }
     } catch (error) {
       console.error("Logout error:", error);
-      navigate(`/admin/login/${sessionId}`);
+      navigate(`/admin/${sessionId}/login`);
     }
   };
 

@@ -195,6 +195,10 @@ const validateAdminSession = async (req, res) => {
   try {
     // Get JWT token from cookie
     const token = req.cookies.adminToken;
+
+    const {sessionId:adminSessionId}=req.query;
+
+    
     if (!token) {
       return res.status(401).json({
         success: false,
@@ -213,14 +217,24 @@ const validateAdminSession = async (req, res) => {
       });
     }
 
+
     // Find admin and session
     const admin = await Admin.findById(decoded.adminId);
-    const session = await TheUltimateChallenge.findById(decoded.sessionId);
+    const session = await TheUltimateChallenge.findById(adminSessionId);
+
+
 
     if (!admin || !session) {
       return res.status(404).json({
         success: false,
         error: 'Admin or session not found'
+      });
+    }
+
+    if(admin.session.toString() !== session._id.toString()) {
+      return res.status(403).json({
+        success: false,
+        error: 'Admin does not belong to this session'
       });
     }
 

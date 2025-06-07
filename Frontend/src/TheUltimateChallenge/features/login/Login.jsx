@@ -115,7 +115,7 @@ function Login() {
                 ) : (
                     <div className="w-[100%] mx-[48px] h-[284px] text-[20px] font-bold text-center flex flex-col gap-[40px]">
                         <div className="w-[157px] h-[48px] mx-auto">
-                            <h1 className="text-[20px] text-white leading-[120%]">The Ultimate Challenge</h1>
+                            <h1 className="text-[20px] text-white leading-[120%]">The Ultimate Team Challenge</h1>
                         </div>
                         <div className="space-y-[20px]">
                             {error && <p className="text-red-500 text-sm">{error}</p>}

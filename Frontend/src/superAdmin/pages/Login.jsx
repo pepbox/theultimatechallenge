@@ -1,21 +1,24 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Eye, EyeOff, Shield, Mail, Lock } from "lucide-react";
+import { useDispatch } from "react-redux";
+import { setSuperAdmin } from "../../redux/superadmin/superAdminSlice";
 
 export default function SuperAdminLogin() {
   const [formData, setFormData] = useState({
     email: "",
-    password: ""
+    password: "",
   });
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   const handleInputChange = (e) => {
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value
+      [e.target.name]: e.target.value,
     });
     // Clear error when user starts typing
     if (error) setError("");
@@ -24,42 +27,41 @@ export default function SuperAdminLogin() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-    
+
     try {
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_BASE_URL}/api/v1/superadmin/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: formData.email,
-          password: formData.password,
-        }),
-        credentials:"include"
-      });
+      const response = await fetch(
+        `${import.meta.env.VITE_BACKEND_BASE_URL}/api/v1/superadmin/login`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            email: formData.email,
+            password: formData.password,
+          }),
+          credentials: "include",
+        }
+      );
 
       const data = await response.json();
 
       if (response.ok) {
-        // Handle successful login
-        console.log('Login successful:', data);
-        
-        // Store token if provided
+        dispatch(setSuperAdmin({ authenticated: true }));
+
         if (data.token) {
-          localStorage.setItem('adminToken', data.token);
+          localStorage.setItem("adminToken", data.token);
         }
-        
-        // Navigate to superadmin dashboard
-        navigate('/superadmin/');
-        
+        navigate("/superadmin/");
       } else {
         // Handle login error
-        const errorMessage = data.message || 'Login failed. Please check your credentials.';
+        const errorMessage =
+          data.message || "Login failed. Please check your credentials.";
         setError(errorMessage);
       }
     } catch (error) {
-      console.error('Login error:', error);
-      setError('Network error. Please try again.');
+      console.error("Login error:", error);
+      setError("Network error. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -88,7 +90,10 @@ export default function SuperAdminLogin() {
             )}
             {/* Email Field */}
             <div className="space-y-2">
-              <label htmlFor="email" className="block text-sm font-semibold text-gray-700">
+              <label
+                htmlFor="email"
+                className="block text-sm font-semibold text-gray-700"
+              >
                 Email
               </label>
               <div className="relative">
@@ -110,7 +115,10 @@ export default function SuperAdminLogin() {
 
             {/* Password Field */}
             <div className="space-y-2">
-              <label htmlFor="password" className="block text-sm font-semibold text-gray-700">
+              <label
+                htmlFor="password"
+                className="block text-sm font-semibold text-gray-700"
+              >
                 Password
               </label>
               <div className="relative">
@@ -150,7 +158,10 @@ export default function SuperAdminLogin() {
                   type="checkbox"
                   className="h-4 w-4 text-black focus:ring-black border-gray-300 rounded"
                 />
-                <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700">
+                <label
+                  htmlFor="remember-me"
+                  className="ml-2 block text-sm text-gray-700"
+                >
                   Remember me
                 </label>
               </div>
@@ -193,7 +204,8 @@ export default function SuperAdminLogin() {
         {/* Additional Security Notice */}
         <div className="mt-6 text-center">
           <p className="text-sm text-gray-600">
-            This is a secure administrative interface. All access attempts are logged.
+            This is a secure administrative interface. All access attempts are
+            logged.
           </p>
         </div>
       </div>

@@ -1,35 +1,33 @@
-import React from 'react'
-import Background from "../assets/images/background/Background.jpg"
+import React from "react";
+import Background from "../assets/images/background/Background.jpg";
 
-import { Routes, Route } from 'react-router-dom';
-import Home from './home';
-import Login from './Login.jsx';
-import GameManager from './GameManager';
-import QuestionForm from './QuestionForm';
-import { useEffect } from 'react';
-
+import { Routes, Route } from "react-router-dom";
+import Home from "./home";
+import Login from "./Login.jsx";
+import GameManager from "./GameManager";
+import QuestionForm from "./QuestionForm";
+import { useEffect } from "react";
+import AuthWrapper from "../../features/auth/AuthWrapper.jsx";
 
 function SuperAdminRoutes() {
-
-
-  useEffect(()=>{
-       
-  },[])
+  useEffect(() => {}, []);
   return (
-    
-        <div >
-            <Routes>
-              
-                <Route path="/" element={<Home />} />
-                <Route path="/login" element={< Login/>} />
-                <Route path="/gamemanager" element={<GameManager />} />
-                <Route path="/questionform" element={<QuestionForm />} />
-                
-            </Routes>
-        </div>
-    
-    
-  )
+    <div>
+      <Routes>
+        <Route
+          path="/"
+          element={
+            <AuthWrapper role="superadmin">
+              <Home />
+            </AuthWrapper>
+          }
+        />
+        <Route path="/login" element={<Login />} />
+        <Route path="/gamemanager" element={<GameManager />} />
+        <Route path="/questionform" element={<QuestionForm />} />
+      </Routes>
+    </div>
+  );
 }
 
-export default SuperAdminRoutes
+export default SuperAdminRoutes;

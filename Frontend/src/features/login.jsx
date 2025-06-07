@@ -1,6 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
 import { Lock, ArrowRight } from 'lucide-react';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
+import { setAdmin } from '../redux/admin/adminSlice';
 
 export default function AdminLogin() {
   // You can set this dynamically or pass it as a prop
@@ -9,6 +11,8 @@ export default function AdminLogin() {
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
   const inputRefs = useRef([]);
+  const dispatch = useDispatch()
+  const navigate=useNavigate();
 
   useEffect(() => {
     // Focus first input on mount
@@ -127,9 +131,10 @@ export default function AdminLogin() {
         }
       }
 
-      // Success - redirect to admin dashboard
       console.log('Login successful:', data.message);
-      window.location.href = `/admin/${sessionId}`;
+      dispatch(setAdmin({authenticated:true,sessionId:sessionId}))
+
+      navigate(`/admin/${sessionId}`);
       
     } catch (error) {
       console.error('Login error:', error);

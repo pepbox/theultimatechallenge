@@ -29,8 +29,8 @@ const Table = forwardRef(
     const [selectedTeam, setSelectedTeam] = useState(null);
     const [loading, setLoading] = useState(false);
     const [sortConfig, setSortConfig] = useState({
-      key: null,
-      direction: null,
+      key: "name",
+      direction: "desc",
     });
     const socket = getSocket();
 
@@ -99,6 +99,7 @@ const Table = forwardRef(
     // Sorting function
     const handleSort = (key) => {
       let direction = "asc";
+      console.log(key)
       if (sortConfig.key === key && sortConfig.direction === "asc") {
         direction = "desc";
       }

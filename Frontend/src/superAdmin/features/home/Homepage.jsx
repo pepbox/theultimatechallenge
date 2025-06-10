@@ -1,5 +1,4 @@
-import React, { useEffect, useState } from "react";
-import { TextField, Button } from "@mui/material";
+import  { useEffect, useState } from "react";
 import CachedRoundedIcon from "@mui/icons-material/CachedRounded";
 import LiveCard from "./LiveCard";
 import GameHistory from "./GameHistory";
@@ -65,17 +64,14 @@ function Homepage() {
     setFilteredLiveGames(filteredLiveGames);
   }, [searchQuery]);
 
-
   const handleRefresh = () => {
     setIsRefreshing(true);
-    Promise.all([fetchLiveGames(),handlefetchGameHistory()]).finally(() => {
+    Promise.all([fetchLiveGames(), handlefetchGameHistory()]).finally(() => {
       setTimeout(() => {
         setIsRefreshing(false);
-      }, 1000); 
+      }, 1000);
     });
   };
-
- 
 
   // const handleCreateSession = async (formData) => {
   //   try {
@@ -156,15 +152,17 @@ function Homepage() {
               <p>Loading...</p>
             ) : filteredLiveGames.length ? (
               filteredLiveGames.map((game, index) => (
-                <LiveCard key={index} game={game} />
+                <LiveCard handleRefresh={handleRefresh} key={index} game={game} />
               ))
             ) : (
               <div>No Games Found</div>
             )}
           </div>
 
-          <div className='font-bold font-sans text-[16px] mt-12 px-4'>Game History</div>
-          <GameHistory data={gameHistory}/>
+          <div className="font-bold font-sans text-[16px] mt-12 px-4">
+            Game History
+          </div>
+          <GameHistory data={gameHistory} />
         </div>
 
         <div className="w-[20%]">

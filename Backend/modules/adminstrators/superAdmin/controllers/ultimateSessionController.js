@@ -53,7 +53,7 @@ const createSession = async (req, res) => {
     // Validate question IDs and ensure they exist
     for (let level = 1; level <= numberOfLevels; level++) {
       const questionIds = selectedQuestions[level.toString()] || [];
-      
+
       // Check if the number of questions matches questionsPerLevel
       if (questionIds.length !== questionsPerLevel) {
         return res.status(400).json({
@@ -101,7 +101,7 @@ const createSession = async (req, res) => {
     const session = new TheUltimateChallenge({
       companyName,
       admin,
-      passCode:password,
+      passCode: password,
       teamFormationGame,
       numberOfTeams,
       numberOfLevels,
@@ -156,6 +156,51 @@ const createSession = async (req, res) => {
   }
 };
 
+
+const updateSession = async (req, res) => {
+  try {
+    const { sessionId, companyName, admin, password } = req.body;
+
+    // Validate required fields
+    if (!sessionId || !companyName || !admin || !password) {
+      return res.status(400).json
+        ({
+          success: false,
+          error: 'Missing required fields: sessionId, companyName, admin, password'
+        });
+    }
+    const session = await TheUltimateChallenge.findById(sessionId);
+    if (!session) {
+      return res.status(404).json({
+        success: false,
+        error: 'Session not found'
+      });
+    }
+    session.companyName = companyName;
+    session.admin = admin;
+
+    session.passCode = password;
+
+    // Save the updated session
+    const updatedSession = await session.save();
+
+    // Return success response
+    return res.status(200).json({
+      success: true,
+      data: updatedSession,
+      message: 'Session updated successfully'
+    });
+  }
+  catch (error) {
+    console.error('Error updating session:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Internal server error'
+    });
+  }
+}
+
 module.exports = {
+  updateSession,
   createSession
 };

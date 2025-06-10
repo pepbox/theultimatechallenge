@@ -249,9 +249,9 @@ function Layout() {
         <h2 className="text-center">Admin : {sessionInfo.adminName}</h2>
         <div className="w-[80%] h-[100%] mt-4 mx-auto flex items-center justify-between">
           <div className="w-[337px] h-[40px] flex gap-[16px] text-[16px]">
-            <button className="bg-[#111111] h-[40px] w-[146px] rounded-[8px] text-white hover:scale-105 transform transition-transform duration-200">
+            {/* <button className="bg-[#111111] h-[40px] w-[146px] rounded-[8px] text-white hover:scale-105 transform transition-transform duration-200">
               Reset Session
-            </button>
+            </button> */}
             <button
               onClick={() => setEndSessionModal(true)}
               className="bg-[#111111] h-[40px] w-[175px] rounded-[8px] text-white hover:scale-105 transform transition-transform duration-200 cursor-pointer"
@@ -271,14 +271,14 @@ function Layout() {
             >
               <MoreVertIcon className="w-[32px] h-[32px] hover:scale-115 transform transition-transform duration-200" />
               {settingOpen && (
-                <div className="absolute w-[176px] h-[150px] bg-white shadow-md rounded-[12px] top-full mt-2 font-sans flex flex-col gap-[8px] p-[8px] z-10">
-                  <div className="w-[160px] h-[40px] font-medium flex justify-between hover:bg-slate-100 rounded-md px-2">
+                <div className="absolute w-[176px] bg-white shadow-md rounded-[12px] top-full mt-2 font-sans flex flex-col gap-[8px] p-[8px] z-10">
+                  {/* <div className="w-[160px] h-[40px] font-medium flex justify-between hover:bg-slate-100 rounded-md px-2">
                     <div className="self-center">History</div>
                     <div className="self-center">&gt;</div>
                   </div>
                   <div className="w-[160px] h-[40px] font-medium flex items-center px-2 hover:bg-slate-100 rounded-md">
                     Export
-                  </div>
+                  </div> */}
                   <div
                     className="w-[160px] h-[40px] font-medium flex items-center px-2 hover:bg-slate-100 rounded-md cursor-pointer"
                     onClick={() => setSessionInfoModal(true)}

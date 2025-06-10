@@ -10,8 +10,6 @@ const loginAdmin = async (req, res) => {
   try {
     const { sessionId, passCode } = req.body;
 
-    console.log(typeof passCode)
-    console.log(sessionId)
 
     // Validate input
     if (!sessionId || !passCode) {
@@ -35,6 +33,13 @@ const loginAdmin = async (req, res) => {
       return res.status(404).json({
         success: false,
         error: 'Session not found'
+      });
+    }
+
+    if(session.sessionEnded){
+      return res.status(400).json({
+        success: false,
+        error: 'Session has already ended'
       });
     }
 

@@ -7,10 +7,11 @@ import Header from "../../components/Header";
 import CreateSessionPopup from "./CreateSessionPopup";
 import axios from "axios";
 import { styled } from "@mui/material/styles";
+import useGamesData from "../../../hooks/superadmin/useGamesData";
 
 const RotatingIcon = styled(CachedRoundedIcon)(({ rotating }) => ({
-  transition: 'transform 1s ease',
-  transform: rotating ? 'rotate(360deg)' : 'rotate(0deg)',
+  transition: "transform 1s ease",
+  transform: rotating ? "rotate(360deg)" : "rotate(0deg)",
 }));
 
 function Homepage() {
@@ -22,10 +23,12 @@ function Homepage() {
   const [loading, setLoading] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
+  const { handlefetchGameHistory, gameHistory } = useGamesData();
+
   const fetchLiveGames = async () => {
     setLoading(true);
     setLiveGames([]);
-    setFilteredLiveGames([]); 
+    setFilteredLiveGames([]);
     try {
       const response = await axios.get(
         `${
@@ -46,6 +49,7 @@ function Homepage() {
   };
   useEffect(() => {
     fetchLiveGames();
+    handlefetchGameHistory();
   }, []);
 
   useEffect(() => {
@@ -60,15 +64,18 @@ function Homepage() {
     });
     setFilteredLiveGames(filteredLiveGames);
   }, [searchQuery]);
+
+
   const handleRefresh = () => {
     setIsRefreshing(true);
-    fetchLiveGames().finally(() => {
-      // Reset the refreshing state after a delay to complete the animation
+    Promise.all([fetchLiveGames(),handlefetchGameHistory()]).finally(() => {
       setTimeout(() => {
         setIsRefreshing(false);
-      }, 1000); // 1 second for full rotation
+      }, 1000); 
     });
   };
+
+ 
 
   // const handleCreateSession = async (formData) => {
   //   try {
@@ -97,7 +104,9 @@ function Homepage() {
     <div className="relative font-sans max-w-[1440px] w-[100%] mx-auto mb-10">
       <Header searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
       <div className="bg-[#FCA61E]/10 h-[72px]">
-        <div className="w-[80%] h-full mx-auto flex items-center">          <div className="h-full w-full ">
+        <div className="w-[80%] h-full mx-auto flex items-center">
+          {" "}
+          <div className="h-full w-full ">
             <h1 className="h-full font-bold text-[24px] flex items-center justify-center">
               Game Master Console
             </h1>
@@ -143,7 +152,9 @@ function Homepage() {
 
           <div className="font-sans font-bold my-3">Live Games</div>
           <div className="flex gap-3 flex-wrap">
-            {loading ? <p>Loading...</p> : filteredLiveGames.length ? (
+            {loading ? (
+              <p>Loading...</p>
+            ) : filteredLiveGames.length ? (
               filteredLiveGames.map((game, index) => (
                 <LiveCard key={index} game={game} />
               ))
@@ -152,8 +163,8 @@ function Homepage() {
             )}
           </div>
 
-          {/* <div className='font-bold font-sans text-[16px] my-3'>Game History</div> */}
-          {/* <GameHistory/> */}
+          <div className='font-bold font-sans text-[16px] mt-12 px-4'>Game History</div>
+          <GameHistory data={gameHistory}/>
         </div>
 
         <div className="w-[20%]">

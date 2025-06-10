@@ -1,11 +1,11 @@
 const TheUltimateChallenge = require("../../../theUltimateChallenge/models/TheUltimateChallenge")
 const Player = require("../../../theUltimateChallenge/models/playerSchema")
 
-const handleGetAllLiveGames = async (req,res) => {
+const handleGetAllLiveGames = async (req, res) => {
     try {
         const allGames = await TheUltimateChallenge.find({ sessionEnded: false }).sort({ createdAt: -1 })
 
-        if( !allGames || allGames.length === 0) {
+        if (!allGames || allGames.length === 0) {
             return res.status(404).json({
                 success: false,
                 message: "No live games found"
@@ -37,7 +37,34 @@ const handleGetAllLiveGames = async (req,res) => {
 }
 
 
+const handleGetGameHistory = async (req, res) => {
+    try {
+        const allGames = await TheUltimateChallenge.find({ sessionEnded: true }).sort({ completionDate: -1 });
+
+        if (!allGames || allGames.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: "No game history found"
+            });
+        }
+
+        return res.json({
+            success: true,
+            data: allGames
+        });
+    }
+    catch (error) {
+        console.error("Error fetching game history:", error);
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error"
+        });
+    }
+
+}
+
 
 module.exports = {
+    handleGetGameHistory,
     handleGetAllLiveGames
 };

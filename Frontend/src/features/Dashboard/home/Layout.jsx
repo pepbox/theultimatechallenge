@@ -6,6 +6,7 @@ import RemoveIcon from "@mui/icons-material/Remove";
 import Table from "./Table";
 import LeaderBoard from "./LeaderBoard";
 import {
+  EndSessionModal,
   GameLevelChangePopup,
   GameStatusChangePopup,
   GameTransactionChangePopup,
@@ -17,6 +18,8 @@ import { CachedRounded } from "@mui/icons-material";
 import SuccessPopup from "../../../superAdmin/features/home/SuccessPopup.jsx";
 import { useDispatch } from "react-redux";
 import { resetAdminState } from "../../../redux/admin/adminSlice.js";
+import useSessionManagement from "../../../hooks/admin/useSessionManagement.js";
+import useAdminAuth from "../../../hooks/admin/useAuth.js";
 
 const RotatingIcon = styled(CachedRounded)(({ rotating }) => ({
   transition: "transform 1s ease",
@@ -31,10 +34,11 @@ function Layout() {
   const socketRef = useRef(null);
   const { sessionId } = useParams();
   const tableRef = useRef(null);
-  const navigate = useNavigate();
-  const dispatch = useDispatch();
 
-  const [sessionInfoModal,setSessionInfoModal] = useState(false);
+  const { handleLogout } = useAdminAuth();
+
+  const [sessionInfoModal, setSessionInfoModal] = useState(false);
+  const [endSessionModal, setEndSessionModal] = useState(false);
 
   // Game state
   const gameStatus = useRef(true); // Initialize with default false
@@ -55,15 +59,11 @@ function Layout() {
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   useEffect(() => {
-    // Initialize socket connection
     const socket = connectSocket();
     socketRef.current = socket;
-
-    // Listen for toggle-session-pause response
     socket.on("session-pause-updated", (data) => {
       gameStatus.current = data.isPaused;
       setDisplayStatus(data.isPaused);
-      // console.log("Session pause status updated:", data.isPaused);
     });
 
     return () => {
@@ -206,21 +206,6 @@ function Layout() {
     setPendingTransactionChange(null);
   };
 
-  const handleLogout = async () => {
-    try {
-      const response = await axios.get(
-        `${import.meta.env.VITE_BACKEND_BASE_URL}/api/v1/admin/logout`
-      ,{withCredentials:true});
-      if (response.status === 200) {
-        dispatch(resetAdminState())
-        navigate(`/admin/${sessionId}/login`);
-      }
-    } catch (error) {
-      console.error("Logout error:", error);
-      navigate(`/admin/${sessionId}/login`);
-    }
-  };
-
   // Callback to update gameLevel and initialize displayStatus
   const handleLevelUpdate = (newLevel) => {
     setGameLevel(newLevel);
@@ -267,7 +252,10 @@ function Layout() {
             <button className="bg-[#111111] h-[40px] w-[146px] rounded-[8px] text-white hover:scale-105 transform transition-transform duration-200">
               Reset Session
             </button>
-            <button className="bg-[#111111] h-[40px] w-[175px] rounded-[8px] text-white hover:scale-105 transform transition-transform duration-200">
+            <button
+              onClick={() => setEndSessionModal(true)}
+              className="bg-[#111111] h-[40px] w-[175px] rounded-[8px] text-white hover:scale-105 transform transition-transform duration-200 cursor-pointer"
+            >
               End Session
             </button>
           </div>
@@ -293,7 +281,7 @@ function Layout() {
                   </div>
                   <div
                     className="w-[160px] h-[40px] font-medium flex items-center px-2 hover:bg-slate-100 rounded-md cursor-pointer"
-                    onClick={()=>setSessionInfoModal(true)}
+                    onClick={() => setSessionInfoModal(true)}
                   >
                     Session Info
                   </div>
@@ -398,7 +386,20 @@ function Layout() {
         onConfirm={confirmTransactionChange}
       />
 
-      { sessionInfoModal && <SuccessPopup onClose={()=>{setSessionInfoModal(false)}} sessionData={sessionInfo} />}
+      {sessionInfoModal && (
+        <SuccessPopup
+          onClose={() => {
+            setSessionInfoModal(false);
+          }}
+          sessionData={sessionInfo}
+        />
+      )}
+      {endSessionModal && (
+        <EndSessionModal
+          onClose={() => setEndSessionModal(false)}
+          sessionId={sessionId}
+        />
+      )}
     </div>
   );
 }

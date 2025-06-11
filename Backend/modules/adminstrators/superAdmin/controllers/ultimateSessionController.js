@@ -200,6 +200,43 @@ const updateSession = async (req, res) => {
   }
 }
 
+
+const deleteSession = async (req, res) => {
+  try {
+    const { sessionId } = req.body;
+
+    if (!sessionId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Session ID is required'
+      });
+    }
+
+    const session = await TheUltimateChallenge.findById(sessionId);
+    if (!session) {
+      return res.status(404).json({
+        success: false,
+        error: 'Session not found'
+      });
+    }
+
+    await TheUltimateChallenge.deleteOne({ _id: sessionId });
+
+    await Admin.deleteMany({ session: sessionId });
+
+    return res.status(200).json({
+      success: true,
+      message: 'Session deleted successfully'
+    });
+  } catch (error) {
+    console.error('Error deleting session:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Internal server error'
+    });
+  }
+}
+
 module.exports = {
   updateSession,
   createSession

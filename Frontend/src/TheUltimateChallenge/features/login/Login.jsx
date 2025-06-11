@@ -109,13 +109,13 @@ function Login() {
 
     return (
         <div className="relative flex justify-center items-center font-mono" style={{ height: `${window.innerHeight}px` }}>
-            <div className="h-[378px] w-[100%] bg-[#A9A1EB33] rounded-[20px] flex items-center justify-center mx-[24px]">
+            <div className="w-[100%] bg-[#A9A1EB33] rounded-[20px] flex items-center justify-center mx-[24px] py-4">
                 {loading ? (
                     <CircularProgress color="primary" />
                 ) : (
-                    <div className="w-[100%] mx-[48px] h-[284px] text-[20px] font-bold text-center flex flex-col gap-[40px]">
-                        <div className="w-[157px] h-[48px] mx-auto">
-                            <h1 className="text-[20px] text-white leading-[120%]">The Ultimate Team Challenge</h1>
+                    <div className="w-[100%] mx-[48px] text-[20px] font-bold text-center flex flex-col gap-[12px]">
+                        <div className="mx-auto">
+                            <h1 className="text-[20px] text-white">The Ultimate Team Challenge</h1>
                         </div>
                         <div className="space-y-[20px]">
                             {error && <p className="text-red-500 text-sm">{error}</p>}

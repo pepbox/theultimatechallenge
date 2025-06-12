@@ -21,30 +21,72 @@ function BodyGame() {
   const [submitError, setSubmitError] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
+  const [isAnswerSubmitted, setIsAnswerSubmitted] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const socket = getSocket();
+
+  // Function to check if there's an unsaved answer
+  const hasUnsavedAnswer = () => {
+    return selectedFile && !isAnswerSubmitted && !isSubmitting;
+  };
+
+  // Function to show confirmation dialog
+  const showUnsavedAlert = () => {
+    return window.confirm(
+      "You have an unsaved answer. Are you sure you want to leave? Your uploaded file will be lost."
+    );
+  };
+
+  // Handle navigation with unsaved changes check
+  const handleNavigation = (navigationFn) => {
+    if (hasUnsavedAnswer()) {
+      if (showUnsavedAlert()) {
+        navigationFn();
+      }
+    } else {
+      navigationFn();
+    }
+  };
+
+  // Prevent page refresh/close with unsaved changes
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      if (hasUnsavedAnswer()) {
+        e.preventDefault();
+        e.returnValue = "You have an unsaved answer. Are you sure you want to leave?";
+        return e.returnValue;
+      }
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, [selectedFile, isAnswerSubmitted, isSubmitting]);
 
   // Clean up socket on unmount
   useEffect(() => {
     const onPauseUpdated = (data) => {
       if (data.isPaused) {
-        navigate(`/theultimatechallenge/quizsection/${sessionId}`);
+        handleNavigation(() => navigate(`/theultimatechallenge/quizsection/${sessionId}`));
       }
     };
 
     const onTeamData = (data) => {
       if (data.teamInfo.currentLevel !== location.state.level) {
-        navigate(`/theultimatechallenge/quizsection/${sessionId}`);
+        handleNavigation(() => navigate(`/theultimatechallenge/quizsection/${sessionId}`));
       }
     };
 
     const onQuestionStatusChanged = (data) => {
       if (data.questionId === cardData?.id) {
-        navigate(`/theultimatechallenge/quizsection/${sessionId}`);
+        handleNavigation(() => navigate(`/theultimatechallenge/quizsection/${sessionId}`));
       }
     };
 
     const onAdminUpdatedTotalScore = (data) => {
-      navigate(`/theultimatechallenge/quizsection/${sessionId}`);
+      handleNavigation(() => navigate(`/theultimatechallenge/quizsection/${sessionId}`));
     };
 
     socket.on("session-pause-updated", onPauseUpdated);
@@ -62,7 +104,7 @@ function BodyGame() {
         socket.off("admin-updated-total-score", onAdminUpdatedTotalScore);
       }
     };
-  }, [socket, cardData?.id, navigate, sessionId]);
+  }, [socket, cardData?.id, navigate, sessionId, selectedFile, isAnswerSubmitted, isSubmitting]);
 
   // Validate card data on load
   useEffect(() => {
@@ -103,8 +145,13 @@ function BodyGame() {
     }
   };
 
-  const handleBackClick = () => resetQuestionStatus();
-  const handlePlayLater = () => resetQuestionStatus();
+  const handleBackClick = () => {
+    handleNavigation(resetQuestionStatus);
+  };
+
+  const handlePlayLater = () => {
+    handleNavigation(resetQuestionStatus);
+  };
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -127,6 +174,8 @@ function BodyGame() {
     setSelectedFile(file);
     setFileUploaded(true);
     setSubmitError(null);
+    setIsAnswerSubmitted(false);
+    setUploadProgress(0); // Reset progress when new file is selected
   };
 
   const handleRemoveFile = () => {
@@ -134,6 +183,8 @@ function BodyGame() {
     setFileUploaded(false);
     setPreviewUrl(null);
     setSubmitError(null);
+    setIsAnswerSubmitted(false);
+    setUploadProgress(0);
     // Reset the file input
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
@@ -146,15 +197,16 @@ function BodyGame() {
       return;
     }
 
-    if (selectedFile.size > 20 * 1024 * 1024) {
-      setSubmitError("File size exceeds 20 MB limit");
+    const fileLimit = cardData.answerType === "image" ? 20 : 50;
+
+    if (selectedFile.size > fileLimit * 1024 * 1024) {
+      setSubmitError(`File size exceeds ${fileLimit} MB limit`);
       return;
     }
 
-    // 10 MB limit
-
     setIsSubmitting(true);
     setSubmitError(null);
+    setUploadProgress(0);
 
     try {
       const formData = new FormData();
@@ -171,10 +223,18 @@ function BodyGame() {
             "Content-Type": "multipart/form-data",
           },
           withCredentials: true,
+          onUploadProgress: (progressEvent) => {
+            const percentCompleted = Math.round(
+              (progressEvent.loaded * 100) / progressEvent.total
+            );
+            setUploadProgress(percentCompleted);
+          },
         }
       );
 
       if (response.data.success) {
+        setIsAnswerSubmitted(true);
+        setUploadProgress(100);
         navigate(`/theultimatechallenge/taskcomplete/${sessionId}`, {
           state: {
             pointsEarned: response.data.pointsEarned,
@@ -188,6 +248,7 @@ function BodyGame() {
     } catch (error) {
       console.error("Upload error:", error);
       setSubmitError(error.response?.data?.error || "Failed to upload file");
+      setUploadProgress(0);
     } finally {
       setIsSubmitting(false);
     }
@@ -265,6 +326,24 @@ function BodyGame() {
           </div>
         )}
 
+        {/* Progress Bar */}
+        {isSubmitting && (
+          <div className="w-full mb-4">
+            <div className="w-full border-2 border-[#BA273299]/60 bg-[#FFA8AE4D]/85 rounded-[20px] backdrop-blur-[53px] p-3">
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-white text-sm font-mono">Uploading...</span>
+                <span className="text-white text-sm font-mono">{uploadProgress}%</span>
+              </div>
+              <div className="w-full bg-gray-700 rounded-full h-2">
+                <div
+                  className="bg-[#BA2732] h-2 rounded-full transition-all duration-300 ease-out"
+                  style={{ width: `${uploadProgress}%` }}
+                ></div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* File Preview */}
         {selectedFile && previewUrl && (
           <div className="w-full mb-4">
@@ -273,6 +352,7 @@ function BodyGame() {
               <button
                 onClick={handleRemoveFile}
                 className="absolute top-2 right-2 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center hover:bg-red-600 transition-colors z-10"
+                disabled={isSubmitting}
               >
                 <X className="text-white w-4 h-4" />
               </button>
@@ -312,19 +392,23 @@ function BodyGame() {
           disabled={isSubmitting}
         >
           {isSubmitting ? (
-            <span className="text-white">Uploading...</span>
+            <span className="text-white">Uploading... {uploadProgress}%</span>
           ) : fileUploaded ? (
             <>
               {cardData.answerType === "image" ? (
                 <Camera className="text-white" />
               ) : (
-                <Video />
+                <Video className="text-white"/>
               )}
               <span className="text-white">Submit Answer</span>
             </>
           ) : (
             <>
-              <Camera className="text-white" />
+              {cardData.answerType === "image" ? (
+                <Camera className="text-white" />
+              ) : (
+                <Video className="text-white" />
+              )}
               <span className="text-white">
                 Upload {cardData.answerType === "image" ? "Image" : "Video"}
               </span>

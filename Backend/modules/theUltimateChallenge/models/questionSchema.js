@@ -29,7 +29,7 @@ const questionSchema = new mongoose.Schema({
   },
   answerType: {
     type: String,
-    enum: ['fileUpload', 'text'],
+    enum: ['fileUpload', 'text','image','video'],
     required: true
   },
   questionImageUrl: {

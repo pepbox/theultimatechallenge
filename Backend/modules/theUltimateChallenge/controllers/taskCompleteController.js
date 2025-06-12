@@ -179,8 +179,7 @@ const uploadFileAnswer = async (req, res) => {
     if (!questionStatus) return res.status(404).json({ error: 'Question not assigned to team' });
     if (questionStatus.status === 'done') return res.status(400).json({ error: 'Question already answered' });
 
-
-
+    // Image compression (if applicable)
     if (req.file && req.file.mimetype.startsWith('image/')) {
       try {
         let quality = 90;
@@ -201,24 +200,43 @@ const uploadFileAnswer = async (req, res) => {
       }
     }
 
-
-    // Upload file to S3
+    // Upload file to S3 with progress tracking
     const file = req.file;
     const fileExtension = file.originalname.split('.').pop();
     const uniqueId = crypto.randomBytes(8).toString('hex');
     const s3Key = `answers/${uniqueId}.${fileExtension}`;
 
-
-
-
-    await s3.upload({
+    // Create upload parameters
+    const uploadParams = {
       Bucket: process.env.AWS_S3_BUCKET_NAME,
       Key: s3Key,
       Body: file.buffer,
       ContentType: file.mimetype,
-    }).promise();
+    };
 
-    const answerUrl = `https://${process.env.AWS_S3_BUCKET_NAME}.s3.amazonaws.com/${s3Key}`;
+    // Upload with progress tracking
+    const managedUpload = s3.upload(uploadParams);
+    
+    // Optional: If you want to emit progress via Socket.IO to the client
+    const io = req.app.get("socketService");
+    const socketId = req.headers['x-socket-id']; // Client should send their socket ID
+    
+    if (io && socketId) {
+      managedUpload.on('httpUploadProgress', (progress) => {
+        const percentCompleted = Math.round((progress.loaded * 100) / progress.total);
+        io.to(socketId).emit('upload-progress', {
+          questionId,
+          progress: percentCompleted,
+          loaded: progress.loaded,
+          total: progress.total
+        });
+      });
+    }
+
+    // Wait for upload to complete
+    const uploadResult = await managedUpload.promise();
+    
+    const answerUrl = uploadResult.Location;
     const pointsEarned = question.points;
 
     // Update team questionStatus and score
@@ -237,7 +255,6 @@ const uploadFileAnswer = async (req, res) => {
     );
 
     // Emit updated team data to admin and players
-    const io = req.app.get("socketService");
     await emitAllTeamsData(team.session, io);
     await emitTeamDataToPlayers(team._id, team.session, io);
 
@@ -250,6 +267,11 @@ const uploadFileAnswer = async (req, res) => {
     });
   } catch (err) {
     console.error('File upload error:', err);
+    
+    if (err.code === 'LIMIT_FILE_SIZE') {
+      return res.status(400).json({ error: 'File size too large' });
+    }
+    
     res.status(500).json({ error: 'Upload failed' });
   }
 };

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 
 function SubmissionModal({ team, onClose, socket }) {
@@ -12,16 +12,14 @@ function SubmissionModal({ team, onClose, socket }) {
     ...availableLevels.map((level) => ({ value: level.toString(), label: `Level ${level}` })),
   ];
 
-  // Update filtered questions when team or selectedLevel changes
   useEffect(() => {
     console.log('SubmissionModal: team prop updated', team.id, team.questions.length);
     const updatedQuestions = selectedLevel === 'all'
       ? team.questions
       : team.questions.filter((q) => q.level === parseInt(selectedLevel));
     setFilteredQuestions(updatedQuestions);
-  }, [team, selectedLevel]); // Depend on entire team object to catch all changes
+  }, [team, selectedLevel]); 
 
-  // Handle level toggle
   const handleLevelChange = (value) => {
     setSelectedLevel(value);
   };
@@ -29,7 +27,6 @@ function SubmissionModal({ team, onClose, socket }) {
   return (
     <div className="fixed inset-0 flex items-center justify-center z-[1000] bg-black/75">
       <div className="bg-gradient-to-b from-[#D4E5FF]/30 to-[#E5FFD4]/30 border-2 border-white/20 rounded-2xl p-6 w-[90%] max-w-4xl flex flex-col backdrop-blur-3xl shadow-2xl">
-        {/* Modal Header */}
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-white text-2xl font-bold font-sans tracking-tight">
             Questions for Team {team.name}
@@ -67,7 +64,7 @@ function SubmissionModal({ team, onClose, socket }) {
         <div className="max-h-[60vh] overflow-y-auto scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent">
           {filteredQuestions.length > 0 ? (
             <table className="w-full border-collapse text-white">
-              <thead className="sticky top-0 bg-gradient-to-b from-[#D4E5FF]/20 to-[#E5FFD4]/20 z-10">
+              <thead className="sticky top-0 bg-gradient-to-b from-[#828a90] to-[#848e87] z-10">
                 <tr className="text-center">
                   <th className="p-3 text-sm font-medium text-white/80">Question #</th>
                   <th className="p-3 text-sm font-medium text-white/80 text-left">Question Text</th>
@@ -87,7 +84,7 @@ function SubmissionModal({ team, onClose, socket }) {
                     <td className="p-3 text-sm text-left">{question.text}</td>
                     <td className="p-3 text-sm capitalize">{question.answerType}</td>
                     <td className="p-3 text-sm">
-                      {question.answerType === 'image' || question.answerType === 'video' && question.answerUrl ? (
+                      {(question.answerType === 'image' || question.answerType === 'video') && question.answerUrl ? (
                         <a
                           href={question.answerUrl}
                           target="_blank"

@@ -128,7 +128,7 @@ const updateQuestionStatus = async (req, res) => {
     const teamPayload = {
       teamInfo: {
         name: team.name,
-        currentLevel: team.currentLevel,
+        currentLevel: session.currentLevel,
         teamScore: team.teamScore,
         caption: team.caption,
         isPaused: session.isPaused,
@@ -187,7 +187,7 @@ const updateQuestionStatus = async (req, res) => {
           teamInfo: {
             id: t._id,
             name: t.name,
-            currentLevel: t.currentLevel,
+            currentLevel: session.currentLevel,
             teamScore: t.teamScore,
             caption: t.caption,
             isPaused: session.isPaused,
@@ -292,7 +292,7 @@ const updateTeamScore = async (req, res) => {
       teamInfo: {
         id: team._id,
         name: team.name,
-        currentLevel: team.currentLevel,
+        currentLevel: session.currentLevel,
         teamScore: team.teamScore,
         caption: team.caption,
         isPaused: session.isPaused
@@ -336,7 +336,7 @@ const updateTeamScore = async (req, res) => {
         teamInfo: {
           id: t._id,
           name: t.name,
-          currentLevel: t.currentLevel,
+          currentLevel: session.currentLevel,
           teamScore: t.teamScore,
           caption: t.caption,
           isPaused: session.isPaused
@@ -370,4 +370,27 @@ const updateTeamScore = async (req, res) => {
   }
 };
 
-module.exports = { updateQuestionStatus,updateTeamScore };
+
+const getTeamPlayersInfo=async(req,res)=>{
+  try {
+    const { teamId } = req.query;
+
+    if (!teamId) {
+      return res.status(400).json({ success: false, error: "Team ID is required" });
+    }
+
+    const team = await Team.findById(teamId);
+    if (!team) {
+      return res.status(404).json({ success: false, error: "Team not found" });
+    }
+
+    const players = await Player.find({ team: team._id }).select('name');
+
+    res.status(200).json({ success: true, data:players });
+  } catch (error) {
+    console.error("Error fetching team players info:", error);
+    res.status(500).json({ success: false, error: "Internal server error" });
+  }
+}
+
+module.exports = { updateQuestionStatus,updateTeamScore,getTeamPlayersInfo };

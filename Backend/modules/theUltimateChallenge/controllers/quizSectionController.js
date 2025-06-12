@@ -31,6 +31,11 @@ const getTeamData = async (req, res) => {
       return res.status(404).json({ error: 'Player not found' });
     }
 
+
+    const session = await TheUltimateChallenge.findById(player.session);
+    if (!session) return res.status(404).json({ error: 'Session not found' });
+
+    
     // Find team with populated question details
     const team = await Team.findById(player.team)
       .populate({
@@ -45,7 +50,7 @@ const getTeamData = async (req, res) => {
         path: 'session',
         select: 'companyName numberOfLevels questionsPerLevel'
       })
-      .select('name caption questionStatus teamScore currentLevel')
+      .select('name caption questionStatus teamScore')
       .lean();
 
     if (!team) {
@@ -58,7 +63,7 @@ const getTeamData = async (req, res) => {
       teamName: team.name,
       caption: team.caption,
       teamScore: team.teamScore,
-      currentLevel: team.currentLevel,
+      currentLevel: session.currentLevel,
       session: {
         companyName: team.session.companyName,
         numberOfLevels: team.session.numberOfLevels,
@@ -88,4 +93,4 @@ const getTeamData = async (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 };
-module.exports={getTeamData}
+module.exports = { getTeamData }

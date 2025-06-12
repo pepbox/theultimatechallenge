@@ -60,7 +60,7 @@ const emitAllTeamsData = async (sessionId, io) => {
           teamInfo: {
             id: team._id,
             name: team.name,
-            currentLevel: team.currentLevel,
+            currentLevel: session.currentLevel,
             teamScore: team.teamScore,
             caption: team.caption,
             isPaused: session.isPaused,
@@ -132,7 +132,7 @@ const emitTeamDataToPlayers = async (teamId, sessionId, io) => {
     const payload = {
       teamInfo: {
         name: team.name,
-        currentLevel: team.currentLevel,
+        currentLevel: session.currentLevel,
         teamScore: team.teamScore,
         caption: team.caption,
         isPaused: session.isPaused,
@@ -236,19 +236,6 @@ const uploadFileAnswer = async (req, res) => {
       }
     );
 
-    // Check if all questions in current level are done
-    const currentLevelQuestions = team.questionStatus.filter(
-      (q) => question.level === team.currentLevel && q.status === 'done'
-    );
-    const totalLevelQuestions = team.questionStatus.filter(
-      (q) => question.level === team.currentLevel
-    );
-
-    // If all questions in current level are done, increment level
-    if (currentLevelQuestions.length === totalLevelQuestions.length && team.currentLevel < 3) {
-      await Team.updateOne({ _id: team._id }, { $inc: { currentLevel: 1 } });
-    }
-
     // Emit updated team data to admin and players
     const io = req.app.get("socketService");
     await emitAllTeamsData(team.session, io);
@@ -286,11 +273,16 @@ const submitTextAnswer = async (req, res) => {
     const player = await Player.findById(playerId).populate('team');
     if (!player) return res.status(404).json({ error: 'Player not found' });
 
+    const session= await TheUltimateChallenge.findById(player.session);
+    if (!session) return res.status(404).json({ error: 'Session not found' });
+
     const question = await Question.findById(questionId);
     if (!question) return res.status(404).json({ error: 'Question not found' });
 
     const team = await Team.findById(player.team._id);
     if (!team) return res.status(404).json({ error: 'Team not found' });
+
+
 
     // Find question status in team
     const questionStatus = team.questionStatus.find((q) => q.question.equals(questionId));
@@ -308,10 +300,10 @@ const submitTextAnswer = async (req, res) => {
       { _id: team._id, 'questionStatus.question': questionId },
       {
         $set: {
-          'questionStatus.$.status': isCorrect? "done":"available", // Set to 'done' regardless of correctness
+          'questionStatus.$.status': isCorrect ? "done" : "attending", // Set to 'done' regardless of correctness
           'questionStatus.$.pointsEarned': pointsEarned,
           'questionStatus.$.submittedAnswer': answer.trim(),
-          'questionStatus.$.currentPlayer': null,
+          'questionStatus.$.currentPlayer': playerId,
         },
         $inc: {
           teamScore: pointsEarned,
@@ -319,18 +311,6 @@ const submitTextAnswer = async (req, res) => {
       }
     );
 
-    // Check if all questions in current level are done
-    const currentLevelQuestions = team.questionStatus.filter(
-      (q) => question.level === team.currentLevel && q.status === 'done'
-    );
-    const totalLevelQuestions = team.questionStatus.filter(
-      (q) => question.level === team.currentLevel
-    );
-
-    // If all questions in current level are done, increment level
-    if (currentLevelQuestions.length === totalLevelQuestions.length && team.currentLevel < 3) {
-      await Team.updateOne({ _id: team._id }, { $inc: { currentLevel: 1 } });
-    }
 
     // Emit updated team data to admin and players
     const io = req.app.get("socketService");

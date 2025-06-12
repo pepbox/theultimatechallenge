@@ -1,10 +1,11 @@
 import React, { useRef, useState, useEffect } from "react";
-import { ChevronLeft, Camera, X } from "lucide-react";
+import { ChevronLeft, Camera, X, Upload, Image } from "lucide-react";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
 import { getSocket } from "../../../services/sockets/theUltimateChallenge";
 import axios from "axios";
 import Modal from "react-modal";
 import Overlay from "../QuizSection/Overlay";
+import CameraCapture from "../../../components/CameraCapture";
 
 // Set modal root for accessibility
 Modal.setAppElement("#root");
@@ -21,6 +22,7 @@ function BodyGame() {
   const [submitError, setSubmitError] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
+  const [showCamera, setShowCamera] = useState(false);
   const socket = getSocket();
 
   // Clean up socket on unmount
@@ -116,10 +118,11 @@ function BodyGame() {
       "image/gif",
       "video/mp4",
       "video/quicktime",
+      "video/webm"
     ];
     if (!validTypes.includes(file.type)) {
       setSubmitError(
-        "Please upload an image (JPEG, PNG, GIF) or video (MP4, MOV)"
+        "Please upload an image (JPEG, PNG, GIF) or video (MP4, MOV, WEBM)"
       );
       return;
     }
@@ -127,6 +130,13 @@ function BodyGame() {
     setSelectedFile(file);
     setFileUploaded(true);
     setSubmitError(null);
+  };
+
+  const handleCameraCapture = (file) => {
+    setSelectedFile(file);
+    setFileUploaded(true);
+    setSubmitError(null);
+    setShowCamera(false);
   };
 
   const handleRemoveFile = () => {
@@ -150,8 +160,6 @@ function BodyGame() {
       setSubmitError("File size exceeds 20 MB limit");
       return;
     }
-
-    // 10 MB limit
 
     setIsSubmitting(true);
     setSubmitError(null);
@@ -304,27 +312,43 @@ function BodyGame() {
           </div>
         )}
 
-        <button
-          className="w-full h-[40px] bg-[#BA2732] rounded-[12px] mb-2 disabled:opacity-50 flex items-center justify-center gap-2"
-          onClick={
-            fileUploaded ? handleSubmit : () => fileInputRef.current.click()
-          }
-          disabled={isSubmitting}
-        >
-          {isSubmitting ? (
-            <span className="text-white">Uploading...</span>
-          ) : fileUploaded ? (
-            <>
-              <Camera className="text-white" />
-              <span className="text-white">Submit Answer</span>
-            </>
-          ) : (
-            <>
-              <Camera className="text-white" />
-              <span className="text-white">Select File</span>
-            </>
-          )}
-        </button>
+        {/* Action Buttons */}
+        {fileUploaded ? (
+          // Submit button when file is selected
+          <button
+            className="w-full h-[40px] bg-[#BA2732] rounded-[12px] mb-2 disabled:opacity-50 flex items-center justify-center gap-2"
+            onClick={handleSubmit}
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? (
+              <span className="text-white">Uploading...</span>
+            ) : (
+              <>
+                <Upload className="text-white w-5 h-5" />
+                <span className="text-white">Submit Answer</span>
+              </>
+            )}
+          </button>
+        ) : (
+          // Upload/Capture options when no file is selected
+          <div className="w-full space-y-2">
+            <button
+              className="w-full h-[40px] bg-[#BA2732] rounded-[12px] flex items-center justify-center gap-2"
+              onClick={() => setShowCamera(true)}
+            >
+              <Camera className="text-white w-5 h-5" />
+              <span className="text-white">Capture with Camera</span>
+            </button>
+            
+            <button
+              className="w-full h-[40px] bg-[#BA2732]/80 border border-[#BA2732] rounded-[12px] flex items-center justify-center gap-2"
+              onClick={() => fileInputRef.current.click()}
+            >
+              <Image className="text-white w-5 h-5" />
+              <span className="text-white">Upload from Gallery</span>
+            </button>
+          </div>
+        )}
 
         <input
           type="file"
@@ -332,9 +356,16 @@ function BodyGame() {
           onChange={handleFileChange}
           className="hidden"
           accept="image/*,video/*"
-          capture="environment"
         />
       </div>
+
+      {/* Camera Modal */}
+      <CameraCapture
+        isOpen={showCamera}
+        onClose={() => setShowCamera(false)}
+        onCapture={handleCameraCapture}
+        modes={["picture", "video"]}
+      />
     </div>
   );
 }

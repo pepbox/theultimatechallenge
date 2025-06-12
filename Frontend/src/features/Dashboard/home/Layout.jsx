@@ -84,11 +84,18 @@ function Layout() {
         }
       );
       if (response.data.success) {
-        const { numberOfLevels, isPaused, adminName, sessionName, sessionId } =
-          response.data.data;
+        const {
+          numberOfLevels,
+          isPaused,
+          adminName,
+          sessionName,
+          sessionId,
+          currentLevel,
+        } = response.data.data;
         gameStatus.current = isPaused;
         setDisplayStatus(isPaused);
         setMaxGameLevels(numberOfLevels);
+        setGameLevel(currentLevel);
         setSessionInfo({
           sessionId: sessionId,
           adminName: adminName || "Admin",
@@ -237,6 +244,7 @@ function Layout() {
             <div className="flex items-center gap-7 text-[16px] text-[#111111]">
               <h1 className="text-[24px] font-bold">Admin</h1>
               <button className="text-black">Home</button>
+               
             </div>
           </div>
         </div>
@@ -385,6 +393,8 @@ function Layout() {
         onClose={closeTransactionPopup}
         onConfirm={confirmTransactionChange}
       />
+
+     
 
       {sessionInfoModal && (
         <SuccessPopup

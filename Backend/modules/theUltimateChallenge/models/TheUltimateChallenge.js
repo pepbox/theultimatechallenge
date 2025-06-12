@@ -4,8 +4,8 @@ const theUltimateChallengeSchema = new mongoose.Schema({
   companyName: { type: String, required: true },
   admin: { type: String, required: true },
   passCode: { type: String, required: true },
-
   teamFormationGame: { type: Boolean, default: false },
+  currentLevel:{type:Number,default:1},
   numberOfTeams: { type: Number, required: true },
   numberOfTeamsJoined: { type: Number, default: 0 },
   numberOfPlayersJoined: { type: Number, required: true, default: 0 },

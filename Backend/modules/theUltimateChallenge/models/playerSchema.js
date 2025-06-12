@@ -7,7 +7,7 @@ const playerSchema = new mongoose.Schema({
   isCaption: { type: Boolean, default: false },
   socketId: { type: String },
 
-  createdAt: { type: Date, default: Date.now, expires: '1d' } // TTL index: expires after 1 day
+  createdAt: { type: Date, default: Date.now, } // TTL index: expires after 1 day
 });
 
 module.exports = mongoose.model('Player', playerSchema);

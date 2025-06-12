@@ -88,7 +88,7 @@ const emitAllTeamsData = async (sessionId, io) => {
           teamInfo: {
             id: team._id,
             name: team.name,
-            currentLevel: team.currentLevel,
+            currentLevel: session.currentLevel,
             teamScore: team.teamScore,
             caption: team.caption,
             isPaused: session.isPaused,

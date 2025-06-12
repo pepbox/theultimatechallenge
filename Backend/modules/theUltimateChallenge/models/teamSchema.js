@@ -24,7 +24,7 @@ const teamSchema = new mongoose.Schema({
     }  
   }],
   teamScore:{type:Number,default : 0},
-  currentLevel:{type:Number,default: 1}
+  // currentLevel:{type:Number,default: 1}
 });
 
 module.exports = mongoose.model('Team', teamSchema);

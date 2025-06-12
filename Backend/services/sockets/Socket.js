@@ -78,7 +78,7 @@ function setupSocket(io) {
                 const payload = {
                     teamInfo: {
                         name: team.name,
-                        currentLevel: team.currentLevel,
+                        currentLevel: session.currentLevel,
                         teamScore: team.teamScore,
                         caption: team.caption,
                         isPaused: session.isPaused
@@ -183,7 +183,7 @@ function setupSocket(io) {
                 const payload = {
                     teamInfo: {
                         name: updatedTeam.name,
-                        currentLevel: updatedTeam.currentLevel,
+                        currentLevel: session.currentLevel,
                         teamScore: updatedTeam.teamScore,
                         caption: updatedTeam.caption,
                         isPaused: session.isPaused
@@ -224,7 +224,7 @@ function setupSocket(io) {
                         teamInfo: {
                             id: t._id,
                             name: t.name,
-                            currentLevel: t.currentLevel,
+                            currentLevel: session.currentLevel,
                             teamScore: t.teamScore,
                             caption: t.caption,
                             isPaused: session.isPaused
@@ -350,7 +350,7 @@ function setupSocket(io) {
                 const payload = {
                     teamInfo: {
                         name: updatedTeam.name,
-                        currentLevel: updatedTeam.currentLevel,
+                        currentLevel: session.currentLevel,
                         teamScore: updatedTeam.teamScore,
                         caption: updatedTeam.caption,
                         isPaused: session.isPaused
@@ -391,7 +391,7 @@ function setupSocket(io) {
                         teamInfo: {
                             id: t._id,
                             name: t.name,
-                            currentLevel: t.currentLevel,
+                            currentLevel: session.currentLevel,
                             teamScore: t.teamScore,
                             caption: t.caption,
                             isPaused: session.isPaused
@@ -502,7 +502,7 @@ function setupSocket(io) {
                         teamInfo: {
                             id: team._id,
                             name: team.name,
-                            currentLevel: team.currentLevel,
+                            currentLevel: session.currentLevel,
                             teamScore: team.teamScore,
                             caption: team.caption,
                             isPaused: session.isPaused
@@ -597,7 +597,7 @@ function setupSocket(io) {
                         teamInfo: {
                             id: team._id,
                             name: team.name,
-                            currentLevel: team.currentLevel,
+                            currentLevel: session.currentLevel,
                             teamScore: team.teamScore,
                             caption: team.caption,
                             isPaused: session.isPaused
@@ -686,7 +686,7 @@ function setupSocket(io) {
                     const payload = {
                         teamInfo: {
                             name: team.name,
-                            currentLevel: team.currentLevel,
+                            currentLevel: session.currentLevel,
                             teamScore: team.teamScore,
                             caption: team.caption,
                             isPaused: session.isPaused

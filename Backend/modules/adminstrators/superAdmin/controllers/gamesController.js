@@ -39,7 +39,7 @@ const handleGetAllLiveGames = async (req, res) => {
 
 const handleGetGameHistory = async (req, res) => {
     try {
-        const allGames = await TheUltimateChallenge.find({ sessionEnded: true }).sort({ completionDate: -1 });
+        const allGames = await TheUltimateChallenge.find({ sessionEnded: true }).sort({ completionDate: -1 }).select('companyName admin createdAt completionDate numberOfPlayersJoined numberOfTeamsJoined');
 
         if (!allGames || allGames.length === 0) {
             return res.status(404).json({

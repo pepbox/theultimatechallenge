@@ -49,6 +49,7 @@ function GameHistory({data}) {
             <div className='grid grid-cols-5 gap-4 text-[12px]  rounded-lg  items-center px-4 text-gray-400'>
                 <div className="flex items-center">Game Name</div>
                 <div className="flex items-center justify-center">Admin</div>
+                <div className="flex items-center justify-center">Created On</div>
                 <div className="flex items-center justify-center">Completed On</div>
                 <div className="flex items-center justify-center">Players</div>
                 <div className="flex items-center justify-center">Teams</div>
@@ -64,6 +65,7 @@ function GameHistory({data}) {
                 >
                     <div className="flex items-center text-gray-600 text-[14px]">{item.companyName}</div>
                     <div className="flex items-center justify-center text-gray-600 text-[14px]">{item.admin}</div>
+                    <div className="flex items-center justify-center text-gray-600 text-[14px]">{new Date(item.createdAt).toLocaleDateString()}</div>
                     <div className="flex items-center justify-center text-gray-600 text-[14px]">{new Date(item.completionDate).toLocaleDateString()}</div>
                     <div className="flex items-center justify-center text-gray-600 text-[14px]">{item.numberOfPlayersJoined}</div>
                     <div className="flex items-center justify-center text-gray-600 text-[14px]">{item.numberOfTeamsJoined}</div>

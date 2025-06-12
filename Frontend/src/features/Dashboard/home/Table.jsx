@@ -9,6 +9,7 @@ import SubmissionModal from "./SubmissionModal";
 import { ArrowDownward, ArrowUpward } from "@mui/icons-material";
 import { forwardRef } from "react";
 import { useImperativeHandle } from "react";
+import TeamInfoModal from "./TeamInfoModal";
 
 const Table = forwardRef(
   (
@@ -26,6 +27,10 @@ const Table = forwardRef(
     const [showEditModal, setShowEditModal] = useState(false);
     const [showStatusModal, setShowStatusModal] = useState(false);
     const [showSubmissionModal, setShowSubmissionModal] = useState(false);
+
+    const [showTeamInfoModal, setShowTeamInfoModal] = useState(false);
+    const [activeTeamInfo, setActiveTeamInfo] = useState(null);
+
     const [selectedTeam, setSelectedTeam] = useState(null);
     const [loading, setLoading] = useState(false);
     const [sortConfig, setSortConfig] = useState({
@@ -99,7 +104,7 @@ const Table = forwardRef(
     // Sorting function
     const handleSort = (key) => {
       let direction = "asc";
-      console.log(key)
+      console.log(key);
       if (sortConfig.key === key && sortConfig.direction === "asc") {
         direction = "desc";
       }
@@ -208,6 +213,8 @@ const Table = forwardRef(
       setShowStatusModal(false);
       setShowSubmissionModal(false);
       setSelectedTeam(null);
+      setShowTeamInfoModal(false);
+      setActiveTeamInfo(null);
     };
 
     // Function to render sort arrow
@@ -227,6 +234,12 @@ const Table = forwardRef(
         <ArrowDownward className="text-gray-600" sx={{ fontSize: "16px" }} />
       );
     };
+
+
+    const handleShowTeamInfo=({teamId,teamName})=>{
+      setActiveTeamInfo({teamId,teamName})
+      setShowTeamInfoModal(true)
+    }
 
     return (
       <>
@@ -286,7 +299,7 @@ const Table = forwardRef(
                   className="even:bg-gray-50 text-center rounded-2xl"
                 >
                   <td>
-                    <div className="flex justify-center items-center h-16 rounded-l-2xl text-[14px]">
+                    <div onClick={()=>handleShowTeamInfo({teamId:team.id,teamName:team.name})} className="flex justify-center items-center h-16 cursor-pointer rounded-l-2xl text-[14px] underline">
                       {team.name}
                     </div>
                   </td>
@@ -382,6 +395,13 @@ const Table = forwardRef(
             team={selectedTeam}
             onClose={closeAllModals}
             socket={socket}
+          />
+        )}
+        {showTeamInfoModal && (
+          <TeamInfoModal
+            onClose={closeAllModals}
+            teamId={activeTeamInfo.teamId}
+            teamName={activeTeamInfo.teamName}
           />
         )}
       </>

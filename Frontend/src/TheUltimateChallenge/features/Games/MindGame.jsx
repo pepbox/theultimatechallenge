@@ -126,7 +126,7 @@ function MindGame() {
   };
 
   const handleContinueWithTasks = () => {
-    navigate(`/theultimatechallenge/quizsection/${sessionId}`);
+    // navigate(`/theultimatechallenge/quizsection/${sessionId}`);
     setShowWrongAnswerPopup(false);
     setAnswer('');
   };
@@ -227,7 +227,7 @@ function MindGame() {
               -{pointsDeducted} Points
             </p>
             <p className="text-white text-sm mb-6 text-center">
-              This task can't be retried - but your journey continues.
+             Keep trying until you get the right answer.
             </p>
             <button
               onClick={handleContinueWithTasks}

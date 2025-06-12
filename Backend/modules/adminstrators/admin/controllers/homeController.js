@@ -39,11 +39,14 @@ const changeTeamLevels = async (req, res) => {
             return res.status(404).json({ error: 'No teams found for this session' });
         }
 
+        session.currentLevel = Number(level);
+        await session.save();
+
         // 5. Update currentLevel for all teams
-        await Team.updateMany(
-            { session: sessionId },
-            { $set: { currentLevel: Number(level) } }
-        );
+        // await Team.updateMany(
+        //     { session: sessionId },
+        //     { $set: { currentLevel: Number(level) } }
+        // );
 
         // 6. Emit updated team data to all players
         const io = req.app.get("socketService");
@@ -127,9 +130,10 @@ const getGameSettingsData = async (req, res) => {
             data: {
                 sessionId: session._id,
                 numberOfLevels: session.numberOfLevels,
-                isPaused:session.isPaused,
+                isPaused: session.isPaused,
                 adminName: session.admin,
-                sessionName:session.companyName
+                sessionName: session.companyName,
+                currentLevel:session.currentLevel
             }
         });
     }

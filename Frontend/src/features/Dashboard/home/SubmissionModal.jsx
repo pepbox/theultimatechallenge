@@ -87,7 +87,7 @@ function SubmissionModal({ team, onClose, socket }) {
                     <td className="p-3 text-sm text-left">{question.text}</td>
                     <td className="p-3 text-sm capitalize">{question.answerType}</td>
                     <td className="p-3 text-sm">
-                      {question.answerType === 'fileUpload' && question.answerUrl ? (
+                      {question.answerType === 'image' || question.answerType === 'video' && question.answerUrl ? (
                         <a
                           href={question.answerUrl}
                           target="_blank"

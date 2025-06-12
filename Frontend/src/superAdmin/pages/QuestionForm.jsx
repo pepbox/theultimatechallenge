@@ -35,7 +35,7 @@ const QuestionForm = () => {
     if (formData.answerType === 'text' && !formData.correctAnswer.trim()) {
       newErrors.push('Correct Answer is required for Text answer type');
     }
-    if (formData.answerType === 'fileUpload' && !formData.questionImageFile) {
+    if ((formData.answerType === 'image' || formData.answerType === 'video') && !formData.questionImageFile) {
       newErrors.push('Question Image is required for File Upload answer type');
     }
 

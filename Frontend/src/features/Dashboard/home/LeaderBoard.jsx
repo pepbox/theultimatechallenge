@@ -1,15 +1,17 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import GoldCrown from "../../../assets/images/dashboard/GoldCrown.webp";
 import SilverCrown from "../../../assets/images/dashboard/SliverCrown.webp";
 import BrownCrown from "../../../assets/images/dashboard/BronzeCrown.webp";
 import RoundTimer from "./RoundTimer";
 import { getSocket } from "../../../services/sockets/admin";
 import { ExpandIcon } from "lucide-react";
+import useTimer from "../../user/timer/hooks/useTimer";
 
-const LeaderBoard = ({ timerIsOpen }) => {
+const LeaderBoard = ({ isTimerOpen,sessionId }) => {
   const [topTeams, setTopTeams] = useState([]);
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const socket = getSocket();
+  
 
   const processTeamData = (data) => {
     const sortedTeams = data.teams
@@ -79,7 +81,7 @@ const LeaderBoard = ({ timerIsOpen }) => {
               className="absolute top-2 right-4 p-2 hover:bg-gray-100 rounded-full transition-colors"
               title="Expand Leaderboard"
             >
-              <ExpandIcon size={18}/>
+              <ExpandIcon size={18} />
             </button>
           )}
         </div>
@@ -212,7 +214,7 @@ const LeaderBoard = ({ timerIsOpen }) => {
   return (
     <>
       <div className="w-1/3 mx-auto p-4 font-sans">
-        {timerIsOpen && <RoundTimer />}
+        {isTimerOpen && <RoundTimer sessionId={sessionId} />}
         <LeaderBoardContent />
       </div>
 

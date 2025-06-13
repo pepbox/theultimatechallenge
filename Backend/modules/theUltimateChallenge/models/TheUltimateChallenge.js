@@ -13,6 +13,12 @@ const theUltimateChallengeSchema = new mongoose.Schema({
   questionsPerLevel: { type: Number, max: 13, required: true },
   isCustomQuestionSelection: { type: Boolean, default: false },
   isPaused: { type: Boolean, default: true },
+  timer:{
+    timerStatus : { type: String, enum: ['ON', 'OFF', 'PAUSED','NOT_SHOW'], default: 'NOT_SHOW' },
+    pausedDuration: { type: Number, default: 0 },
+    startTime: { type: Date, default: null },
+    pausedTime: { type: Date, default: null }
+  },
   sessionEnded: { type: Boolean, default: false },
   completionDate: { type: Date, default: null },
   selectedQuestions: {

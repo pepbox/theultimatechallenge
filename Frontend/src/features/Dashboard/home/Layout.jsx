@@ -1,5 +1,5 @@
 import { FormControlLabel, styled, Switch } from "@mui/material";
-import React, { useRef, useState, useEffect } from "react";
+import React, { useRef, useState, useEffect, useCallback } from "react";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import AddIcon from "@mui/icons-material/Add";
 import RemoveIcon from "@mui/icons-material/Remove";
@@ -20,6 +20,7 @@ import { useDispatch } from "react-redux";
 import { resetAdminState } from "../../../redux/admin/adminSlice.js";
 import useSessionManagement from "../../../hooks/admin/useSessionManagement.js";
 import useAdminAuth from "../../../hooks/admin/useAuth.js";
+import useTimer from "../../user/timer/hooks/useTimer.js";
 
 const RotatingIcon = styled(CachedRounded)(({ rotating }) => ({
   transition: "transform 1s ease",
@@ -29,11 +30,11 @@ function Layout() {
   const [sessionInfo, setSessionInfo] = useState({});
   const [gameLevel, setGameLevel] = useState(1);
   const [maxGameLevels, setMaxGameLevels] = useState();
-  const [timerIsOpen, setIsTimerOpen] = useState(false);
   const [settingOpen, isSettingOpen] = useState(false);
   const socketRef = useRef(null);
   const { sessionId } = useParams();
   const tableRef = useRef(null);
+  const {timerStatus,toggleTimerVisibility}=useTimer({ sessionId });
 
   const { handleLogout } = useAdminAuth();
 
@@ -58,19 +59,6 @@ function Layout() {
 
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  useEffect(() => {
-    const socket = connectSocket();
-    socketRef.current = socket;
-    socket.on("session-pause-updated", (data) => {
-      gameStatus.current = data.isPaused;
-      setDisplayStatus(data.isPaused);
-    });
-
-    return () => {
-      socket.off("session-pause-updated");
-      socket.disconnect();
-    };
-  }, []);
 
   const fetchGameSettingsData = async () => {
     try {
@@ -214,13 +202,13 @@ function Layout() {
   };
 
   // Callback to update gameLevel and initialize displayStatus
-  const handleLevelUpdate = (newLevel) => {
+  const handleLevelUpdate = useCallback((newLevel) => {
     setGameLevel(newLevel);
     // Initialize displayStatus from gameStatus.current when receiving initial data
     if (!pendingStatusChange && gameStatus.current !== null) {
       setDisplayStatus(gameStatus.current);
     }
-  };
+  }, [pendingStatusChange]);
 
   const handleRefresh = async () => {
     try {
@@ -235,6 +223,11 @@ function Layout() {
       }, 1000);
     }
   };
+
+
+  const handleToggleTimer = (e) => {
+    toggleTimerVisibility(e.target.checked);
+  }
 
   return (
     <div className="relative font-sans max-w-[1440px] w-[100%] mx-auto mb-10">
@@ -355,8 +348,8 @@ function Layout() {
           <FormControlLabel
             control={
               <Switch
-                checked={timerIsOpen}
-                onChange={() => setIsTimerOpen((pre) => !pre)}
+                checked={timerStatus != "NOT_SHOW"}
+                onChange={handleToggleTimer}
               />
             }
             label="Timer"
@@ -373,7 +366,7 @@ function Layout() {
           transactionsEnabled={transactionsEnabled}
           maxGameLevels={maxGameLevels}
         />
-        <LeaderBoard timerIsOpen={timerIsOpen} />
+        <LeaderBoard isTimerOpen={timerStatus!="NOT_SHOW"} sessionId={sessionId} />
       </div>
 
       <GameLevelChangePopup

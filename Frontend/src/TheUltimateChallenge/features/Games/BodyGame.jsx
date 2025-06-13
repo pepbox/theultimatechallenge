@@ -5,6 +5,7 @@ import { getSocket } from "../../../services/sockets/theUltimateChallenge";
 import axios from "axios";
 import Modal from "react-modal";
 import Overlay from "../QuizSection/Overlay";
+import UserTimer from "../../../features/user/timer/components/UserTimer";
 
 // Set modal root for accessibility
 Modal.setAppElement("#root");
@@ -53,7 +54,8 @@ function BodyGame() {
     const handleBeforeUnload = (e) => {
       if (hasUnsavedAnswer()) {
         e.preventDefault();
-        e.returnValue = "You have an unsaved answer. Are you sure you want to leave?";
+        e.returnValue =
+          "You have an unsaved answer. Are you sure you want to leave?";
         return e.returnValue;
       }
     };
@@ -69,24 +71,32 @@ function BodyGame() {
   useEffect(() => {
     const onPauseUpdated = (data) => {
       if (data.isPaused) {
-        handleNavigation(() => navigate(`/theultimatechallenge/quizsection/${sessionId}`));
+        handleNavigation(() =>
+          navigate(`/theultimatechallenge/quizsection/${sessionId}`)
+        );
       }
     };
 
     const onTeamData = (data) => {
       if (data.teamInfo.currentLevel !== location.state.level) {
-        handleNavigation(() => navigate(`/theultimatechallenge/quizsection/${sessionId}`));
+        handleNavigation(() =>
+          navigate(`/theultimatechallenge/quizsection/${sessionId}`)
+        );
       }
     };
 
     const onQuestionStatusChanged = (data) => {
       if (data.questionId === cardData?.id) {
-        handleNavigation(() => navigate(`/theultimatechallenge/quizsection/${sessionId}`));
+        handleNavigation(() =>
+          navigate(`/theultimatechallenge/quizsection/${sessionId}`)
+        );
       }
     };
 
     const onAdminUpdatedTotalScore = (data) => {
-      handleNavigation(() => navigate(`/theultimatechallenge/quizsection/${sessionId}`));
+      handleNavigation(() =>
+        navigate(`/theultimatechallenge/quizsection/${sessionId}`)
+      );
     };
 
     socket.on("session-pause-updated", onPauseUpdated);
@@ -104,7 +114,15 @@ function BodyGame() {
         socket.off("admin-updated-total-score", onAdminUpdatedTotalScore);
       }
     };
-  }, [socket, cardData?.id, navigate, sessionId, selectedFile, isAnswerSubmitted, isSubmitting]);
+  }, [
+    socket,
+    cardData?.id,
+    navigate,
+    sessionId,
+    selectedFile,
+    isAnswerSubmitted,
+    isSubmitting,
+  ]);
 
   // Validate card data on load
   useEffect(() => {
@@ -267,6 +285,8 @@ function BodyGame() {
     >
       <div className="mb-[26px] flex flex-col h-[100%] pt-[26px]">
         {/* Header */}
+        <UserTimer sessionId={sessionId} />
+
         <div className="text-white w-full h-[36px] flex justify-between items-center">
           <div
             className="flex gap-1.5 cursor-pointer"
@@ -331,8 +351,12 @@ function BodyGame() {
           <div className="w-full mb-4">
             <div className="w-full border-2 border-[#BA273299]/60 bg-[#FFA8AE4D]/85 rounded-[20px] backdrop-blur-[53px] p-3">
               <div className="flex justify-between items-center mb-2">
-                <span className="text-white text-sm font-mono">Uploading...</span>
-                <span className="text-white text-sm font-mono">{uploadProgress}%</span>
+                <span className="text-white text-sm font-mono">
+                  Uploading...
+                </span>
+                <span className="text-white text-sm font-mono">
+                  {uploadProgress}%
+                </span>
               </div>
               <div className="w-full bg-gray-700 rounded-full h-2">
                 <div
@@ -398,7 +422,7 @@ function BodyGame() {
               {cardData.answerType === "image" ? (
                 <Camera className="text-white" />
               ) : (
-                <Video className="text-white"/>
+                <Video className="text-white" />
               )}
               <span className="text-white">Submit Answer</span>
             </>

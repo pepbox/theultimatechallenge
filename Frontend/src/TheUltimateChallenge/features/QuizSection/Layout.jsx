@@ -1,9 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import Header from './Header';
 import Overlay from './Overlay';
 import Card from './Card';
 import { getSocket } from '../../../services/sockets/theUltimateChallenge';
-import { useParams } from 'react-router-dom';
 
 function Layout() {
   const [overlayToggle, setOverlayToggle] = useState(false);
@@ -11,7 +10,6 @@ function Layout() {
   const [teamData, setTeamData] = useState(null);
   const [error, setError] = useState(null);
   const socket = getSocket();
-  const { sessionId } = useParams();
 
   useEffect(() => {
     const handleResize = () => setWindowHeight(window.innerHeight);

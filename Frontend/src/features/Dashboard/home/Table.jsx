@@ -235,11 +235,10 @@ const Table = forwardRef(
       );
     };
 
-
-    const handleShowTeamInfo=({teamId,teamName})=>{
-      setActiveTeamInfo({teamId,teamName})
-      setShowTeamInfoModal(true)
-    }
+    const handleShowTeamInfo = ({ teamId, teamName }) => {
+      setActiveTeamInfo({ teamId, teamName });
+      setShowTeamInfoModal(true);
+    };
 
     return (
       <>
@@ -299,7 +298,15 @@ const Table = forwardRef(
                   className="even:bg-gray-50 text-center rounded-2xl"
                 >
                   <td>
-                    <div onClick={()=>handleShowTeamInfo({teamId:team.id,teamName:team.name})} className="flex justify-center items-center h-16 cursor-pointer rounded-l-2xl text-[14px] underline">
+                    <div
+                      onClick={() =>
+                        handleShowTeamInfo({
+                          teamId: team.id,
+                          teamName: team.name,
+                        })
+                      }
+                      className="flex justify-center items-center h-16 cursor-pointer rounded-l-2xl text-[14px] underline"
+                    >
                       {team.name}
                     </div>
                   </td>

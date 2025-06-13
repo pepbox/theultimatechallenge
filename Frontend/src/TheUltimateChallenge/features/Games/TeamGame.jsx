@@ -1,6 +1,7 @@
 import React, { useRef, useState, useEffect } from "react";
 import { ChevronLeft, Camera, X, Video } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import UserTimer from "../../../features/user/timer/components/UserTimer";
 
 function TeamGames() {
   const navigate = useNavigate();
@@ -8,7 +9,7 @@ function TeamGames() {
   const [fileUploaded, setFileUploaded] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
-
+  const { sessionId } = useParams();
   // Generate preview for selected file
   useEffect(() => {
     if (!selectedFile) {
@@ -58,6 +59,7 @@ function TeamGames() {
       style={{ minHeight: `${window.innerHeight}px` }}
     >
       <div className="mb-[26px] flex flex-col h-[100%] pt-[26px]">
+        <UserTimer sessionId={sessionId} />
         <div className="text-white w-full h-[36px] flex justify-between items-center">
           <div
             className="flex gap-1.5"
@@ -138,11 +140,11 @@ function TeamGames() {
           onClick={handleClick}
         >
           <div className="flex justify-center gap-[7px]">
-           {cardData.answerType === "image" ? (
-                <Camera className="text-white" />
-              ) : (
-                <Video className="text-white"/>
-              )}
+            {cardData.answerType === "image" ? (
+              <Camera className="text-white" />
+            ) : (
+              <Video className="text-white" />
+            )}
             <h1 className="text-white">
               {fileUploaded ? "Submit" : "Capture"}
             </h1>

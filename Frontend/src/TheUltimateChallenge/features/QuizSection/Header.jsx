@@ -1,9 +1,12 @@
 import React, { useEffect, useState } from 'react'
 import coin from '../../assets/images/QuizSection/TeamGame/Coin.png';
 import Energy from '../../assets/images/QuizSection/TeamGame/Energy.png';
+import { useParams } from 'react-router-dom';
+import UserTimer from '../../../features/user/timer/components/UserTimer';
 
 function Header({ teamData }) {
     const [task, setTask] = useState({})
+    const {sessionId} = useParams();
     function getQuestionStatsByLevel(questions, level) {
         const levelQuestions = questions.filter(q => q.level === level);
         const availableCount = levelQuestions.filter(q => q.status !== "available").length;
@@ -22,6 +25,8 @@ function Header({ teamData }) {
     return (
         <>
             <header className='absolute top-0 left-0 w-[100%] h-[69px] bg-gradient-to-t from-[#595297]/50 to-[#23203E]/50 text-white rounded-b-[20px] font-mono backdrop-blur-[10px]'>
+                  <UserTimer sessionId={sessionId}/>
+            
                 <div className='absolute top-[52px] left-[24px] w-[108px] h-[32px] rounded-[20px]  flex items-center   bg-gradient-to-l from-[#595297] to-[#23203E]/70 backdrop-blur-[10px] z-10'>
                     <div className='mx-auto flex gap-2 py-1 pl-2 pr-1 items-center'>
                         <img

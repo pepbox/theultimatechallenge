@@ -4,7 +4,8 @@ const { addQuestion, addMultipleQuestions, getAllQuestions } = require('../contr
 
 const { joinSession, getNumberOfTeams, updateSocketId } = require('../controllers/loginController');
 const { getTeamData } = require('../controllers/quizSectionController');
-const { uploadFileAnswer, submitTextAnswer } = require("../controllers/taskCompleteController")
+const { uploadFileAnswer, submitTextAnswer } = require("../controllers/taskCompleteController");
+const { getTimerStatus } = require('../controllers/timerController');
 
 const router = express.Router();
 
@@ -30,5 +31,8 @@ router.post('/uploadtextanswer', upload.single('answerFile'), submitTextAnswer);
 
 
 router.get('/quizsectioninit', getTeamData)
+
+
+router.get('/get-timer-status', getTimerStatus);
 
 module.exports = router;

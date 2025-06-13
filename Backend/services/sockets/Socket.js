@@ -21,10 +21,10 @@ function setupSocket(io) {
                     if (callback) callback({ success: false, error: "No cookies found" });
                     return socket.emit("error", "No cookies found");
                 }
-                
+
                 const parsedCookies = cookie.parse(cookies);
                 const token = parsedCookies.token;
-                
+
                 if (!token) {
                     if (callback) callback({ success: false, error: "JWT token missing in cookie" });
                     return socket.emit("error", "JWT token missing in cookie");
@@ -105,10 +105,10 @@ function setupSocket(io) {
                     if (callback) callback({ success: false, error: "No cookies found" });
                     return socket.emit("error", "No cookies found");
                 }
-                
+
                 const parsedCookies = cookie.parse(cookies);
                 const token = parsedCookies.token;
-                
+
                 if (!token) {
                     if (callback) callback({ success: false, error: "JWT token missing in cookie" });
                     return socket.emit("error", "JWT token missing in cookie");
@@ -157,7 +157,7 @@ function setupSocket(io) {
                 // 6. Emit updated team data to all team members
                 const teamPlayers = await Player.find({ team: team._id });
                 const teamSocketIds = teamPlayers.map(p => p.socketId).filter(id => id);
-                
+
                 // Get updated team data
                 const updatedTeam = await Team.findById(team._id).populate({
                     path: "questionStatus.question",
@@ -435,16 +435,16 @@ function setupSocket(io) {
                 if (!cookies) {
                     return callback({ success: false, error: "No cookies found" });
                 }
-                
+
                 const parsedCookies = cookie.parse(cookies);
                 const token = parsedCookies.adminToken;
-                
+
                 if (!token) {
                     return callback({ success: false, error: "Admin token missing" });
                 }
 
                 const decoded = jwt.verify(token, process.env.JWT_SECRET);
-                
+
                 // 2. Get the session
                 const session = await TheUltimateChallenge.findById(decoded.sessionId);
                 if (!session) {
@@ -466,16 +466,16 @@ function setupSocket(io) {
 
                 // Emit to all players
                 playerSocketIds.forEach(socketId => {
-                    io.to(socketId).emit("session-pause-updated", { 
-                        isPaused: session.isPaused 
+                    io.to(socketId).emit("session-pause-updated", {
+                        isPaused: session.isPaused
                     });
                 });
 
                 // Also notify admin
                 const admin = await Admin.findById(decoded.adminId);
                 if (admin && admin.socketId) {
-                    io.to(admin.socketId).emit("session-pause-updated", { 
-                        isPaused: session.isPaused 
+                    io.to(admin.socketId).emit("session-pause-updated", {
+                        isPaused: session.isPaused
                     });
                 }
 
@@ -629,6 +629,216 @@ function setupSocket(io) {
             }
         });
 
+
+
+        // timer:{
+        //     timerStatus : { type: String, enum: ['ON', 'OFF', 'PAUSED','NOT_SHOW'], default: 'NOT_SHOW' },
+        //     pausedDuration: { type: Number, default: 0 },
+        //     startTime: { type: Date, default: null },
+        //     pausedTime: { type: Date, default: null }
+        //   },
+        socket.on("pause-timer", async () => {
+            try {
+                const cookies = socket.handshake.headers.cookie;
+                if (!cookies) {
+                    return socket.emit("error", "No cookies found");
+                }
+                const parsedCookies = cookie.parse(cookies);
+                const token = parsedCookies.adminToken;
+                if (!token) {
+                    return socket.emit("error", "Admin token missing");
+                }
+                const decoded = jwt.verify(token, process.env.JWT_SECRET);
+                const session = await TheUltimateChallenge.findById(decoded.sessionId);
+                if (!session) {
+                    return socket.emit("error", "Session not found");
+                }
+
+                // Only pause if timer is currently running
+                if (session.timer.timerStatus === 'ON') {
+                    session.timer.timerStatus = 'PAUSED';
+                    session.timer.pausedTime = new Date();
+                    await session.save();
+
+                    const players = await Player.find({ session: session._id }).select('socketId').lean();
+                    const admins = await Admin.find({ session: session._id }).select('socketId').lean();
+
+                    const recipientSocketIds = [
+                        ...players.map(p => p.socketId).filter(id => id),
+                        ...admins.map(a => a.socketId).filter(id => id)
+                    ];
+
+                    recipientSocketIds.forEach(socketId => {
+                        io.to(socketId).emit("timer-paused", {
+                            message: "Timer is paused",
+                            timerStatus: session.timer.timerStatus
+                        });
+                    });
+                }
+            } catch (error) {
+                console.error("Error pausing timer:", error);
+                socket.emit("error", "Failed to pause timer");
+            }
+        });
+
+        socket.on("timer-start", async () => {
+            try {
+                const cookies = socket.handshake.headers.cookie;
+                if (!cookies) {
+                    return socket.emit("error", "No cookies found");
+                }
+                const parsedCookies = cookie.parse(cookies);
+                const token = parsedCookies.adminToken;
+                if (!token) {
+                    return socket.emit("error", "Admin token missing");
+                }
+                const decoded = jwt.verify(token, process.env.JWT_SECRET);
+                const session = await TheUltimateChallenge.findById(decoded.sessionId);
+                if (!session) {
+                    return socket.emit("error", "Session not found");
+                }
+
+                // Handle resuming from pause
+                if (session.timer.timerStatus === 'PAUSED' && session.timer.pausedTime) {
+                    const pausedDuration = new Date() - session.timer.pausedTime;
+                    session.timer.pausedDuration += pausedDuration;
+                    session.timer.pausedTime = null;
+                }
+                // Handle starting fresh timer (if timer is not visible or first time)
+                else if (session.timer.timerStatus === 'NOT_SHOW' || !session.timer.startTime) {
+                    session.timer.startTime = new Date();
+                    session.timer.pausedDuration = 0;
+                    session.timer.pausedTime = null;
+                }
+
+                session.timer.timerStatus = 'ON';
+                await session.save();
+
+                const players = await Player.find({ session: session._id }).select('socketId').lean();
+                const admins = await Admin.find({ session: session._id }).select('socketId').lean();
+
+                const recipientSocketIds = [
+                    ...players.map(p => p.socketId).filter(id => id),
+                    ...admins.map(a => a.socketId).filter(id => id)
+                ];
+
+                recipientSocketIds.forEach(socketId => {
+                    io.to(socketId).emit("timer-started", {
+                        message: "Timer is started",
+                        timerStatus: session.timer.timerStatus
+                    });
+                });
+            } catch (error) {
+                console.error("Error starting timer:", error);
+                socket.emit("error", "Failed to start timer");
+            }
+        });
+
+        // New reset timer handler
+        socket.on("reset-timer", async () => {
+            try {
+                const cookies = socket.handshake.headers.cookie;
+                if (!cookies) {
+                    return socket.emit("error", "No cookies found");
+                }
+                const parsedCookies = cookie.parse(cookies);
+                const token = parsedCookies.adminToken;
+                if (!token) {
+                    return socket.emit("error", "Admin token missing");
+                }
+                const decoded = jwt.verify(token, process.env.JWT_SECRET);
+                const session = await TheUltimateChallenge.findById(decoded.sessionId);
+                if (!session) {
+                    return socket.emit("error", "Session not found");
+                }
+
+                // Reset timer to initial state but keep it visible
+                session.timer.timerStatus = 'PAUSED'; // Set to paused so it shows 00:00 but is ready to start
+                session.timer.startTime = null;
+                session.timer.pausedDuration = 0;
+                session.timer.pausedTime = null;
+                await session.save();
+
+                const players = await Player.find({ session: session._id }).select('socketId').lean();
+                const admins = await Admin.find({ session: session._id }).select('socketId').lean();
+
+                const recipientSocketIds = [
+                    ...players.map(p => p.socketId).filter(id => id),
+                    ...admins.map(a => a.socketId).filter(id => id)
+                ];
+
+                recipientSocketIds.forEach(socketId => {
+                    io.to(socketId).emit("timer-reset", {
+                        message: "Timer has been reset",
+                        timerStatus: session.timer.timerStatus
+                    });
+                });
+            } catch (error) {
+                console.error("Error resetting timer:", error);
+                socket.emit("error", "Failed to reset timer");
+            }
+        });
+
+        socket.on("toggle-show-timer", async (data) => {
+            try {
+                console.log("Toggling timer visibility:", data);
+                const cookies = socket.handshake.headers.cookie;
+                if (!cookies) {
+                    return socket.emit("error", "No cookies found");
+                }
+                const parsedCookies = cookie.parse(cookies);
+                const token = parsedCookies.adminToken;
+                if (!token) {
+                    return socket.emit("error", "Admin token missing");
+                }
+                const decoded = jwt.verify(token, process.env.JWT_SECRET);
+                const session = await TheUltimateChallenge.findById(decoded.sessionId);
+                if (!session) {
+                    return socket.emit("error", "Session not found");
+                }
+
+                if (data.showTimer === 'SHOW_TIMER') {
+                    // Show timer in paused state, ready to start
+                    session.timer.timerStatus = 'PAUSED';
+                    session.timer.startTime = null;
+                    session.timer.pausedDuration = 0;
+                    session.timer.pausedTime = null;
+                }
+                else if (data.showTimer === 'OFF') {
+                    // Hide timer and reset everything
+                    session.timer.timerStatus = 'NOT_SHOW';
+                    session.timer.startTime = null;
+                    session.timer.pausedDuration = 0;
+                    session.timer.pausedTime = null;
+                }
+
+                await session.save();
+
+                const players = await Player.find({ session: session._id }).select('socketId').lean();
+                const admins = await Admin.find({ session: session._id }).select('socketId').lean();
+
+                const recipientSocketIds = [
+                    ...players.map(p => p.socketId).filter(id => id),
+                    ...admins.map(a => a.socketId).filter(id => id)
+                ];
+
+                console.log("Recipient Socket IDs:", recipientSocketIds);
+                recipientSocketIds.forEach(socketId => {
+                    console.log("Emitting to socket ID:", socketId);
+                    io.to(socketId).emit("timer-visibility-toggled", {
+                        message: `Timer visibility toggled to ${data.showTimer}`,
+                        timerStatus: session.timer.timerStatus,
+                        time: new Date().toISOString()
+                    });
+                });
+
+            } catch (error) {
+                console.error("Error toggling timer visibility:", error);
+                socket.emit("error", "Failed to toggle timer visibility");
+            }
+        });
+
+
         socket.on('disconnect', async () => {
             console.log('A user disconnected', socket.id);
 
@@ -703,6 +913,9 @@ function setupSocket(io) {
                 console.error("Error during disconnect cleanup:", err);
             }
         });
+
+
+
 
     });
 }

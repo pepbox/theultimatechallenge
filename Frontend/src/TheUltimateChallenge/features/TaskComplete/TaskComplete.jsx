@@ -17,7 +17,7 @@ function TaskComplete() {
             style={{ height: `${window.innerHeight}px` }}
         >
             <div className='flex flex-col items-center justify-center'>
-                <h1 className='text-white text-2xl mb-4 font-mono'>{message}</h1>
+                <h1 className='text-white text-2xl mb-4 font-mono text-center'>{message}</h1>
 
                 <img src={Check} className='' />
 

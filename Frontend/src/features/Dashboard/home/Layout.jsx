@@ -31,7 +31,7 @@ function Layout() {
   const [gameLevel, setGameLevel] = useState(1);
   const [maxGameLevels, setMaxGameLevels] = useState();
   const [settingOpen, isSettingOpen] = useState(false);
-  const socketRef = useRef(null);
+  const socket= getSocket();
   const { sessionId } = useParams();
   const tableRef = useRef(null);
   const {timerStatus,toggleTimerVisibility}=useTimer({ sessionId });
@@ -151,8 +151,8 @@ function Layout() {
 
   const confirmStatusChange = () => {
     if (pendingStatusChange !== null) {
-      if (socketRef.current) {
-        socketRef.current.emit(
+      if (socket) {
+        socket.emit(
           "toggle-session-pause",
           { isPaused: pendingStatusChange },
           (response) => {

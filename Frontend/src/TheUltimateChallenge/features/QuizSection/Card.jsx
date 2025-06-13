@@ -199,7 +199,10 @@ const CardList = ({ teamData }) => {
   );
 
   return (
-    <div className="capture flex justify-center mt-[126px] h-[calc(100vh-136px)] overflow-scroll">
+    <div
+      className={`capture flex justify-center mt-[126px] overflow-scroll`}
+      style={{ height: `${window.innerHeight - 136}px` }}
+    >
       <div className="grid grid-cols-[154px_154px] gap-[19px] auto-rows-[154px] mb-2">
         {currentLevelQuestions.map((question) => (
           <Card key={question.id} {...question} />

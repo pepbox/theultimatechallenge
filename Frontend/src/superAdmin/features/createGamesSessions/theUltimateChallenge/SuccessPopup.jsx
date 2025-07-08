@@ -7,8 +7,10 @@ const SuccessPopup = ({ sessionData, onClose, onEdit }) => {
 
   // Construct links using window.location
   const baseUrl = window.location.origin;
-  const playerLink = `${baseUrl}/theultimatechallenge/login/${sessionData.sessionId}`;
-  const adminLink = `${baseUrl}/admin/${sessionData.sessionId}/login`;
+  const playerLink = sessionData.playerGameLink
+  const adminLink = sessionData.adminGameLink;
+  // const playerLink = `${baseUrl}/theultimatechallenge/login/${sessionData.sessionId}`;
+  // const adminLink = `${baseUrl}/admin/${sessionData.sessionId}/login`;
 
   const copyToClipboard = (text, field) => {
     navigator.clipboard.writeText(text);

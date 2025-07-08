@@ -16,7 +16,7 @@ const io = new Server(server);
 app.use(cookieParser());
 
 app.use(cors({
-  origin: ['http://localhost:5173','http://localhost:4173'],
+  origin: ['http://localhost:5174','http://localhost:4173'],
   credentials: true // if you plan to send cookies or auth headers
 }));
 

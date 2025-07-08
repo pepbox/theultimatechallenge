@@ -1,4 +1,4 @@
-import  { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import CachedRoundedIcon from "@mui/icons-material/CachedRounded";
 import LiveCard from "./LiveCard";
 import GameHistory from "./GameHistory";
@@ -15,7 +15,7 @@ const RotatingIcon = styled(CachedRoundedIcon)(({ rotating }) => ({
 
 function Homepage() {
   const [createSessionOpen, setCreateSessionOpen] = useState(false);
-  const [activeGame, setActiveGame] = useState("ultimate-challenge");
+  const [activeGame, setActiveGame] = useState("the-ultimate-challenge");
   const [liveGames, setLiveGames] = useState([]);
   const [filteredLiveGames, setFilteredLiveGames] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -124,7 +124,7 @@ function Homepage() {
               <button
                 className="w-[100%] h-[34px] cursor-pointer rounded-[12px] border mt-4 hover:bg-gray-100"
                 onClick={() => {
-                  setActiveGame("ultimate-challenge");
+                  setActiveGame("the-ultimate-challenge");
                   setCreateSessionOpen(true);
                 }}
               >
@@ -132,18 +132,20 @@ function Homepage() {
               </button>
             </div>
 
-            {/* <div className='w-[305px] h-[112px] bg-[#8C8C8C1A] rounded-[20px] p-4 '>
-              <div><p className='font-bold text-[16px]'>Team Naming</p></div>
-              <button 
-                className='w-[100%] h-[34px] rounded-[12px] border mt-4 hover:bg-gray-100'
+            <div className="w-[305px] h-[112px] bg-[#8C8C8C1A] rounded-[20px] p-4 ">
+              <div>
+                <p className="font-bold text-[16px]">Team Formation</p>
+              </div>
+              <button
+                className="w-[100%] h-[34px] rounded-[12px] border mt-4 hover:bg-gray-100"
                 onClick={() => {
-                  setActiveGame('team-naming');
+                  setActiveGame("team-formation");
                   setCreateSessionOpen(true);
                 }}
               >
                 Create New Session
               </button>
-            </div> */}
+            </div>
           </div>
 
           <div className="font-sans font-bold my-3">Live Games</div>
@@ -152,7 +154,11 @@ function Homepage() {
               <p>Loading...</p>
             ) : filteredLiveGames.length ? (
               filteredLiveGames.map((game, index) => (
-                <LiveCard handleRefresh={handleRefresh} key={index} game={game} />
+                <LiveCard
+                  handleRefresh={handleRefresh}
+                  key={index}
+                  game={game}
+                />
               ))
             ) : (
               <div>No Games Found</div>
@@ -189,6 +195,7 @@ function Homepage() {
       <CreateSessionPopup
         isOpen={createSessionOpen}
         onClose={() => setCreateSessionOpen(false)}
+        activeGame={activeGame}
         // onSubmit={handleCreateSession}
       />
     </div>

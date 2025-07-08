@@ -235,9 +235,9 @@ const joinSession = async (req, res) => {
     }
 
     // Check if team exists or create new one
-    let team = await Team.findOne({ 
-      session: sessionId, 
-      name: teamName 
+    let team = await Team.findOne({
+      session: sessionId,
+      name: teamName
     });
 
     let isCaptain = false;
@@ -273,7 +273,7 @@ const joinSession = async (req, res) => {
     // Initialize question status for team if new
     if (team.questionStatus.length === 0) {
       const questionStatus = [];
-      
+
       // Add questions from all levels
       for (let level = 1; level <= session.numberOfLevels; level++) {
         const levelQuestions = session.selectedQuestions[level] || [];
@@ -361,7 +361,7 @@ const updateSocketId = async (req, res) => {
     player.socketId = socketId;
     await player.save();
 
-    return res.status(200).json({ 
+    return res.status(200).json({
       success: true,
       message: 'Socket ID updated successfully',
       player: {
@@ -380,8 +380,63 @@ const updateSocketId = async (req, res) => {
   }
 };
 
+
+const restoreCookie = async (req, res) => {
+  const { token } = req.body;
+  if (!token) {
+    return res.status(400).json({
+      success: false,
+      message: 'Token is required'
+    });
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    if (!decoded.playerId) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid token'
+      });
+    }
+
+    const player = await Player.findById(decoded.playerId);
+    if (!player) {
+      return res.status(404).json({
+        success: false,
+        message: 'Player not found'
+      });
+    }
+
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 24 * 60 * 60 * 1000
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: 'Cookie restored successfully',
+      sessionId: player.session,
+      player: {
+        id: player._id,
+        name: player.name,
+        socketId: player.socketId
+      }
+    });
+  }
+  catch (error) {
+    console.error('Error restoring cookie:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to restore cookie',
+      error: error.message
+    });
+  }
+}
+
 module.exports = {
   getNumberOfTeams,
   joinSession,
-  updateSocketId
+  updateSocketId,
+  restoreCookie
 };

@@ -3,6 +3,7 @@ const TheUltimateChallenge = require('../../../theUltimateChallenge/models/TheUl
 const SessionHistory = require('../../../../models/sessionHistorySchema');
 const Question = require('../../../theUltimateChallenge/models/questionSchema');
 const Admin = require('../../admin/models/adminSchema');
+const axios = require('axios');
 
 const createSession = async (req, res) => {
   try {
@@ -15,7 +16,7 @@ const createSession = async (req, res) => {
       numberOfLevels,
       questionsPerLevel,
       isCustomQuestionSelection = false,
-      selectedQuestions
+      selectedQuestions,
     } = req.body;
 
     // Validate required fields
@@ -112,6 +113,29 @@ const createSession = async (req, res) => {
 
     // Save session
     const savedSession = await session.save();
+    let playerGameLink = `${process.env.FRONTEND_URL}/theultimatechallenge/login/${savedSession._id.toString()}`;
+    let adminGameLink = `${process.env.FRONTEND_URL}/admin/${savedSession._id.toString()}/login`;
+
+    if (teamFormationGame) {
+      const teamFormationSessionResponse = await axios.post(`${process.env.TEAM_FORMATION_SERVER_URL}/create-session`, {
+        gameSessionId: savedSession._id.toString(),
+        gameLink: `${process.env.FRONTEND_URL}/theultimatechallenge/login/${savedSession._id.toString()}`,
+        gameAdminLink: `${process.env.FRONTEND_URL}/admin/${savedSession._id.toString()}/login`,
+        gameServerUrl: process.env.SERVER_URL,
+        pin: password,
+      });
+      if (teamFormationSessionResponse.status !== 201) {
+        return res.status(500).json({
+          success: false,
+          error: 'Failed to create team formation session'
+        });
+      }
+      const teamFormationSessionId = teamFormationSessionResponse.data.data._id;
+      savedSession.teamFormationSessionId = teamFormationSessionId;
+      playerGameLink = `${process.env.TEAM_FORMATION_LINK}/user/${teamFormationSessionId}/login`;
+      adminGameLink = `${process.env.TEAM_FORMATION_LINK}/admin/${teamFormationSessionId}/login`;
+      await savedSession.save();
+    }
 
     // Create session history entry
     const sessionHistory = new SessionHistory({
@@ -140,7 +164,7 @@ const createSession = async (req, res) => {
     return res.status(201).json({
       success: true,
       data: {
-        session: savedSession,
+        session: { ...savedSession, playerGameLink, adminGameLink },
         sessionHistory,
         admin: newAdmin
       },

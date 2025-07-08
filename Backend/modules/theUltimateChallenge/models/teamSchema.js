@@ -6,9 +6,8 @@ const teamSchema = new mongoose.Schema({
 
   caption: {
     type: String, 
-    
   },
-
+  currentLevel: { type: Number, default: 1 },
   questionStatus: [{
     question: { type: mongoose.Schema.Types.ObjectId, ref: 'Question' },
     status: { type: String, enum: ['available', 'attending', 'done'], default: 'available' },

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import SuccessPopup from "./SuccessPopup";
+import SuccessPopup from "../createGamesSessions/theUltimateChallenge/SuccessPopup";
 import EditSessionPopup from "./EditSessionPopup";
 import { Edit2 } from "lucide-react";
 
@@ -12,6 +12,8 @@ function LiveCard({ game, handleRefresh }) {
     sessionName: game.companyName,
     adminName: game.admin,
     adminPassword: game.passCode,
+    playerGameLink: game.playerGameLink,
+    adminGameLink: game.adminGameLink,
   };
 
   const copyToClipboard = () => {

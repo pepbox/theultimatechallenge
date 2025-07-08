@@ -2,7 +2,7 @@ const express = require('express');
 const multer = require('multer');
 const { addQuestion, addMultipleQuestions, getAllQuestions } = require('../controllers/questionController');
 
-const { joinSession, getNumberOfTeams, updateSocketId } = require('../controllers/loginController');
+const { joinSession, getNumberOfTeams, updateSocketId, restoreCookie } = require('../controllers/loginController');
 const { getTeamData } = require('../controllers/quizSectionController');
 const { uploadFileAnswer, submitTextAnswer } = require("../controllers/taskCompleteController");
 const { getTimerStatus } = require('../controllers/timerController');
@@ -17,7 +17,9 @@ router.post('/addmultiple', addMultipleQuestions);
 router.get('/getquestions', getAllQuestions);
 
 router.post('/totalteams', getNumberOfTeams);
-router.post('/createplayer', joinSession)
+router.post('/createplayer', joinSession);
+router.post("/restore-cookie",restoreCookie);
+
 router.post("/updatesocketid", updateSocketId)
 
 const upload = multer({

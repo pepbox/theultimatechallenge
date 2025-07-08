@@ -5,6 +5,7 @@ const theUltimateChallengeSchema = new mongoose.Schema({
   admin: { type: String, required: true },
   passCode: { type: String, required: true },
   teamFormationGame: { type: Boolean, default: false },
+  teamFormationSessionId: { type: String, default: null },  
   currentLevel:{type:Number,default:1},
   numberOfTeams: { type: Number, required: true },
   numberOfTeamsJoined: { type: Number, default: 0 },

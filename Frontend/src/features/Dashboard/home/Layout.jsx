@@ -15,7 +15,7 @@ import { connectSocket, getSocket } from "../../../services/sockets/admin.js";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { CachedRounded } from "@mui/icons-material";
-import SuccessPopup from "../../../superAdmin/features/home/SuccessPopup.jsx";
+import SuccessPopup from "../../../superAdmin/features/createGamesSessions/theUltimateChallenge/SuccessPopup.jsx";
 import { useDispatch } from "react-redux";
 import { resetAdminState } from "../../../redux/admin/adminSlice.js";
 import useSessionManagement from "../../../hooks/admin/useSessionManagement.js";
@@ -31,10 +31,10 @@ function Layout() {
   const [gameLevel, setGameLevel] = useState(1);
   const [maxGameLevels, setMaxGameLevels] = useState();
   const [settingOpen, isSettingOpen] = useState(false);
-  const socket= getSocket();
+  const socket = getSocket();
   const { sessionId } = useParams();
   const tableRef = useRef(null);
-  const {timerStatus,toggleTimerVisibility}=useTimer({ sessionId });
+  const { timerStatus, toggleTimerVisibility } = useTimer({ sessionId });
 
   const { handleLogout } = useAdminAuth();
 
@@ -59,7 +59,6 @@ function Layout() {
 
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-
   const fetchGameSettingsData = async () => {
     try {
       const response = await axios.get(
@@ -79,6 +78,8 @@ function Layout() {
           sessionName,
           sessionId,
           currentLevel,
+          playerGameLink,
+          adminGameLink,
         } = response.data.data;
         gameStatus.current = isPaused;
         setDisplayStatus(isPaused);
@@ -88,6 +89,8 @@ function Layout() {
           sessionId: sessionId,
           adminName: adminName || "Admin",
           sessionName: sessionName || "Session",
+          playerGameLink: playerGameLink || "",
+          adminGameLink: adminGameLink || "",
         });
       } else {
         console.error(
@@ -202,13 +205,16 @@ function Layout() {
   };
 
   // Callback to update gameLevel and initialize displayStatus
-  const handleLevelUpdate = useCallback((newLevel) => {
-    setGameLevel(newLevel);
-    // Initialize displayStatus from gameStatus.current when receiving initial data
-    if (!pendingStatusChange && gameStatus.current !== null) {
-      setDisplayStatus(gameStatus.current);
-    }
-  }, [pendingStatusChange]);
+  const handleLevelUpdate = useCallback(
+    (newLevel) => {
+      setGameLevel(newLevel);
+      // Initialize displayStatus from gameStatus.current when receiving initial data
+      if (!pendingStatusChange && gameStatus.current !== null) {
+        setDisplayStatus(gameStatus.current);
+      }
+    },
+    [pendingStatusChange]
+  );
 
   const handleRefresh = async () => {
     try {
@@ -224,10 +230,9 @@ function Layout() {
     }
   };
 
-
   const handleToggleTimer = (e) => {
     toggleTimerVisibility(e.target.checked);
-  }
+  };
 
   return (
     <div className="relative font-sans max-w-[1440px] w-[100%] mx-auto mb-10">
@@ -237,7 +242,6 @@ function Layout() {
             <div className="flex items-center gap-7 text-[16px] text-[#111111]">
               <h1 className="text-[24px] font-bold">Admin</h1>
               <button className="text-black">Home</button>
-               
             </div>
           </div>
         </div>
@@ -366,7 +370,10 @@ function Layout() {
           transactionsEnabled={transactionsEnabled}
           maxGameLevels={maxGameLevels}
         />
-        <LeaderBoard isTimerOpen={timerStatus!="NOT_SHOW"} sessionId={sessionId} />
+        <LeaderBoard
+          isTimerOpen={timerStatus != "NOT_SHOW"}
+          sessionId={sessionId}
+        />
       </div>
 
       <GameLevelChangePopup
@@ -386,8 +393,6 @@ function Layout() {
         onClose={closeTransactionPopup}
         onConfirm={confirmTransactionChange}
       />
-
-     
 
       {sessionInfoModal && (
         <SuccessPopup

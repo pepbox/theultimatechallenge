@@ -12,13 +12,29 @@ const handleGetAllLiveGames = async (req, res) => {
             });
         }
 
+
         // For each game find the number of players in each session
         const gamesWithPlayerCount = await Promise.all(allGames.map(async (game) => {
             const playerCount = await Player.find({ session: game._id })
                 .countDocuments();
+
+            let playerGameLink;
+            let adminGameLink;
+            if (game.teamFormationGame) {
+                const teamFormationSessionId = game.teamFormationSessionId;
+                playerGameLink = `${process.env.TEAM_FORMATION_LINK}/user/${teamFormationSessionId}/login`;
+                adminGameLink = `${process.env.TEAM_FORMATION_LINK}/admin/${teamFormationSessionId}/login`;
+            }
+            else {
+                playerGameLink = `${process.env.FRONTEND_URL}/theultimatechallenge/login/${game._id.toString()}`;
+                adminGameLink = `${process.env.FRONTEND_URL}/admin/${game._id.toString()}/login`;
+            }
+
             return {
                 ...game.toObject(),
-                playerCount
+                playerCount,
+                playerGameLink,
+                adminGameLink
             };
         }
         ));

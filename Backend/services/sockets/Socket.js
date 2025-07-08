@@ -569,6 +569,8 @@ function setupSocket(io) {
                     model: "Question"
                 });
 
+                console.log("Teams",teams)
+
                 if (!teams || teams.length === 0) {
                     if (callback) callback({ success: false, error: "No teams found for this session" });
                     return socket.emit("error", "No teams found for this session");

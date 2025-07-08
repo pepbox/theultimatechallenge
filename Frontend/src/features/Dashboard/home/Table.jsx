@@ -67,7 +67,7 @@ const Table = forwardRef(
 
         return {
           id: team.teamInfo.id,
-          name: team.teamInfo.name.split("Team")[1],
+          name: team.teamInfo.name,
           players: team.players.length,
           progress: progressItems,
           score: team.teamInfo.teamScore,
@@ -240,6 +240,8 @@ const Table = forwardRef(
       setShowTeamInfoModal(true);
     };
 
+
+    console.log(sortedTeamData);
     return (
       <>
         <div className="w-[70%] overflow-x-auto font-sans">
@@ -251,7 +253,7 @@ const Table = forwardRef(
                     className="flex justify-center items-center text-[12px] text-[#111111]/50 cursor-pointer hover:text-[#111111]/70 transition-colors"
                     onClick={() => handleSort("name")}
                   >
-                    <span>Team Id</span>
+                    <span>Team Name</span>
                     <div className="ml-1">{renderSortArrow("name")}</div>
                   </div>
                 </th>

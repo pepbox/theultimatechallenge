@@ -1,0 +1,1 @@
+   navigate(`/admin/${response.data.sessionId}/`);

@@ -36,7 +36,7 @@ const loginAdmin = async (req, res) => {
       });
     }
 
-    if(session.sessionEnded){
+    if (session.sessionEnded) {
       return res.status(400).json({
         success: false,
         error: 'Session has already ended'
@@ -44,9 +44,9 @@ const loginAdmin = async (req, res) => {
     }
 
     // Find the admin by session ID and passCode
-    const admin = await Admin.findOne({ 
+    const admin = await Admin.findOne({
       session: sessionId,
-      passCode: passCode 
+      passCode: passCode
     });
 
     if (!admin) {
@@ -92,7 +92,7 @@ const loginAdmin = async (req, res) => {
 
   } catch (error) {
     console.error('Error in admin login:', error);
-    
+
     // Handle specific MongoDB errors
     if (error.name === 'CastError') {
       return res.status(400).json({
@@ -100,7 +100,7 @@ const loginAdmin = async (req, res) => {
         error: 'Invalid session ID format'
       });
     }
-    
+
     return res.status(500).json({
       success: false,
       error: 'Internal server error'
@@ -201,9 +201,9 @@ const validateAdminSession = async (req, res) => {
     // Get JWT token from cookie
     const token = req.cookies.adminToken;
 
-    const {sessionId:adminSessionId}=req.query;
+    const { sessionId: adminSessionId } = req.query;
 
-    
+
     if (!token) {
       return res.status(401).json({
         success: false,
@@ -236,7 +236,7 @@ const validateAdminSession = async (req, res) => {
       });
     }
 
-    if(admin.session.toString() !== session._id.toString()) {
+    if (admin.session.toString() !== session._id.toString()) {
       return res.status(403).json({
         success: false,
         error: 'Admin does not belong to this session'
@@ -263,9 +263,63 @@ const validateAdminSession = async (req, res) => {
   }
 };
 
+const restoreCookie = async (req, res) => {
+  const { token } = req.body;
+  if (!token) {
+    return res.status(400).json({
+      success: false,
+      message: 'Token is required'
+    });
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    if (!decoded.adminId) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid token'
+      });
+    }
+
+
+    const admin = await Admin.findById(decoded.adminId);
+    if (!admin) {
+      return res.status(404).json({
+        success: false,
+        message: 'Player not found'
+      });
+    }
+
+    const cookieOptions = {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 24 * 60 * 60 * 1000 // 1 day
+    };
+
+    // Set the JWT as HTTP-only cookie
+    res.cookie('adminToken', token, cookieOptions);
+
+    return res.status(200).json({
+      success: true,
+      message: 'Cookie restored successfully',
+      sessionId: admin.session,
+    });
+  }
+  catch (error) {
+    console.error('Error restoring cookie:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to restore cookie',
+      error: error.message
+    });
+  }
+}
+
 module.exports = {
   loginAdmin,
   logoutAdmin,
   updateSocketId,
-  validateAdminSession
+  validateAdminSession,
+  restoreCookie
 };

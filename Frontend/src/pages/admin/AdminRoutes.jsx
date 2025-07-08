@@ -1,5 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { Routes, Route, useParams, Navigate } from "react-router-dom";
+import {
+  Routes,
+  Route,
+  useParams,
+  Navigate,
+  useNavigate,
+  useLocation,
+} from "react-router-dom";
 import PepBoxAdminDashboard from "../../features/Dashboard/home/Layout.jsx";
 import History from "../../features/Dashboard/history/History.jsx";
 import GameHistory from "../../features/Dashboard/gameHistory/GameHistory.jsx";
@@ -18,9 +25,54 @@ import Loader from "../../components/Loader.jsx";
 function AdminRoutes() {
   const { sessionId } = useParams();
   const dispatch = useDispatch();
+  const [loading, setLoading] = useState(false);
   const { isLoading, authenticated } = useSelector((state) => state.admin);
   const [socketConnected, setSocketConnected] = useState(false);
   const [initializationError, setInitializationError] = useState(null);
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const restoreCookie = async (token) => {
+    try {
+      setLoading(true);
+      const response = await axios.post(
+        `${import.meta.env.VITE_BACKEND_BASE_URL}/api/v1/admin/restore-cookie`,
+        {
+          token,
+        },
+        {
+          withCredentials: true,
+        }
+      );
+      console.log("Response from restore-cookie:", response.data);
+      if (response.status === 200 && response.data.success) {
+        dispatch(
+          setAdmin({
+            authenticated: true,
+            sessionId: response.data.sessionId,
+            isLoading: false,
+          })
+        );
+        navigate(`/admin/${response.data.sessionId}/`);
+      } else {
+        console.error("Failed to restore cookie:", response.data.error);
+      }
+    } catch (error) {
+      console.error("Error restoring cookie:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+  useEffect(() => {
+    const queryParams = new URLSearchParams(location.search);
+    const token = queryParams.get("token");
+
+    if (!token) {
+      setLoading(false);
+      return;
+    }
+    restoreCookie(token);
+  }, [location.search]);
 
   const handleValidateAdminSession = async () => {
     console.log("Validating admin session with ID:", sessionId);
@@ -54,7 +106,7 @@ function AdminRoutes() {
   const handleSocketConnection = async () => {
     try {
       // Wait for the socket to actually connect
-      await connectSocket(); 
+      await connectSocket();
       setSocketConnected(true);
       console.log("Socket connected successfully");
       return true;
@@ -85,7 +137,7 @@ function AdminRoutes() {
       disconnectSocket();
       setSocketConnected(false);
     };
-  }, [sessionId]);
+  }, [sessionId, authenticated]);
 
   // Show error if initialization failed
   if (initializationError) {
@@ -93,7 +145,7 @@ function AdminRoutes() {
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
           <p className="text-red-500 mb-4">{initializationError}</p>
-          <button 
+          <button
             onClick={() => {
               setInitializationError(null);
               window.location.reload();
@@ -108,7 +160,7 @@ function AdminRoutes() {
   }
 
   // Show loader while validating session or connecting socket
-  if (isLoading || (authenticated && !socketConnected)) {
+  if (isLoading || loading || (authenticated && !socketConnected)) {
     return <Loader />;
   }
 

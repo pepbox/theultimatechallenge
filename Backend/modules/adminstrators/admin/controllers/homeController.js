@@ -125,6 +125,10 @@ const getGameSettingsData = async (req, res) => {
             return res.status(404).json({ error: 'Session not found' });
         }
 
+        const playerGameLink = `${process.env.FRONTEND_URL}/theultimatechallenge/login/${session._id.toString()}`;
+        const adminGameLink = `${process.env.FRONTEND_URL}/admin/${session._id.toString()}/login`;
+
+
         return res.status(200).json({
             success: true,
             data: {
@@ -133,7 +137,9 @@ const getGameSettingsData = async (req, res) => {
                 isPaused: session.isPaused,
                 adminName: session.admin,
                 sessionName: session.companyName,
-                currentLevel:session.currentLevel
+                currentLevel: session.currentLevel,
+                playerGameLink,
+                adminGameLink,
             }
         });
     }

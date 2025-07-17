@@ -240,146 +240,260 @@ const Table = forwardRef(
       setShowTeamInfoModal(true);
     };
 
-
     console.log(sortedTeamData);
     return (
       <>
-        <div className="w-[70%] overflow-x-auto font-sans">
-          <table className="w-full border-collapse">
-            <thead>
-              <tr className="text-center">
-                <th className="h-12">
-                  <div
-                    className="flex justify-center items-center text-[12px] text-[#111111]/50 cursor-pointer hover:text-[#111111]/70 transition-colors"
-                    onClick={() => handleSort("name")}
-                  >
-                    <span>Team Name</span>
-                    <div className="ml-1">{renderSortArrow("name")}</div>
-                  </div>
-                </th>
-                <th className="h-12">
-                  <div className="flex justify-center items-center text-[12px] text-[#111111]/50">
-                    Players
-                  </div>
-                </th>
-                <th className="h-12">
-                  <div className="flex justify-center items-center text-[12px] text-[#111111]/50">
-                    Progress
-                  </div>
-                </th>
-                <th className="h-12">
-                  <div
-                    className="flex justify-center items-center text-[12px] text-[#111111]/50 cursor-pointer hover:text-[#111111]/70 transition-colors"
-                    onClick={() => handleSort("score")}
-                  >
-                    <span>Score</span>
-                    <div className="ml-1">{renderSortArrow("score")}</div>
-                  </div>
-                </th>
-                <th className="h-12">
-                  <div className="flex justify-center items-center text-[12px] text-[#111111]/50">
-                    Change Score
-                  </div>
-                </th>
-                <th className="h-12">
-                  <div className="flex justify-center items-center text-[12px] text-[#111111]/50">
-                    Playing Status
-                  </div>
-                </th>
-                <th className="h-12">
-                  <div className="flex justify-center items-center text-[12px] text-[#111111]/50">
-                    Submissions
-                  </div>
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {sortedTeamData.map((team, index) => (
-                <tr
-                  key={team.id}
-                  className="even:bg-gray-50 text-center rounded-2xl"
-                >
-                  <td>
+        <div className="w-full max-w-full overflow-hidden font-sans">
+          {/* Desktop/Tablet Table View */}
+          <div className="hidden md:block overflow-x-auto">
+            <table className="w-full border-collapse min-w-[800px]">
+              <thead>
+                <tr className="text-center">
+                  <th className="h-12 px-2">
                     <div
-                      onClick={() =>
-                        handleShowTeamInfo({
-                          teamId: team.id,
-                          teamName: team.name,
-                        })
-                      }
-                      className="flex justify-center items-center h-16 cursor-pointer rounded-l-2xl text-[14px] underline"
+                      className="flex justify-center items-center text-[12px] text-[#111111]/50 cursor-pointer hover:text-[#111111]/70 transition-colors"
+                      onClick={() => handleSort("name")}
                     >
-                      {team.name}
+                      <span>Team Name</span>
+                      <div className="ml-1">{renderSortArrow("name")}</div>
                     </div>
-                  </td>
-                  <td>
-                    <div className="flex justify-center items-center h-16 text-[14px]">
-                      {team.players}
+                  </th>
+                  <th className="h-12 px-2">
+                    <div className="flex justify-center items-center text-[12px] text-[#111111]/50">
+                      Players
                     </div>
-                  </td>
-                  <td>
-                    <div className="flex flex-col items-center justify-center space-y-1 h-full py-2">
-                      {team.progress.map((p) => (
-                        <div
-                          key={p.label}
-                          className="flex items-center space-x-2 text-[14px]"
-                        >
-                          <span className="text-[14px]">{p.label}</span>
-                          <div className="w-24 h-2.5 bg-gray-200 rounded-full relative">
-                            <div
-                              className={`h-2.5 ${p.color} rounded-full`}
-                              style={{ width: `${(p.value / p.total) * 100}%` }}
-                            />
-                          </div>
-                          <span className="text-[14px]">{`${p.value}/${p.total}`}</span>
-                        </div>
-                      ))}
+                  </th>
+                  <th className="h-12 px-2">
+                    <div className="flex justify-center items-center text-[12px] text-[#111111]/50">
+                      Progress
                     </div>
-                  </td>
-                  <td>
-                    <div className="flex justify-center items-center h-16 text-[14px]">
-                      {team.score.toLocaleString()}
+                  </th>
+                  <th className="h-12 px-2">
+                    <div
+                      className="flex justify-center items-center text-[12px] text-[#111111]/50 cursor-pointer hover:text-[#111111]/70 transition-colors"
+                      onClick={() => handleSort("score")}
+                    >
+                      <span>Score</span>
+                      <div className="ml-1">{renderSortArrow("score")}</div>
                     </div>
-                  </td>
-                  <td>
-                    <div className="flex justify-center items-center h-16 text-[14px]">
-                      <Pencil
-                        size={16}
-                        className={`hover:scale-115 transform transition-transform duration-200 cursor-pointer   ${
-                          transactionsEnabled
-                            ? "cursor-pointer text-blue-600 hover:text-blue-800 hover:scale-115"
-                            : "cursor-not-allowed text-gray-400"
-                        }`}
-                        onClick={() => handleEditScore(team)}
-                      />
+                  </th>
+                  <th className="h-12 px-2">
+                    <div className="flex justify-center items-center text-[12px] text-[#111111]/50">
+                      Change Score
                     </div>
-                  </td>
-                  <td>
-                    <div className="flex justify-center items-center h-16 text-[14px]">
-                      <Lock
-                        size={16}
-                        className={`transform transition-transform duration-200 ${
-                          transactionsEnabled
-                            ? "cursor-pointer text-orange-600 hover:text-orange-800 hover:scale-115"
-                            : "cursor-not-allowed text-gray-400"
-                        }`}
-                        onClick={() => handleShowStatus(team)}
-                      />
+                  </th>
+                  <th className="h-12 px-2">
+                    <div className="flex justify-center items-center text-[12px] text-[#111111]/50">
+                      Playing Status
                     </div>
-                  </td>
-                  <td>
-                    <div className="flex justify-center items-center h-16 text-[14px]">
-                      <Eye
-                        size={16}
-                        className="hover:scale-115 transform transition-transform duration-200 cursor-pointer text-green-600 hover:text-green-800"
-                        onClick={() => handleShowSubmissions(team)}
-                      />
+                  </th>
+                  <th className="h-12 px-2">
+                    <div className="flex justify-center items-center text-[12px] text-[#111111]/50">
+                      Submissions
                     </div>
-                  </td>
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {sortedTeamData.map((team, index) => (
+                  <tr
+                    key={team.id}
+                    className="even:bg-gray-50 text-center rounded-2xl"
+                  >
+                    <td className="px-2">
+                      <div
+                        onClick={() =>
+                          handleShowTeamInfo({
+                            teamId: team.id,
+                            teamName: team.name,
+                          })
+                        }
+                        className="flex justify-center items-center h-16 cursor-pointer rounded-l-2xl text-[14px] underline"
+                      >
+                        {team.name}
+                      </div>
+                    </td>
+                    <td className="px-2">
+                      <div className="flex justify-center items-center h-16 text-[14px]">
+                        {team.players}
+                      </div>
+                    </td>
+                    <td className="px-2">
+                      <div className="flex flex-col items-center justify-center space-y-1 h-full py-2">
+                        {team.progress.map((p) => (
+                          <div
+                            key={p.label}
+                            className="flex items-center space-x-2 text-[14px]"
+                          >
+                            <span className="text-[14px]">{p.label}</span>
+                            <div className="w-24 h-2.5 bg-gray-200 rounded-full relative">
+                              <div
+                                className={`h-2.5 ${p.color} rounded-full`}
+                                style={{
+                                  width: `${(p.value / p.total) * 100}%`,
+                                }}
+                              />
+                            </div>
+                            <span className="text-[14px]">{`${p.value}/${p.total}`}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </td>
+                    <td className="px-2">
+                      <div className="flex justify-center items-center h-16 text-[14px]">
+                        {team.score.toLocaleString()}
+                      </div>
+                    </td>
+                    <td className="px-2">
+                      <div className="flex justify-center items-center h-16 text-[14px]">
+                        <Pencil
+                          size={16}
+                          className={`hover:scale-115 transform transition-transform duration-200 cursor-pointer   ${
+                            transactionsEnabled
+                              ? "cursor-pointer text-blue-600 hover:text-blue-800 hover:scale-115"
+                              : "cursor-not-allowed text-gray-400"
+                          }`}
+                          onClick={() => handleEditScore(team)}
+                        />
+                      </div>
+                    </td>
+                    <td className="px-2">
+                      <div className="flex justify-center items-center h-16 text-[14px]">
+                        <Lock
+                          size={16}
+                          className={`transform transition-transform duration-200 ${
+                            transactionsEnabled
+                              ? "cursor-pointer text-orange-600 hover:text-orange-800 hover:scale-115"
+                              : "cursor-not-allowed text-gray-400"
+                          }`}
+                          onClick={() => handleShowStatus(team)}
+                        />
+                      </div>
+                    </td>
+                    <td className="px-2">
+                      <div className="flex justify-center items-center h-16 text-[14px]">
+                        <Eye
+                          size={16}
+                          className="hover:scale-115 transform transition-transform duration-200 cursor-pointer text-green-600 hover:text-green-800"
+                          onClick={() => handleShowSubmissions(team)}
+                        />
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Mobile Card View */}
+          <div className="md:hidden space-y-4">
+            {/* Mobile Header with Sort Options */}
+            <div className="flex justify-between items-center px-4 py-2 bg-gray-50 rounded-lg">
+              <div
+                className="flex items-center text-sm text-[#111111]/70 cursor-pointer hover:text-[#111111] transition-colors"
+                onClick={() => handleSort("name")}
+              >
+                <span>Sort by Name</span>
+                <div className="ml-1">{renderSortArrow("name")}</div>
+              </div>
+              <div
+                className="flex items-center text-sm text-[#111111]/70 cursor-pointer hover:text-[#111111] transition-colors"
+                onClick={() => handleSort("score")}
+              >
+                <span>Sort by Score</span>
+                <div className="ml-1">{renderSortArrow("score")}</div>
+              </div>
+            </div>
+
+            {/* Mobile Cards */}
+            {sortedTeamData.map((team, index) => (
+              <div
+                key={team.id}
+                className="bg-white border border-gray-200 rounded-lg shadow-sm p-4 space-y-3"
+              >
+                {/* Team Name */}
+                <div className="flex justify-between items-center">
+                  <div
+                    onClick={() =>
+                      handleShowTeamInfo({
+                        teamId: team.id,
+                        teamName: team.name,
+                      })
+                    }
+                    className="text-lg font-semibold text-blue-600 underline cursor-pointer"
+                  >
+                    {team.name}
+                  </div>
+                  <div className="text-sm text-gray-600">
+                    {team.players} players
+                  </div>
+                </div>
+
+                {/* Score */}
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-600">Score:</span>
+                  <span className="text-lg font-semibold">
+                    {team.score.toLocaleString()}
+                  </span>
+                </div>
+
+                {/* Progress */}
+                <div className="space-y-2">
+                  <span className="text-sm text-gray-600">Progress:</span>
+                  {team.progress.map((p) => (
+                    <div key={p.label} className="space-y-1">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm">{p.label}</span>
+                        <span className="text-sm">{`${p.value}/${p.total}`}</span>
+                      </div>
+                      <div className="w-full h-2 bg-gray-200 rounded-full">
+                        <div
+                          className={`h-2 ${p.color} rounded-full`}
+                          style={{ width: `${(p.value / p.total) * 100}%` }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Actions */}
+                <div className="flex justify-around items-center pt-2 border-t border-gray-100">
+                  <div className="flex flex-col items-center space-y-1">
+                    <Pencil
+                      size={20}
+                      className={`transform transition-transform duration-200 ${
+                        transactionsEnabled
+                          ? "cursor-pointer text-blue-600 hover:text-blue-800 hover:scale-115"
+                          : "cursor-not-allowed text-gray-400"
+                      }`}
+                      onClick={() => handleEditScore(team)}
+                    />
+                    <span className="text-xs text-gray-500">Edit Score</span>
+                  </div>
+                  <div className="flex flex-col items-center space-y-1">
+                    <Lock
+                      size={20}
+                      className={`transform transition-transform duration-200 ${
+                        transactionsEnabled
+                          ? "cursor-pointer text-orange-600 hover:text-orange-800 hover:scale-115"
+                          : "cursor-not-allowed text-gray-400"
+                      }`}
+                      onClick={() => handleShowStatus(team)}
+                    />
+                    <span className="text-xs text-gray-500">Status</span>
+                  </div>
+                  <div className="flex flex-col items-center space-y-1">
+                    <Eye
+                      size={20}
+                      className="transform transition-transform duration-200 cursor-pointer text-green-600 hover:text-green-800 hover:scale-115"
+                      onClick={() => handleShowSubmissions(team)}
+                    />
+                    <span className="text-xs text-gray-500">Submissions</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* Edit Score Modal */}

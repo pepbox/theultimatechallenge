@@ -235,28 +235,26 @@ function Layout() {
   };
 
   return (
-    <div className="relative font-sans max-w-[1440px] w-[100%] mx-auto mb-10">
-      <div className="w-[80%] mx-auto">
+    <div className="relative font-sans max-w-[1440px] w-full mx-auto mb-10 px-4 sm:px-6 lg:px-8">
+      <div className="w-full max-w-6xl mx-auto">
         <div>
           <div className="h-[60px] flex items-center">
-            <div className="flex items-center gap-7 text-[16px] text-[#111111]">
-              <h1 className="text-[24px] font-bold">Admin</h1>
+            <div className="flex items-center gap-4 sm:gap-7 text-sm sm:text-base text-[#111111]">
+              <h1 className="text-xl sm:text-2xl font-bold">Admin</h1>
               <button className="text-black">Home</button>
             </div>
           </div>
         </div>
       </div>
-      <div className="bg-[#FCA61E]/10 p-4">
-        {/* bold */}
-        <h1 className="text-center text-2xl font-bold">
+      <div className="bg-[#FCA61E]/10 p-4 sm:p-6">
+        <h1 className="text-center text-xl sm:text-2xl font-bold">
           {sessionInfo.sessionName}
         </h1>
-        <h2 className="text-center">Admin : {sessionInfo.adminName}</h2>
-        <div className="w-[80%] h-[100%] mt-4 mx-auto flex items-center justify-between">
-          <div className="w-[337px] h-[40px] flex gap-[16px] text-[16px]">
-            {/* <button className="bg-[#111111] h-[40px] w-[146px] rounded-[8px] text-white hover:scale-105 transform transition-transform duration-200">
-              Reset Session
-            </button> */}
+        <h2 className="text-center text-sm sm:text-base">
+          Admin : {sessionInfo.adminName}
+        </h2>
+        <div className="w-full max-w-6xl mt-4 mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex gap-4 text-sm sm:text-base">
             <button
               onClick={() => setEndSessionModal(true)}
               className="bg-[#111111] h-[40px] w-[175px] rounded-[8px] text-white hover:scale-105 transform transition-transform duration-200 cursor-pointer"
@@ -264,8 +262,8 @@ function Layout() {
               End Session
             </button>
           </div>
-          <div className="flex">
-            <div className="mr-4 cursor-pointer" onClick={handleRefresh}>
+          <div className="flex items-center gap-4">
+            <div className="cursor-pointer" onClick={handleRefresh}>
               <RotatingIcon rotating={isRefreshing ? 1 : 0} />
             </div>
             <div
@@ -276,14 +274,7 @@ function Layout() {
             >
               <MoreVertIcon className="w-[32px] h-[32px] hover:scale-115 transform transition-transform duration-200" />
               {settingOpen && (
-                <div className="absolute w-[176px] bg-white shadow-md rounded-[12px] top-full mt-2 font-sans flex flex-col gap-[8px] p-[8px] z-10">
-                  {/* <div className="w-[160px] h-[40px] font-medium flex justify-between hover:bg-slate-100 rounded-md px-2">
-                    <div className="self-center">History</div>
-                    <div className="self-center">&gt;</div>
-                  </div>
-                  <div className="w-[160px] h-[40px] font-medium flex items-center px-2 hover:bg-slate-100 rounded-md">
-                    Export
-                  </div> */}
+                <div className="absolute w-[176px] bg-white shadow-md rounded-[12px] top-full mt-2 font-sans flex flex-col gap-[8px] p-[8px] z-10 right-0">
                   <div
                     className="w-[160px] h-[40px] font-medium flex items-center px-2 hover:bg-slate-100 rounded-md cursor-pointer"
                     onClick={() => setSessionInfoModal(true)}
@@ -302,12 +293,12 @@ function Layout() {
           </div>
         </div>
       </div>
-      <div className="w-[80%] h-[72px] mx-auto flex items-center justify-between">
-        <div className="w-[223px] h-[40px] flex justify-between">
-          <h2 className="text-[16px] text-center self-center">Current Level</h2>
+      <div className="w-full max-w-6xl mx-auto flex flex-col lg:flex-row items-center justify-between gap-4 py-4">
+        <div className="flex flex-col sm:flex-row items-center gap-4">
+          <h2 className="text-sm sm:text-base text-center">Current Level</h2>
           <div className="w-[102px] h-[40px] rounded-[32px] bg-[#FCA61E1A] flex items-center justify-between border border-[#FCA61E1A]">
             <div
-              className={`ml-[5px] w-[30px] h-[30px]  rounded-full flex justify-center items-center hover:scale-105 cursor-pointer ${
+              className={`ml-[5px] w-[30px] h-[30px] rounded-full flex justify-center items-center hover:scale-105 cursor-pointer ${
                 gameLevel <= 1 ? "bg-gray-200" : "bg-orange-200"
               }`}
               onClick={() => handleLevelChange(false)}
@@ -316,7 +307,7 @@ function Layout() {
             </div>
             <div>{gameLevel}</div>
             <div
-              className={`mr-[5px] w-[30px] h-[30px]  rounded-full flex justify-center items-center hover:scale-105 cursor-pointer ${
+              className={`mr-[5px] w-[30px] h-[30px] rounded-full flex justify-center items-center hover:scale-105 cursor-pointer ${
                 gameLevel >= maxGameLevels ? "bg-gray-200" : "bg-orange-300"
               }`}
               onClick={() => handleLevelChange(true)}
@@ -325,55 +316,61 @@ function Layout() {
             </div>
           </div>
         </div>
-        <div className="flex gap-[16px]">
-          <FormControlLabel
-            control={
-              <Switch
-                checked={!displayStatus}
-                onChange={handleGameStatusChange}
-                disabled={pendingStatusChange !== null} // Disable during pending change
-              />
-            }
-            label="Game Status"
-            labelPlacement="start"
-          />
-          <FormControlLabel
-            control={
-              <Switch
-                checked={transactionsEnabled}
-                onChange={handleTransactionChange}
-              />
-            }
-            label="Enable Transactions"
-            labelPlacement="start"
-          />
-        </div>
-        <div>
-          <FormControlLabel
-            control={
-              <Switch
-                checked={timerStatus != "NOT_SHOW"}
-                onChange={handleToggleTimer}
-              />
-            }
-            label="Timer"
-            labelPlacement="start"
-          />
+        <div className="flex flex-col sm:flex-row items-center md:justify-content-end gap-4">
+          <div className="flex flex-col sm:flex-row gap-4">
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={!displayStatus}
+                  onChange={handleGameStatusChange}
+                  disabled={pendingStatusChange !== null} // Disable during pending change
+                />
+              }
+              label="Game Status"
+              labelPlacement="start"
+            />
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={transactionsEnabled}
+                  onChange={handleTransactionChange}
+                />
+              }
+              label="Enable Transactions"
+              labelPlacement="start"
+            />
+          </div>
+          <div>
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={timerStatus != "NOT_SHOW"}
+                  onChange={handleToggleTimer}
+                />
+              }
+              label="Timer"
+              labelPlacement="start"
+            />
+          </div>
         </div>
       </div>
-      <div className="w-[80%] mx-auto flex">
-        <Table
-          ref={tableRef}
-          gameStatusRef={gameStatus}
-          onLevelChange={handleLevelUpdate}
-          pendingStatusChange={pendingStatusChange}
-          transactionsEnabled={transactionsEnabled}
-          maxGameLevels={maxGameLevels}
-        />
-        <LeaderBoard
-          isTimerOpen={timerStatus != "NOT_SHOW"}
-          sessionId={sessionId}
-        />
+      <div className="w-full max-w-6xl mx-auto flex flex-col lg:flex-row gap-4">
+        <div className="flex-1 min-w-0">
+          <Table
+            ref={tableRef}
+            gameStatusRef={gameStatus}
+            onLevelChange={handleLevelUpdate}
+            pendingStatusChange={pendingStatusChange}
+            transactionsEnabled={transactionsEnabled}
+            maxGameLevels={maxGameLevels}
+          />
+        </div>
+        {/* <div className=" lg:w-80 xl:w-[700px]"> */}
+          <LeaderBoard
+            isTimerOpen={timerStatus != "NOT_SHOW"}
+            sessionId={sessionId}
+          />
+        {/* </div> */}
       </div>
 
       <GameLevelChangePopup

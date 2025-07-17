@@ -2,6 +2,7 @@ const Player = require("../../../theUltimateChallenge/models/playerSchema");
 const Team = require("../../../theUltimateChallenge/models/teamSchema");
 const TheUltimateChallenge = require("../../../theUltimateChallenge/models/TheUltimateChallenge");
 const Admin = require("../models/adminSchema");
+const axios = require('axios');
 
 const endSession = async (req, res) => {
     try {
@@ -36,7 +37,7 @@ const endSession = async (req, res) => {
                 error: 'Unauthorized - Incorrect admin password'
             });
         }
-        
+
         // count number of players in the session
         const playerCount = await Player.countDocuments({ session: sessionId });
         const teamsCount = await Team.countDocuments({ session: sessionId });
@@ -46,7 +47,22 @@ const endSession = async (req, res) => {
 
         session.sessionEnded = true;
         session.completionDate = new Date();
+
         await session.save();
+
+        const payload = {
+            gameSessionId: session._id,
+            totalPlayers: playerCount,
+            totalTeams: teamsCount,
+            completedOn: session.completionDate,
+            status: "ENDED"
+        };
+
+        try {
+            await axios.post(`${process.env.SUPER_ADMIN_SERVER_URL}/update`, payload);
+        } catch (axiosError) {
+            console.error('Error sending session data:', axiosError);
+        }
         return res.status(200).json({
             success: true,
             message: 'Session ended successfully',

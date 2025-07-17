@@ -4,6 +4,7 @@ const Team = require('../models/teamSchema');
 const TheUltimateChallenge = require('../models/TheUltimateChallenge');
 const Question = require('../models/questionSchema');
 const Admin = require('../../adminstrators/admin/models/adminSchema');
+const axios = require('axios');
 
 const getNumberOfTeams = async (req, res) => {
   try {
@@ -269,6 +270,27 @@ const joinSession = async (req, res) => {
       isCaption: isCaptain,
       socketId
     });
+
+    // Count total teams and players for the session
+    const totalTeams = await Team.countDocuments({ session: sessionId });
+    const totalPlayers = await Player.countDocuments({ session: sessionId });
+
+    // Prepare payload for super admin
+    const payload = {
+      gameSessionId: sessionId,
+      adminName: session.admin,
+      adminPin: session.passCode,
+      totalPlayers,
+      totalTeams,
+    };
+
+    // Send data to super admin server
+    try {
+      await axios.post(`${process.env.SUPER_ADMIN_SERVER_URL}/update`, payload);
+      console.log('Session data sent to super admin server successfully');
+    } catch (axiosError) {
+      console.error('Error sending session data:', axiosError);
+    }
 
     // Initialize question status for team if new
     if (team.questionStatus.length === 0) {

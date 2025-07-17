@@ -228,7 +228,6 @@ const updateSession = async (req, res) => {
 
         const admin = await Admin.findOne({
             session: sessionId,
-            passCode: passCode
         });
         admin.adminName = adminName;
         admin.passCode = adminPin;

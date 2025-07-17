@@ -112,6 +112,7 @@ const createSession = async (req, res) => {
 
         // Save session
         const savedSession = await session.save();
+        console.log("Session created successfully:", savedSession._id);
         let playerGameLink = `${process.env.FRONTEND_URL}/theultimatechallenge/login/${savedSession._id.toString()}`;
         let adminGameLink = `${process.env.FRONTEND_URL}/admin/${savedSession._id.toString()}/login`;
 
@@ -135,8 +136,11 @@ const createSession = async (req, res) => {
                     error: 'Failed to create team formation session'
                 });
             }
-            const teamFormationSessionId = teamFormationSessionResponse.data.data._id;
-            const { playerGameLink: playerLink, adminGameLink: adminLink } = teamFormationSessionResponse.data.data;
+            // const teamFormationSessionId = teamFormationSessionResponse.data.data._id;
+            // const { playerGameLink: playerLink, adminGameLink: adminLink } = teamFormationSessionResponse.data.data;
+            const teamFormationSessionId = teamFormationSessionResponse.data.data.sessionId;
+            const { playerLink, adminLink } = teamFormationSessionResponse.data.data;
+
             savedSession.teamFormationSessionId = teamFormationSessionId;
             playerGameLink = playerLink;
             adminGameLink = adminLink;
@@ -165,6 +169,7 @@ const createSession = async (req, res) => {
 
         // Save admin
         await newAdmin.save();
+
 
         // Return success response
         return res.status(201).json({
@@ -220,6 +225,14 @@ const updateSession = async (req, res) => {
         session.passCode = adminPin;
 
         const updatedSession = await session.save();
+
+        const admin = await Admin.findOne({
+            session: sessionId,
+            passCode: passCode
+        });
+        admin.adminName = adminName;
+        admin.passCode = adminPin;
+        await admin.save();
         return res.status(200).json({
             success: true,
             data: updatedSession,

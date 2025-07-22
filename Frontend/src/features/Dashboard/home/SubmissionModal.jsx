@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { X } from "lucide-react";
+import { ExternalLink, X } from "lucide-react";
 
 function SubmissionModal({ team, onClose, socket }) {
   const [selectedLevel, setSelectedLevel] = useState("all"); // Default to show all levels

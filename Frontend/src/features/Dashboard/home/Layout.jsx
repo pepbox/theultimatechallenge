@@ -1,5 +1,5 @@
 import { FormControlLabel, styled, Switch } from "@mui/material";
-import React, { useRef, useState, useEffect, useCallback } from "react";
+import { useRef, useState, useEffect, useCallback } from "react";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import AddIcon from "@mui/icons-material/Add";
 import RemoveIcon from "@mui/icons-material/Remove";
@@ -11,16 +11,13 @@ import {
   GameStatusChangePopup,
   GameTransactionChangePopup,
 } from "./Popups.jsx";
-import { connectSocket, getSocket } from "../../../services/sockets/admin.js";
-import { useParams, useNavigate } from "react-router-dom";
+import { getSocket } from "../../../services/sockets/admin.js";
+import { useParams } from "react-router-dom";
 import axios from "axios";
 import { CachedRounded } from "@mui/icons-material";
-import SuccessPopup from "../../../superAdmin/features/createGamesSessions/theUltimateChallenge/SuccessPopup.jsx";
-import { useDispatch } from "react-redux";
-import { resetAdminState } from "../../../redux/admin/adminSlice.js";
-import useSessionManagement from "../../../hooks/admin/useSessionManagement.js";
 import useAdminAuth from "../../../hooks/admin/useAuth.js";
 import useTimer from "../../user/timer/hooks/useTimer.js";
+import SuccessPopup from "../../../components/SuccessPopup.jsx";
 
 const RotatingIcon = styled(CachedRounded)(({ rotating }) => ({
   transition: "transform 1s ease",
@@ -366,10 +363,10 @@ function Layout() {
           />
         </div>
         {/* <div className=" lg:w-80 xl:w-[700px]"> */}
-          <LeaderBoard
-            isTimerOpen={timerStatus != "NOT_SHOW"}
-            sessionId={sessionId}
-          />
+        <LeaderBoard
+          isTimerOpen={timerStatus != "NOT_SHOW"}
+          sessionId={sessionId}
+        />
         {/* </div> */}
       </div>
 

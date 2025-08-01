@@ -1,6 +1,6 @@
 import React from 'react'
 import Check from "../../assets/images/Result/Check.png"
-import Star from "../../assets/images/Result/Star.png"
+import Star from "../../assets/images/Result/star.png"
 import { useNavigate, useParams, useLocation } from 'react-router-dom'
 
 function TaskComplete() {

@@ -120,10 +120,28 @@ const Table = forwardRef(
           let aValue = a[sortConfig.key];
           let bValue = b[sortConfig.key];
 
-          // For team name (id), convert to number for proper sorting
+          // Enhanced natural sorting for team names
           if (sortConfig.key === "name") {
-            aValue = parseInt(aValue) || 0;
-            bValue = parseInt(bValue) || 0;
+            // Extract number from team name for natural sorting
+            const extractNumber = (name) => {
+              const match = name.toString().match(/\d+/);
+              return match ? parseInt(match[0]) : 0;
+            };
+
+            const aNum = extractNumber(aValue);
+            const bNum = extractNumber(bValue);
+
+            if (aNum !== bNum) {
+              // Compare numbers numerically
+              return sortConfig.direction === "asc" ? aNum - bNum : bNum - aNum;
+            } else {
+              // If numbers are same or no numbers, compare strings case-insensitively
+              const aStr = aValue.toString().toLowerCase();
+              const bStr = bValue.toString().toLowerCase();
+              return sortConfig.direction === "asc" 
+                ? aStr.localeCompare(bStr)
+                : bStr.localeCompare(aStr);
+            }
           }
 
           if (aValue < bValue) {

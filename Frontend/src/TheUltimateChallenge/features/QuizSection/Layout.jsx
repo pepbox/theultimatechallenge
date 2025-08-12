@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react';
-import Header from './Header';
-import Overlay from './Overlay';
-import Card from './Card';
-import { getSocket } from '../../../services/sockets/theUltimateChallenge';
+import { useEffect, useState } from "react";
+import Header from "./Header";
+import Overlay from "./Overlay";
+import Card from "./Card";
+import { getSocket } from "../../../services/sockets/theUltimateChallenge";
+import { useNavigate, useParams } from "react-router-dom";
 
 function Layout() {
   const [overlayToggle, setOverlayToggle] = useState(false);
@@ -10,24 +11,39 @@ function Layout() {
   const [teamData, setTeamData] = useState(null);
   const [error, setError] = useState(null);
   const socket = getSocket();
+  const { sessionId } = useParams();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const handleResize = () => setWindowHeight(window.innerHeight);
-    window.addEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
+    console.log("Session ID from params:", sessionId);
 
     const onTeamData = (data) => {
-      console.log('Team data received:', data);
+      console.log("Team data received:", data);
       setTeamData(data);
-      setOverlayToggle(data.teamInfo.isPaused)
+      setOverlayToggle(data.teamInfo.isPaused);
+    };
+    const onGameEnded = ({ sessionId: endedId }) => {
+      console.log("Game ended for session:", endedId, "  ", sessionId);
+      if (endedId === sessionId) {
+        console.log(
+          "Game ended for current session, redirecting to completion page"
+        );
+        if (!location.pathname.includes("/completion/")) {
+          console.log("Redirecting to completion page for session:", sessionId);
+          navigate(`/theultimatechallenge/completion/${sessionId}`);
+        }
+      }
     };
 
     const onError = (err) => {
-      console.error('Socket error:', err);
-      setError(err.message || 'Socket error occurred');
+      console.error("Socket error:", err);
+      setError(err.message || "Socket error occurred");
     };
 
     const onPauseUpdated = (data) => {
-      console.log('Session pause status updated:', data.isPaused);
+      console.log("Session pause status updated:", data.isPaused);
       setOverlayToggle(data.isPaused);
     };
 
@@ -36,7 +52,7 @@ function Layout() {
       if (response.success) {
         setTeamData(response.data);
       } else {
-        setError(response.error || 'Failed to fetch team data');
+        setError(response.error || "Failed to fetch team data");
       }
     });
 
@@ -45,12 +61,14 @@ function Layout() {
     socket.on("error", onError);
     socket.on("session-pause-updated", onPauseUpdated);
 
+    socket.on("game-ended", onGameEnded);
+
     return () => {
       // Cleanup all listeners
       socket.off("team-data", onTeamData);
       socket.off("error", onError);
       socket.off("session-pause-updated", onPauseUpdated);
-      window.removeEventListener('resize', handleResize);
+      window.removeEventListener("resize", handleResize);
     };
   }, [socket]);
 
@@ -63,7 +81,10 @@ function Layout() {
   }
 
   return (
-    <div className="relative flex justify-center font-mono" style={{ minHeight: `${windowHeight}px` }}>
+    <div
+      className="relative flex justify-center font-mono"
+      style={{ minHeight: `${windowHeight}px` }}
+    >
       {overlayToggle && <Overlay />}
       <Header teamData={teamData} />
       <Card teamData={teamData} socket={socket} />

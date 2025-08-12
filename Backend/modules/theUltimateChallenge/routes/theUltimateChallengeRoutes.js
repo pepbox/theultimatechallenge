@@ -3,6 +3,7 @@ const multer = require('multer');
 const { addQuestion, addMultipleQuestions, getAllQuestions } = require('../controllers/questionController');
 
 const { joinSession, getNumberOfTeams, updateSocketId, restoreCookie } = require('../controllers/loginController');
+const { getGameCompletionData, logoutPlayer } = require('../controllers/gameCompletionController');
 const { getTeamData } = require('../controllers/quizSectionController');
 const { uploadFileAnswer, submitTextAnswer } = require("../controllers/taskCompleteController");
 const { getTimerStatus } = require('../controllers/timerController');
@@ -36,5 +37,9 @@ router.get('/quizsectioninit', getTeamData)
 
 
 router.get('/get-timer-status', getTimerStatus);
+
+// Game completion
+router.get('/game-completion-data', getGameCompletionData); // Player/admin after session end
+router.post('/logout', logoutPlayer);
 
 module.exports = router;

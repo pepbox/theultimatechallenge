@@ -98,11 +98,24 @@ function BodyGame() {
         navigate(`/theultimatechallenge/quizsection/${sessionId}`)
       );
     };
+    const onGameEnded = ({ sessionId: endedId }) => {
+      console.log("Game ended for session:", endedId, "  ", sessionId);
+      if (endedId === sessionId) {
+        console.log(
+          "Game ended for current session, redirecting to completion page"
+        );
+        if (!location.pathname.includes("/completion/")) {
+          console.log("Redirecting to completion page for session:", sessionId);
+          navigate(`/theultimatechallenge/completion/${sessionId}`);
+        }
+      }
+    };
 
     socket.on("session-pause-updated", onPauseUpdated);
     socket.on("team-data", onTeamData);
     socket.on("question-status-changed-by-admin", onQuestionStatusChanged);
     socket.on("admin-updated-total-score", onAdminUpdatedTotalScore);
+    socket.on("game-ended", onGameEnded);
 
     return () => {
       if (socket && cardData?.id) {

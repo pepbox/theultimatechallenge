@@ -63,6 +63,16 @@ const endSession = async (req, res) => {
         } catch (axiosError) {
             console.error('Error sending session data:', axiosError);
         }
+
+        // Emit socket event to all players for game completion redirect
+        const io = req.app.get('socketService');
+        console.log("Emitting game-ended event to all players");
+        if (io) {
+            console.log("io connected, emitting game-ended event");
+            const players = await Player.find({ session: sessionId }).select('socketId');
+            players.forEach(p => { if (p.socketId) io.to(p.socketId).emit('game-ended', { sessionId }); });
+        }
+
         return res.status(200).json({
             success: true,
             message: 'Session ended successfully',

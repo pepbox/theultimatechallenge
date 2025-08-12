@@ -41,11 +41,19 @@ function MindGame() {
     const onAdminUpdatedTotalScore = (data) => {
       navigate(`/theultimatechallenge/quizsection/${sessionId}`);
     };
+    const onGameEnded = ({ sessionId: endedId }) => {
+      if (endedId === sessionId) {
+        if (!location.pathname.includes("/completion/")) {
+          navigate(`/theultimatechallenge/completion/${sessionId}`);
+        }
+      }
+    };
 
     socket.on("session-pause-updated", onPauseUpdated);
     socket.on("team-data", onTeamData);
     socket.on("question-status-changed-by-admin", onQuestionStatusChanged);
     socket.on("admin-updated-total-score", onAdminUpdatedTotalScore);
+    socket.on("game-ended", onGameEnded);
 
     return () => {
       if (socket && cardData?.id) {

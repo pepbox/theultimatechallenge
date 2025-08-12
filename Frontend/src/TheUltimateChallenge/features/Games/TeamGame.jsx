@@ -2,6 +2,7 @@ import React, { useRef, useState, useEffect } from "react";
 import { ChevronLeft, Camera, X, Video } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import UserTimer from "../../../features/user/timer/components/UserTimer";
+import { getSocket } from "../../../services/sockets/theUltimateChallenge";
 
 function TeamGames() {
   const navigate = useNavigate();
@@ -10,6 +11,8 @@ function TeamGames() {
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
   const { sessionId } = useParams();
+  const socket = getSocket();
+
   // Generate preview for selected file
   useEffect(() => {
     if (!selectedFile) {
@@ -22,6 +25,22 @@ function TeamGames() {
 
     return () => URL.revokeObjectURL(objectUrl);
   }, [selectedFile]);
+
+  useEffect(() => {
+    const onGameEnded = ({ sessionId: endedId }) => {
+      console.log("Game ended for session:", endedId, "  ", sessionId);
+      if (endedId === sessionId) {
+        console.log(
+          "Game ended for current session, redirecting to completion page"
+        );
+        if (!location.pathname.includes("/completion/")) {
+          console.log("Redirecting to completion page for session:", sessionId);
+          navigate(`/theultimatechallenge/completion/${sessionId}`);
+        }
+      }
+    };
+    socket.on("game-ended", onGameEnded);
+  }, [socket]);
 
   const handleClick = () => {
     if (fileUploaded) {

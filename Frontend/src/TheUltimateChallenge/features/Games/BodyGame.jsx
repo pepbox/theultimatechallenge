@@ -454,11 +454,7 @@ function BodyGame() {
 
         <button
           className="w-full h-[40px] bg-[#BA2732] rounded-[12px] mb-2 disabled:opacity-50 flex items-center justify-center gap-2"
-          onClick={
-            fileUploaded
-              ? handleSubmit
-              : () => openUploadOptions()
-          }
+          onClick={fileUploaded ? handleSubmit : () => openUploadOptions()}
           disabled={isSubmitting}
         >
           {isSubmitting ? (
@@ -496,7 +492,6 @@ function BodyGame() {
                 onClick={handleClickPhoto}
                 disabled={isSubmitting}
               >
-                <Camera className="text-white" />
                 <span>Click Photo</span>
               </button>
               <button
@@ -521,7 +516,6 @@ function BodyGame() {
                 onClick={handleRecordVideo}
                 disabled={isSubmitting}
               >
-                <Video className="text-white" />
                 <span>Record Video</span>
               </button>
               <button

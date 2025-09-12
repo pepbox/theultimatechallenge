@@ -201,7 +201,6 @@ function TeamGames() {
                 className="flex-1 h-[40px] bg-[#95400E] rounded-[10px] flex items-center justify-center gap-2 text-white"
                 onClick={handleClickPhoto}
               >
-                <Camera className="text-white" />
                 <span>Click Photo</span>
               </button>
               <button
@@ -209,7 +208,6 @@ function TeamGames() {
                 className="flex-1 h-[40px] bg-[#95400E] rounded-[10px] flex items-center justify-center gap-2 text-white"
                 onClick={handleRecordVideo}
               >
-                <Video className="text-white" />
                 <span>Record Video</span>
               </button>
             </div>

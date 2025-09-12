@@ -1,16 +1,19 @@
 import React, { useRef, useState, useEffect } from "react";
 import { ChevronLeft, Camera, X, Video } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import UserTimer from "../../../features/user/timer/components/UserTimer";
 import { getSocket } from "../../../services/sockets/theUltimateChallenge";
 
 function TeamGames() {
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
+  const imageCameraRef = useRef(null);
+  const videoCameraRef = useRef(null);
   const [fileUploaded, setFileUploaded] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
   const { sessionId } = useParams();
+  const [showUploadMenu, setShowUploadMenu] = useState(false);
   const socket = getSocket();
 
   // Generate preview for selected file
@@ -46,8 +49,23 @@ function TeamGames() {
     if (fileUploaded) {
       navigate("/theultimatechallenge/mindgame");
     } else {
-      fileInputRef.current.click();
+      setShowUploadMenu((v) => !v);
     }
+  };
+
+  const handleClickPhoto = () => {
+    setShowUploadMenu(false);
+    if (imageCameraRef.current) imageCameraRef.current.click();
+  };
+
+  const handleRecordVideo = () => {
+    setShowUploadMenu(false);
+    if (videoCameraRef.current) videoCameraRef.current.click();
+  };
+
+  const handleUploadFromDevice = () => {
+    setShowUploadMenu(false);
+    if (fileInputRef.current) fileInputRef.current.click();
   };
 
   const handleFileChange = (e) => {
@@ -65,6 +83,12 @@ function TeamGames() {
     // Reset the file input
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
+    }
+    if (imageCameraRef.current) {
+      imageCameraRef.current.value = "";
+    }
+    if (videoCameraRef.current) {
+      videoCameraRef.current.value = "";
     }
   };
 
@@ -153,34 +177,77 @@ function TeamGames() {
         </div>
       )}
 
-      <div className="w-full flex items-center justify-center mb-8">
+      <div className="w-full flex items-center justify-center mb-4">
         <button
           className="w-full h-[40px] bg-[#95400E] rounded-[12px]"
           onClick={handleClick}
         >
           <div className="flex justify-center gap-[7px]">
-            {cardData.answerType === "image" ? (
-              <Camera className="text-white" />
-            ) : (
-              <Video className="text-white" />
-            )}
+            <Camera className="text-white" />
             <h1 className="text-white">
               {fileUploaded ? "Submit" : "Capture"}
             </h1>
           </div>
         </button>
+      </div>
+
+      {/* Upload options menu */}
+      {!fileUploaded && showUploadMenu && (
+        <div className="w-full mb-4">
+          <div className="w-full border-2 border-[#D4871199]/60 bg-[#FFD89B4D]/85 rounded-[12px] backdrop-blur-[53px] p-2 flex flex-col gap-2">
+            <div className="flex gap-2">
+              <button
+                type="button"
+                className="flex-1 h-[40px] bg-[#95400E] rounded-[10px] flex items-center justify-center gap-2 text-white"
+                onClick={handleClickPhoto}
+              >
+                <Camera className="text-white" />
+                <span>Click Photo</span>
+              </button>
+              <button
+                type="button"
+                className="flex-1 h-[40px] bg-[#95400E] rounded-[10px] flex items-center justify-center gap-2 text-white"
+                onClick={handleRecordVideo}
+              >
+                <Video className="text-white" />
+                <span>Record Video</span>
+              </button>
+            </div>
+            <button
+              type="button"
+              className="w-full h-[40px] border border-white/70 text-white rounded-[10px] flex items-center justify-center gap-2"
+              onClick={handleUploadFromDevice}
+            >
+              <span>Upload from device</span>
+            </button>
+          </div>
+        </div>
+      )}
+
+      <div className="w-full flex items-center justify-center mb-8">
         <input
           type="file"
           ref={fileInputRef}
           onChange={handleFileChange}
           className="hidden"
-          accept={
-            cardData.answerType === "image"
-              ? "image/*"
-              : cardData.answerType === "video"
-              ? "video/*"
-              : null
-          }
+          accept="image/*,video/*"
+        />
+        {/* Hidden camera inputs */}
+        <input
+          type="file"
+          ref={imageCameraRef}
+          accept="image/*"
+          capture="environment"
+          onChange={handleFileChange}
+          className="hidden"
+        />
+        <input
+          type="file"
+          ref={videoCameraRef}
+          accept="video/*"
+          capture
+          onChange={handleFileChange}
+          className="hidden"
         />
       </div>
     </div>

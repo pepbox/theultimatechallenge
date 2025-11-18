@@ -1,6 +1,6 @@
 const express = require('express');
 const { loginAdmin, updateSocketId, logoutAdmin, validateAdminSession, restoreCookie } = require("../controllers/loginController")
-const { changeTeamLevels, getGameSettingsData } = require("../controllers/homeController")
+const { changeTeamLevels, getGameSettingsData, downloadSessionData } = require("../controllers/homeController")
 const { updateQuestionStatus, updateTeamScore, getTeamPlayersInfo } = require("../controllers/teamData");
 const { endSession } = require('../controllers/sessionController');
 
@@ -16,9 +16,11 @@ router.post("/update-total-score", updateTeamScore);
 router.get("/get-game-settings", getGameSettingsData);
 router.get("/get-teamplayers", getTeamPlayersInfo);
 
+router.get("/download-session-data/:sessionId", downloadSessionData)
+
 router.post("/restore-cookie", restoreCookie)
 
-router.post("/end-session", endSession);
+// router.post("/end-session", endSession);
 
 
 

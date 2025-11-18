@@ -1,4 +1,3 @@
-const AWS = require('aws-sdk');
 const Team = require('../models/teamSchema');
 const Player = require('../models/playerSchema');
 const Question = require('../models/questionSchema');
@@ -7,13 +6,7 @@ const Admin = require('../../adminstrators/admin/models/adminSchema');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const sharp = require('sharp');
-
-// Configure S3
-const s3 = new AWS.S3({
-  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-  region: process.env.AWS_REGION,
-});
+const { uploadFile } = require('../../../services/s3/s3Service');
 
 // Helper function to emit all teams data to admin
 const emitAllTeamsData = async (sessionId, io) => {
@@ -204,38 +197,26 @@ const uploadFileAnswer = async (req, res) => {
     const file = req.file;
     const fileExtension = file.originalname.split('.').pop();
     const uniqueId = crypto.randomBytes(8).toString('hex');
-    const s3Key = `answers/${uniqueId}.${fileExtension}`;
-
-    // Create upload parameters
-    const uploadParams = {
-      Bucket: process.env.AWS_S3_BUCKET_NAME,
-      Key: s3Key,
-      Body: file.buffer,
-      ContentType: file.mimetype,
-    };
-
-    // Upload with progress tracking
-    const managedUpload = s3.upload(uploadParams);
-    
+    const s3Key = `answers/${player.session}/Team-${team.name}-Player-${player.name}-${uniqueId}.${fileExtension}`;
     // Optional: If you want to emit progress via Socket.IO to the client
     const io = req.app.get("socketService");
     const socketId = req.headers['x-socket-id']; // Client should send their socket ID
-    
-    if (io && socketId) {
-      managedUpload.on('httpUploadProgress', (progress) => {
-        const percentCompleted = Math.round((progress.loaded * 100) / progress.total);
+
+    // Upload with progress tracking callback
+    const uploadResult = await uploadFile({
+      fileBuffer: file.buffer,
+      key: s3Key,
+      contentType: file.mimetype,
+      onProgress: io && socketId ? (progress) => {
         io.to(socketId).emit('upload-progress', {
           questionId,
-          progress: percentCompleted,
+          progress: progress.percentCompleted,
           loaded: progress.loaded,
           total: progress.total
         });
-      });
-    }
+      } : null
+    });
 
-    // Wait for upload to complete
-    const uploadResult = await managedUpload.promise();
-    
     const answerUrl = uploadResult.Location;
     const pointsEarned = question.points;
 
@@ -267,11 +248,11 @@ const uploadFileAnswer = async (req, res) => {
     });
   } catch (err) {
     console.error('File upload error:', err);
-    
+
     if (err.code === 'LIMIT_FILE_SIZE') {
       return res.status(400).json({ error: 'File size too large' });
     }
-    
+
     res.status(500).json({ error: 'Upload failed' });
   }
 };
@@ -295,7 +276,7 @@ const submitTextAnswer = async (req, res) => {
     const player = await Player.findById(playerId).populate('team');
     if (!player) return res.status(404).json({ error: 'Player not found' });
 
-    const session= await TheUltimateChallenge.findById(player.session);
+    const session = await TheUltimateChallenge.findById(player.session);
     if (!session) return res.status(404).json({ error: 'Session not found' });
 
     const question = await Question.findById(questionId);

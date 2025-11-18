@@ -36,12 +36,12 @@ const loginAdmin = async (req, res) => {
       });
     }
 
-    if (session.sessionEnded) {
-      return res.status(400).json({
-        success: false,
-        error: 'Session has already ended'
-      });
-    }
+    // if (session.sessionEnded) {
+    //   return res.status(400).json({
+    //     success: false,
+    //     error: 'Session has already ended'
+    //   });
+    // }
 
     // Find the admin by session ID and passCode
     const admin = await Admin.findOne({

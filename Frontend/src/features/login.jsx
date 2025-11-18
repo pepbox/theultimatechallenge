@@ -1,38 +1,38 @@
 import { useState, useRef, useEffect } from 'react';
 import { Lock, ArrowRight } from 'lucide-react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { setAdmin } from '../redux/admin/adminSlice';
 
 export default function AdminLogin() {
-  // You can set this dynamically or pass it as a prop
-  const {sessionId} = useParams();
+  const { sessionId } = useParams();
+  const [searchParams] = useSearchParams();
+  const pin = searchParams.get('pin');
+
   const [otp, setOtp] = useState(['', '', '', '']);
-  const [errors, setErrors] = useState({});
+  const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const inputRefs = useRef([]);
-  const dispatch = useDispatch()
-  const navigate=useNavigate();
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
 
+  // Auto-login with pin from URL
   useEffect(() => {
-    // Focus first input on mount
-    if (inputRefs.current[0]) {
-      inputRefs.current[0].focus();
+    if (pin?.length === 4) {
+      setOtp(pin.split(''));
+      handleLogin(pin);
+    } else {
+      inputRefs.current[0]?.focus();
     }
   }, []);
 
   const handleInputChange = (index, value) => {
-    // Only allow numbers
     if (!/^\d*$/.test(value)) return;
-    
+
     const newOtp = [...otp];
-    newOtp[index] = value.slice(-1); // Only take the last digit
+    newOtp[index] = value.slice(-1);
     setOtp(newOtp);
-    
-    // Clear errors when user starts typing
-    if (errors.passCode) {
-      setErrors({});
-    }
+    setError('');
 
     // Auto-focus next input
     if (value && index < 3) {
@@ -41,23 +41,17 @@ export default function AdminLogin() {
   };
 
   const handleKeyDown = (index, e) => {
-    // Handle backspace
-    if (e.key === 'Backspace') {
-      if (!otp[index] && index > 0) {
-        // If current input is empty, focus previous and clear it
-        inputRefs.current[index - 1]?.focus();
-        const newOtp = [...otp];
-        newOtp[index - 1] = '';
-        setOtp(newOtp);
-      }
+    if (e.key === 'Backspace' && !otp[index] && index > 0) {
+      inputRefs.current[index - 1]?.focus();
+      const newOtp = [...otp];
+      newOtp[index - 1] = '';
+      setOtp(newOtp);
     }
-    
-    // Handle Enter key
-    if (e.key === 'Enter') {
-      handleSubmit();
+
+    if (e.key === 'Enter' && otp.every(d => d)) {
+      handleLogin(otp.join(''));
     }
-    
-    // Handle arrow keys
+
     if (e.key === 'ArrowLeft' && index > 0) {
       inputRefs.current[index - 1]?.focus();
     }
@@ -68,50 +62,36 @@ export default function AdminLogin() {
 
   const handlePaste = (e) => {
     e.preventDefault();
-    const pastedData = e.clipboardData.getData('text');
-    const digits = pastedData.replace(/\D/g, '').slice(0, 4);
-    
-    if (digits.length > 0) {
+    const digits = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 4);
+
+    if (digits) {
       const newOtp = [...otp];
-      for (let i = 0; i < digits.length && i < 4; i++) {
-        newOtp[i] = digits[i];
-      }
+      digits.split('').forEach((digit, i) => {
+        if (i < 4) newOtp[i] = digit;
+      });
       setOtp(newOtp);
-      
-      // Focus the next empty input or the last one
-      const nextIndex = Math.min(digits.length, 3);
-      inputRefs.current[nextIndex]?.focus();
+      inputRefs.current[Math.min(digits.length, 3)]?.focus();
     }
   };
 
-  const validateForm = () => {
-    const passCode = otp.join('');
-    const newErrors = {};
-    
+  const handleLogin = async (passCode) => {
     if (!sessionId) {
-      newErrors.sessionId = 'Session ID is required';
+      setError('Session ID is required');
+      return;
     }
-    
-    if (passCode.length < 4) {
-      newErrors.passCode = 'Please enter all 4 digits';
-    }
-    
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
 
-  const handleSubmit = async () => {
-    if (!validateForm()) return;
-    
+    if (passCode.length < 4) {
+      setError('Please enter all 4 digits');
+      return;
+    }
+
     setIsLoading(true);
-    const passCode = otp.join('');
-    
+    setError('');
+
     try {
       const response = await fetch(`${import.meta.env.VITE_BACKEND_BASE_URL}/api/v1/admin/login`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ passCode, sessionId }),
         credentials: 'include'
       });
@@ -119,36 +99,33 @@ export default function AdminLogin() {
       const data = await response.json();
 
       if (!response.ok) {
-        // Handle specific error messages from the backend
-        if (response.status === 400) {
-          throw new Error(data.error || 'Invalid input provided');
-        } else if (response.status === 401) {
-          throw new Error('Invalid passcode. Please try again.');
-        } else if (response.status === 404) {
-          throw new Error('Session not found. Please check your session ID.');
-        } else {
-          throw new Error(data.error || 'Login failed');
-        }
+        throw new Error(data.error || 'Login failed');
       }
 
-      console.log('Login successful:', data.message);
-      dispatch(setAdmin({authenticated:true,sessionId:sessionId}))
-
+      dispatch(setAdmin({ authenticated: true, sessionId }));
       navigate(`/admin/${sessionId}`);
-      
-    } catch (error) {
-      console.error('Login error:', error);
-      setErrors({ submit: error.message });
-      setIsLoading(false);
-      // Clear OTP on error and refocus first input
+
+    } catch (err) {
+      setError(err.message);
       setOtp(['', '', '', '']);
-      setTimeout(() => {
-        inputRefs.current[0]?.focus();
-      }, 100);
+      setIsLoading(false);
+      setTimeout(() => inputRefs.current[0]?.focus(), 100);
     }
   };
 
   const isComplete = otp.every(digit => digit !== '');
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-gray-900 mx-auto mb-4"></div>
+          <p className="text-lg font-semibold text-gray-700">Verifying access...</p>
+          <p className="text-sm text-gray-500 mt-2">Please wait</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
@@ -176,60 +153,33 @@ export default function AdminLogin() {
                   onChange={(e) => handleInputChange(index, e.target.value)}
                   onKeyDown={(e) => handleKeyDown(index, e)}
                   onPaste={handlePaste}
-                  className={`w-14 h-14 text-center text-2xl font-bold border-2 rounded-xl transition-all duration-200 focus:outline-none ${
-                    digit 
-                      ? 'border-gray-900 bg-gray-50 text-gray-900' 
+                  className={`w-14 h-14 text-center text-2xl font-bold border-2 rounded-xl transition-all duration-200 focus:outline-none ${digit
+                      ? 'border-gray-900 bg-gray-50 text-gray-900'
                       : 'border-gray-300 bg-white text-gray-700'
-                  } focus:border-gray-900 focus:ring-4 focus:ring-gray-100 hover:border-gray-400`}
+                    } focus:border-gray-900 focus:ring-4 focus:ring-gray-100 hover:border-gray-400`}
                   autoComplete="off"
                 />
               ))}
             </div>
 
-            {/* Error Messages */}
-            {errors.passCode && (
-              <div className="text-center">
-                <p className="text-sm text-red-600 bg-red-50 py-2 px-4 rounded-lg border border-red-200">
-                  {errors.passCode}
-                </p>
-              </div>
-            )}
-
-            {errors.sessionId && (
-              <div className="text-center">
-                <p className="text-sm text-red-600 bg-red-50 py-2 px-4 rounded-lg border border-red-200">
-                  {errors.sessionId}
-                </p>
-              </div>
-            )}
-
-            {errors.submit && (
+            {/* Error Message */}
+            {error && (
               <div className="bg-red-50 border border-red-200 rounded-xl p-4">
-                <p className="text-sm text-red-600 text-center font-medium">{errors.submit}</p>
+                <p className="text-sm text-red-600 text-center font-medium">{error}</p>
               </div>
             )}
 
             {/* Submit Button */}
             <button
-              onClick={handleSubmit}
-              disabled={!isComplete || isLoading}
-              className={`w-full py-4 px-6 rounded-xl font-semibold text-lg transition-all duration-300 flex items-center justify-center space-x-2 ${
-                isComplete && !isLoading
+              onClick={() => handleLogin(otp.join(''))}
+              disabled={!isComplete}
+              className={`w-full py-4 px-6 rounded-xl font-semibold text-lg transition-all duration-300 flex items-center justify-center space-x-2 ${isComplete
                   ? 'bg-gray-900 hover:bg-gray-800 text-white shadow-lg hover:shadow-xl transform hover:scale-[1.02] active:scale-[0.98]'
                   : 'bg-gray-200 text-gray-500 cursor-not-allowed'
-              }`}
+                }`}
             >
-              {isLoading ? (
-                <>
-                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
-                  <span>Verifying...</span>
-                </>
-              ) : (
-                <>
-                  <span>Continue</span>
-                  <ArrowRight className="w-5 h-5" />
-                </>
-              )}
+              <span>Continue</span>
+              <ArrowRight className="w-5 h-5" />
             </button>
 
             {/* Helper Text */}
@@ -246,9 +196,8 @@ export default function AdminLogin() {
           {otp.map((digit, index) => (
             <div
               key={index}
-              className={`w-2 h-2 rounded-full transition-all duration-200 ${
-                digit ? 'bg-gray-900' : 'bg-gray-300'
-              }`}
+              className={`w-2 h-2 rounded-full transition-all duration-200 ${digit ? 'bg-gray-900' : 'bg-gray-300'
+                }`}
             />
           ))}
         </div>

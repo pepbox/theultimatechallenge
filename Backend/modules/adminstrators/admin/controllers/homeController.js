@@ -2,6 +2,8 @@ const Team = require('../../../theUltimateChallenge/models/teamSchema');
 const Player = require('../../../theUltimateChallenge/models/playerSchema');
 const TheUltimateChallenge = require('../../../theUltimateChallenge/models/TheUltimateChallenge');
 const jwt = require('jsonwebtoken');
+const archiver = require('archiver');
+const { listObjects, getFileStream } = require('../../../../services/s3/s3Service');
 
 const changeTeamLevels = async (req, res) => {
     try {
@@ -151,4 +153,87 @@ const getGameSettingsData = async (req, res) => {
     }
 }
 
-module.exports = { getGameSettingsData, changeTeamLevels };
+
+const downloadSessionData = async (req, res) => {
+    try {
+        const sessionId = req.params.sessionId;
+
+        // Verify admin token
+        const token = req.cookies.adminToken;
+        if (!token) {
+            return res.status(401).json({ error: 'Admin token missing' });
+        }
+
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+        // Validate sessionId
+        if (!sessionId) {
+            return res.status(400).json({ error: 'sessionId is required' });
+        }
+
+        // Verify session exists
+        const session = await TheUltimateChallenge.findById(sessionId);
+        if (!session) {
+            return res.status(404).json({ error: 'Session not found' });
+        }
+
+        // List all objects in the S3 folder for this session
+        const s3Prefix = `answers/${sessionId}/`;
+        const files = await listObjects(s3Prefix);
+
+        if (!files || files.length === 0) {
+            return res.status(404).json({ error: 'No files found for this session' });
+        }
+
+        // Set response headers for zip download
+        res.setHeader('Content-Type', 'application/zip');
+        res.setHeader(
+            'Content-Disposition',
+            `attachment; filename=session-${session.companyName}-${session.createdAt.toISOString()}.zip`
+        );
+
+        // Create archiver instance
+        const archive = archiver('zip', { zlib: { level: 9 } });
+
+        // Handle archiver errors
+        archive.on('error', (err) => {
+            console.error('Archive error:', err);
+            throw err;
+        });
+
+        // Pipe archive to response
+        archive.pipe(res);
+
+        // Add each file from S3 to the archive
+        for (const file of files) {
+            try {
+                // Get file stream from S3
+                const fileStream = getFileStream(file.Key);
+
+                // Extract filename from S3 key (remove prefix)
+                const fileName = file.Key.replace(s3Prefix, '');
+
+                // Add file to archive
+                archive.append(fileStream, { name: fileName });
+            } catch (fileErr) {
+                console.error(`Error processing file ${file.Key}:`, fileErr);
+                // Continue with other files
+            }
+        }
+
+        // Finalize the archive (this is important!)
+        await archive.finalize();
+
+    } catch (err) {
+        console.error('Error downloading session data:', err);
+
+        // Only send error response if headers haven't been sent
+        if (!res.headersSent) {
+            return res.status(500).json({
+                error: err.message || 'Failed to download session data'
+            });
+        }
+    }
+}
+
+module.exports = { getGameSettingsData, changeTeamLevels, downloadSessionData };

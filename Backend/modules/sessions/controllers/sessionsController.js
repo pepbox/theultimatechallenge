@@ -4,6 +4,7 @@ const SessionHistory = require('../../../models/sessionHistorySchema');
 const Question = require('../../theUltimateChallenge/models/questionSchema');
 const Admin = require('../../adminstrators/admin/models/adminSchema');
 const axios = require('axios');
+const Player = require('../../theUltimateChallenge/models/playerSchema');
 
 const createSession = async (req, res) => {
     try {
@@ -247,8 +248,46 @@ const updateSession = async (req, res) => {
 }
 
 
+const endSession = async (req, res) => {
+    const { sessionId } = req.body;
+    if (!sessionId) {
+        return res.status(400).json({
+            success: false,
+            error: 'Missing required fields: sessionId'
+        });
+    }
+
+    const session = await TheUltimateChallenge.findById(sessionId);
+    if (!session) {
+        return res.status(404).json({
+            success: false,
+            error: 'Session not found'
+        });
+    }
+
+    session.sessionEnded = true;
+    session.completionDate = new Date();
+    await session.save();
+
+    // Emit socket event to all players for game completion redirect
+    const io = req.app.get('socketService');
+    console.log("Emitting game-ended event to all players");
+    if (io) {
+        console.log("io connected, emitting game-ended event");
+        const players = await Player.find({ session: sessionId }).select('socketId');
+        players.forEach(p => { if (p.socketId) io.to(p.socketId).emit('game-ended', { sessionId }); });
+    }
+
+    return res.status(200).json({
+        success: true,
+        message: 'Session ended successfully',
+    });
+
+}
+
 
 module.exports = {
     createSession,
-    updateSession
+    updateSession,
+    endSession
 };

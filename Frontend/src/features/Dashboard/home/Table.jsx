@@ -138,7 +138,7 @@ const Table = forwardRef(
               // If numbers are same or no numbers, compare strings case-insensitively
               const aStr = aValue.toString().toLowerCase();
               const bStr = bValue.toString().toLowerCase();
-              return sortConfig.direction === "asc" 
+              return sortConfig.direction === "asc"
                 ? aStr.localeCompare(bStr)
                 : bStr.localeCompare(aStr);
             }
@@ -268,6 +268,11 @@ const Table = forwardRef(
               <thead>
                 <tr className="text-center">
                   <th className="h-12 px-2">
+                    <div className="flex justify-center items-center text-[12px] text-[#111111]/50">
+                      Rank
+                    </div>
+                  </th>
+                  <th className="h-12 px-2">
                     <div
                       className="flex justify-center items-center text-[12px] text-[#111111]/50 cursor-pointer hover:text-[#111111]/70 transition-colors"
                       onClick={() => handleSort("name")}
@@ -318,6 +323,7 @@ const Table = forwardRef(
                     key={team.id}
                     className="even:bg-gray-50 text-center rounded-2xl"
                   >
+                    <td>{index + 1}</td>
                     <td className="px-2">
                       <div
                         onClick={() =>

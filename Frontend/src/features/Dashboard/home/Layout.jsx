@@ -6,7 +6,7 @@ import RemoveIcon from "@mui/icons-material/Remove";
 import Table from "./Table";
 import LeaderBoard from "./LeaderBoard";
 import {
-  EndSessionModal,
+  // EndSessionModal,
   GameLevelChangePopup,
   GameStatusChangePopup,
   GameTransactionChangePopup,
@@ -18,6 +18,7 @@ import { CachedRounded } from "@mui/icons-material";
 import useAdminAuth from "../../../hooks/admin/useAuth.js";
 import useTimer from "../../user/timer/hooks/useTimer.js";
 import SuccessPopup from "../../../components/SuccessPopup.jsx";
+import { Download } from "lucide-react";
 
 const RotatingIcon = styled(CachedRounded)(({ rotating }) => ({
   transition: "transform 1s ease",
@@ -36,7 +37,7 @@ function Layout() {
   const { handleLogout } = useAdminAuth();
 
   const [sessionInfoModal, setSessionInfoModal] = useState(false);
-  const [endSessionModal, setEndSessionModal] = useState(false);
+  // const [endSessionModal, setEndSessionModal] = useState(false);
 
   // Game state
   const gameStatus = useRef(true); // Initialize with default false
@@ -227,6 +228,15 @@ function Layout() {
     }
   };
 
+  const handleDownloadSessionData = () => {
+    window.open(
+      `${
+        import.meta.env.VITE_BACKEND_BASE_URL
+      }/api/v1/admin/download-session-data/${sessionId}`,
+      "_blank"
+    );
+  };
+
   const handleToggleTimer = (e) => {
     toggleTimerVisibility(e.target.checked);
   };
@@ -252,11 +262,17 @@ function Layout() {
         </h2>
         <div className="w-full max-w-6xl mt-4 mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex gap-4 text-sm sm:text-base">
-            <button
+            {/* <button
               onClick={() => setEndSessionModal(true)}
               className="bg-[#111111] h-[40px] w-[175px] rounded-[8px] text-white hover:scale-105 transform transition-transform duration-200 cursor-pointer"
             >
               End Session
+            </button> */}
+            <button
+              onClick={handleDownloadSessionData}
+              className="bg-[#111111] p-2 flex items-center gap-1 rounded-[8px] text-white hover:scale-105 transform transition-transform duration-200 cursor-pointer"
+            >
+              <Download size={16} /> Download Session Data
             </button>
           </div>
           <div className="flex items-center gap-4">
@@ -396,12 +412,12 @@ function Layout() {
           sessionData={sessionInfo}
         />
       )}
-      {endSessionModal && (
+      {/* {endSessionModal && (
         <EndSessionModal
           onClose={() => setEndSessionModal(false)}
           sessionId={sessionId}
         />
-      )}
+      )} */}
     </div>
   );
 }

@@ -200,7 +200,7 @@ const CardList = ({ teamData }) => {
 
   return (
     <div
-      className={`capture flex justify-center mt-[126px] overflow-scroll`}
+      className={`capture flex justify-center mt-[126px] overflow-y-scroll`}
       style={{ height: `${window.innerHeight - 136}px` }}
     >
       <div className="grid grid-cols-[154px_154px] gap-[19px] auto-rows-[154px] mb-2">

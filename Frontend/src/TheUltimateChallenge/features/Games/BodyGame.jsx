@@ -16,6 +16,8 @@ function BodyGame() {
   const { sessionId } = useParams();
   const cardData = location.state;
   const fileInputRef = useRef(null);
+  const cameraImageRef = useRef(null);
+  const cameraVideoRef = useRef(null);
   const [fileUploaded, setFileUploaded] = useState(false);
   const [imageError, setImageError] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -24,6 +26,7 @@ function BodyGame() {
   const [previewUrl, setPreviewUrl] = useState(null);
   const [isAnswerSubmitted, setIsAnswerSubmitted] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [showUploadMenu, setShowUploadMenu] = useState(false);
   const socket = getSocket();
 
   // Function to check if there's an unsaved answer
@@ -220,6 +223,34 @@ function BodyGame() {
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
+    if (cameraImageRef.current) {
+      cameraImageRef.current.value = "";
+    }
+    if (cameraVideoRef.current) {
+      cameraVideoRef.current.value = "";
+    }
+  };
+
+  // Upload image options
+  const openUploadOptions = () => {
+    setShowUploadMenu((v) => !v);
+  };
+  const handleClickPhoto = () => {
+    setShowUploadMenu(false);
+    if (cameraImageRef.current) cameraImageRef.current.click();
+  };
+  const handleUploadImage = () => {
+    setShowUploadMenu(false);
+    if (fileInputRef.current) fileInputRef.current.click();
+  };
+
+  const handleRecordVideo = () => {
+    setShowUploadMenu(false);
+    if (cameraVideoRef.current) cameraVideoRef.current.click();
+  };
+  const handleUploadVideo = () => {
+    setShowUploadMenu(false);
+    if (fileInputRef.current) fileInputRef.current.click();
   };
 
   const handleSubmit = async () => {
@@ -423,9 +454,7 @@ function BodyGame() {
 
         <button
           className="w-full h-[40px] bg-[#BA2732] rounded-[12px] mb-2 disabled:opacity-50 flex items-center justify-center gap-2"
-          onClick={
-            fileUploaded ? handleSubmit : () => fileInputRef.current.click()
-          }
+          onClick={fileUploaded ? handleSubmit : () => openUploadOptions()}
           disabled={isSubmitting}
         >
           {isSubmitting ? (
@@ -453,6 +482,54 @@ function BodyGame() {
           )}
         </button>
 
+        {/* Upload options menu for images */}
+        {!fileUploaded && showUploadMenu && cardData.answerType === "image" && (
+          <div className="w-full mb-2">
+            <div className="w-full border-2 border-[#BA273299]/60 bg-[#FFA8AE4D]/85 rounded-[12px] backdrop-blur-[53px] p-2 flex gap-2">
+              <button
+                type="button"
+                className="flex-1 h-[40px] bg-[#BA2732] rounded-[10px] flex items-center justify-center gap-2 text-white"
+                onClick={handleClickPhoto}
+                disabled={isSubmitting}
+              >
+                <span>Click Photo</span>
+              </button>
+              <button
+                type="button"
+                className="flex-1 h-[40px] border border-white/70 text-white rounded-[10px] flex items-center justify-center gap-2"
+                onClick={handleUploadImage}
+                disabled={isSubmitting}
+              >
+                <span>Upload Image</span>
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Upload options menu for videos */}
+        {!fileUploaded && showUploadMenu && cardData.answerType === "video" && (
+          <div className="w-full mb-2">
+            <div className="w-full border-2 border-[#BA273299]/60 bg-[#FFA8AE4D]/85 rounded-[12px] backdrop-blur-[53px] p-2 flex gap-2">
+              <button
+                type="button"
+                className="flex-1 h-[40px] bg-[#BA2732] rounded-[10px] flex items-center justify-center gap-2 text-white"
+                onClick={handleRecordVideo}
+                disabled={isSubmitting}
+              >
+                <span>Record Video</span>
+              </button>
+              <button
+                type="button"
+                className="flex-1 h-[40px] border border-white/70 text-white rounded-[10px] flex items-center justify-center gap-2"
+                onClick={handleUploadVideo}
+                disabled={isSubmitting}
+              >
+                <span>Upload Video</span>
+              </button>
+            </div>
+          </div>
+        )}
+
         <input
           type="file"
           ref={fileInputRef}
@@ -466,6 +543,28 @@ function BodyGame() {
               : null
           }
         />
+
+        {/* Hidden camera input to invoke native camera */}
+        {cardData.answerType === "image" && (
+          <input
+            type="file"
+            ref={cameraImageRef}
+            accept="image/*"
+            capture="environment"
+            onChange={handleFileChange}
+            className="hidden"
+          />
+        )}
+        {cardData.answerType === "video" && (
+          <input
+            type="file"
+            ref={cameraVideoRef}
+            accept="video/*"
+            capture
+            onChange={handleFileChange}
+            className="hidden"
+          />
+        )}
       </div>
     </div>
   );

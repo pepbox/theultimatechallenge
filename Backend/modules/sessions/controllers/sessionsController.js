@@ -5,6 +5,8 @@ const Question = require('../../theUltimateChallenge/models/questionSchema');
 const Admin = require('../../adminstrators/admin/models/adminSchema');
 const axios = require('axios');
 const Player = require('../../theUltimateChallenge/models/playerSchema');
+const Team = require('../../theUltimateChallenge/models/teamSchema');
+const { listObjects, deleteFile } = require('../../../services/s3/s3Service');
 
 const createSession = async (req, res) => {
     try {
@@ -286,8 +288,88 @@ const endSession = async (req, res) => {
 }
 
 
+const deleteSessionData = async (req, res) => {
+    const { sessionId } = req.body;
+    if (!sessionId) {
+        return res.status(400).json({
+            success: false,
+            error: 'Missing required fields: sessionId'
+        });
+    }
+
+    try {
+        // Validate sessionId format
+        if (!mongoose.Types.ObjectId.isValid(sessionId)) {
+            return res.status(400).json({
+                success: false,
+                error: 'Invalid sessionId format'
+            });
+        }
+
+        // Check if session exists
+        const session = await TheUltimateChallenge.findById(sessionId);
+        if (!session) {
+            return res.status(404).json({
+                success: false,
+                error: 'Session not found'
+            });
+        }
+
+        // Delete all files from S3 bucket under /answers/{sessionId}/ folder
+        const s3FolderPrefix = `answers/${sessionId}/`;
+        try {
+            const s3Objects = await listObjects(s3FolderPrefix);
+
+            if (s3Objects.length > 0) {
+                console.log(`Deleting ${s3Objects.length} files from S3 folder: ${s3FolderPrefix}`);
+                const deletePromises = s3Objects.map(obj => deleteFile(obj.Key));
+                await Promise.all(deletePromises);
+            } else {
+                console.log(`No files found in S3 folder: ${s3FolderPrefix}`);
+            }
+        } catch (s3Error) {
+            console.error('Error deleting S3 files:', s3Error);
+            // Continue with database cleanup even if S3 deletion fails
+        }
+
+        // Delete all related database records
+        const [
+            deletedPlayers,
+            deletedTeams,
+            deletedAdmin,
+            deletedSessionHistory,
+            deletedSession
+        ] = await Promise.all([
+            Player.deleteMany({ session: sessionId }),
+            Team.deleteMany({ session: sessionId }),
+            Admin.deleteMany({ session: sessionId }),
+            SessionHistory.deleteMany({ session: sessionId }),
+            TheUltimateChallenge.findByIdAndDelete(sessionId)
+        ]);
+        return res.status(200).json({
+            success: true,
+            message: 'Session data deleted successfully',
+            data: {
+                playersDeleted: deletedPlayers.deletedCount,
+                teamsDeleted: deletedTeams.deletedCount,
+                adminsDeleted: deletedAdmin.deletedCount,
+                sessionHistoriesDeleted: deletedSessionHistory.deletedCount,
+                sessionDeleted: deletedSession ? 1 : 0
+            }
+        });
+    }
+    catch (error) {
+        console.error('Error deleting session data:', error);
+        return res.status(500).json({
+            success: false,
+            error: 'Internal server error',
+            details: error.message
+        });
+    }
+}
 module.exports = {
     createSession,
     updateSession,
-    endSession
+    endSession,
+    deleteSessionData
 };

@@ -323,7 +323,12 @@ const Table = forwardRef(
                     key={team.id}
                     className="even:bg-gray-50 text-center rounded-2xl"
                   >
-                    <td>{index + 1}</td>
+                    <td>
+                      {sortConfig.key === "score" &&
+                      sortConfig.direction === "desc"
+                        ? index + 1
+                        : sortedTeamData.length - index}
+                    </td>
                     <td className="px-2">
                       <div
                         onClick={() =>

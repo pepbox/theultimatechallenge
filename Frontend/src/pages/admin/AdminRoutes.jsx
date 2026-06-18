@@ -12,6 +12,8 @@ import History from "../../features/Dashboard/history/History.jsx";
 import GameHistory from "../../features/Dashboard/gameHistory/GameHistory.jsx";
 import LeaderBoardFullPage from "../../features/Dashboard/LeaderBoard/LeaderBoardFullPage.jsx";
 import AdminLogin from "../../features/login.jsx";
+import QuestionLibraryPage from "../../features/Dashboard/QuestionLibrary/QuestionLibraryPage.jsx";
+import GamePDFView from "../../features/Dashboard/home/GamePDFView.jsx";
 import {
   connectSocket,
   disconnectSocket,
@@ -187,6 +189,22 @@ function AdminRoutes() {
       <Route path="history" element={<History />} />
       <Route path="gamehistory" element={<GameHistory />} />
       <Route path="leaderboard" element={<LeaderBoardFullPage />} />
+      <Route
+        path="questions"
+        element={
+          <AuthWrapper role={"admin"}>
+            <QuestionLibraryPage />
+          </AuthWrapper>
+        }
+      />
+      <Route
+        path="print-questions/:level"
+        element={
+          <AuthWrapper role={"admin"}>
+            <GamePDFView />
+          </AuthWrapper>
+        }
+      />
     </Routes>
   );
 }

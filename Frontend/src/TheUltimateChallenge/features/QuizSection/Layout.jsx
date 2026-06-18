@@ -4,6 +4,7 @@ import Overlay from "./Overlay";
 import Card from "./Card";
 import { getSocket } from "../../../services/sockets/theUltimateChallenge";
 import { useNavigate, useParams } from "react-router-dom";
+import UserTimer from "../../../features/user/timer/components/UserTimer";
 
 function Layout() {
   const [overlayToggle, setOverlayToggle] = useState(false);
@@ -88,6 +89,7 @@ function Layout() {
       {overlayToggle && <Overlay />}
       <Header teamData={teamData} />
       <Card teamData={teamData} socket={socket} />
+      <UserTimer sessionId={sessionId} />
     </div>
   );
 }

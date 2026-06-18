@@ -18,87 +18,95 @@ const createSession = async (req, res) => {
             questionsPerLevel,
             isCustomQuestionSelection = false,
             selectedQuestions,
-        } = gameConfig;
+        } = gameConfig || {};
 
 
         // Validate required fields
-        if (!companyName || !admin || !password || !numberOfTeams || !numberOfLevels || !questionsPerLevel) {
+        if (!companyName || !admin || !password) {
             return res.status(400).json({
                 success: false,
-                error: 'Missing required fields: companyName, admin, password, numberOfTeams, numberOfLevels, questionsPerLevel'
+                error: 'Missing required fields: companyName, admin, password'
             });
         }
 
+        const finalNumberOfTeams = numberOfTeams !== undefined ? Number(numberOfTeams) : 10;
+        const finalNumberOfLevels = numberOfLevels !== undefined ? Number(numberOfLevels) : 3;
+        const finalQuestionsPerLevel = questionsPerLevel !== undefined ? Number(questionsPerLevel) : 13;
+
         // Validate numberOfLevels
-        if (![1, 2, 3].includes(numberOfLevels)) {
+        if (finalNumberOfLevels < 1 || finalNumberOfLevels > 10) {
             return res.status(400).json({
                 success: false,
-                error: 'numberOfLevels must be 1, 2, or 3'
+                error: 'numberOfLevels must be between 1 and 10'
             });
         }
 
         // Validate questionsPerLevel
-        if (questionsPerLevel > 13 || questionsPerLevel < 1) {
+        if (finalQuestionsPerLevel > 13 || finalQuestionsPerLevel < 1) {
             return res.status(400).json({
                 success: false,
                 error: 'questionsPerLevel must be between 1 and 13'
             });
         }
 
-        // Validate selectedQuestions
-        if (!selectedQuestions || typeof selectedQuestions !== 'object') {
-            return res.status(400).json({
-                success: false,
-                error: 'selectedQuestions must be an object with levels 1, 2, and 3'
-            });
-        }
+        // Validate selectedQuestions if provided
+        const hasSelectedQuestions = selectedQuestions && 
+            Object.values(selectedQuestions).some(arr => Array.isArray(arr) && arr.length > 0);
 
-        // Validate question IDs and ensure they exist
-        for (let level = 1; level <= numberOfLevels; level++) {
-            const questionIds = selectedQuestions[level.toString()] || [];
-
-            // Check if the number of questions matches questionsPerLevel
-            if (questionIds.length !== questionsPerLevel) {
+        if (hasSelectedQuestions) {
+            if (typeof selectedQuestions !== 'object') {
                 return res.status(400).json({
                     success: false,
-                    error: `Level ${level} must have exactly ${questionsPerLevel} questions`
+                    error: 'selectedQuestions must be an object'
                 });
             }
 
-            // Validate each question ID
-            for (const questionId of questionIds) {
-                if (!mongoose.Types.ObjectId.isValid(questionId)) {
+            // Validate question IDs and ensure they exist
+            for (let level = 1; level <= finalNumberOfLevels; level++) {
+                const questionIds = selectedQuestions[level.toString()] || [];
+
+                // Check if the number of questions matches questionsPerLevel
+                if (questionIds.length !== finalQuestionsPerLevel) {
                     return res.status(400).json({
                         success: false,
-                        error: `Invalid question ID ${questionId} for level ${level}`
+                        error: `Level ${level} must have exactly ${finalQuestionsPerLevel} questions`
                     });
                 }
 
-                // Check if the question exists
-                const question = await Question.findById(questionId);
-                if (!question) {
-                    return res.status(404).json({
-                        success: false,
-                        error: `Question with ID ${questionId} not found`
-                    });
-                }
+                // Validate each question ID
+                for (const questionId of questionIds) {
+                    if (!mongoose.Types.ObjectId.isValid(questionId)) {
+                        return res.status(400).json({
+                            success: false,
+                            error: `Invalid question ID ${questionId} for level ${level}`
+                        });
+                    }
 
-                // Verify question level matches the selected level
-                if (question.level !== level) {
-                    return res.status(400).json({
-                        success: false,
-                        error: `Question ${questionId} does not belong to level ${level}`
-                    });
+                    // Check if the question exists
+                    const question = await Question.findById(questionId);
+                    if (!question) {
+                        return res.status(404).json({
+                            success: false,
+                            error: `Question with ID ${questionId} not found`
+                        });
+                    }
+
+                    // Verify question level matches the selected level
+                    if (question.level !== level) {
+                        return res.status(400).json({
+                            success: false,
+                            error: `Question ${questionId} does not belong to level ${level}`
+                        });
+                    }
                 }
             }
         }
 
         // Ensure unused levels have empty arrays
-        const formattedSelectedQuestions = {
-            1: selectedQuestions['1'] || [],
-            2: selectedQuestions['2'] || [],
-            3: selectedQuestions['3'] || []
-        };
+        const formattedSelectedQuestions = {};
+        for (let i = 1; i <= 10; i++) {
+            formattedSelectedQuestions[i] = (selectedQuestions && selectedQuestions[i.toString()]) || [];
+        }
 
         // Create new session
         const session = new TheUltimateChallenge({
@@ -106,9 +114,9 @@ const createSession = async (req, res) => {
             admin,
             passCode: password,
             teamFormationGame,
-            numberOfTeams,
-            numberOfLevels,
-            questionsPerLevel,
+            numberOfTeams: finalNumberOfTeams,
+            numberOfLevels: finalNumberOfLevels,
+            questionsPerLevel: finalQuestionsPerLevel,
             isCustomQuestionSelection,
             selectedQuestions: formattedSelectedQuestions
         });

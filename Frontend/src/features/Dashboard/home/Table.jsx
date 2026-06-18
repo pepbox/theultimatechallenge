@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Pencil, Lock, Eye, X, ChevronUp, ChevronDown } from "lucide-react";
 import { getSocket } from "../../../services/sockets/admin";
 
@@ -19,6 +19,8 @@ const Table = forwardRef(
       pendingStatusChange,
       transactionsEnabled,
       maxGameLevels,
+      selectedLevels = [],
+      onTeamsCountUpdate,
     },
     ref
   ) => {
@@ -39,7 +41,7 @@ const Table = forwardRef(
     });
     const socket = getSocket();
 
-    const processTeamData = (data) => {
+    const processTeamData = useCallback((data) => {
       // Only update gameStatus if no pending toggle
       if (pendingStatusChange === null) {
         gameStatusRef.current = data.isPaused;
@@ -50,20 +52,25 @@ const Table = forwardRef(
       }
 
       const formattedData = data.teams.map((team) => {
-        // Dynamically create progress array based on maxGameLevels
+        // Dynamically create progress array based on selectedLevels (or default to 1-3 if empty)
         const progressItems = [];
         const colors = ["bg-[#FF6363]", "bg-black", "bg-[#FCA61E]"];
 
-        for (let i = 1; i <= Math.min(maxGameLevels, 3); i++) {
+        const activeLevels = selectedLevels && selectedLevels.length > 0
+          ? [...selectedLevels].sort((a, b) => a - b)
+          : Array.from({ length: Math.min(maxGameLevels || 1, 3) }, (_, i) => i + 1);
+
+        activeLevels.forEach((lvl) => {
+          const levelQuestions = team.questions.filter((q) => q.level === lvl);
           progressItems.push({
-            label: `L${i}`,
-            value: team.questions.filter(
-              (q) => q.level === i && q.status === "done"
+            label: `L${lvl}`,
+            value: levelQuestions.filter(
+              (q) => q.status === "done"
             ).length,
-            total: team.questions.filter((q) => q.level === i).length,
-            color: colors[i - 1],
+            total: levelQuestions.length,
+            color: colors[(lvl - 1) % colors.length],
           });
-        }
+        });
 
         return {
           id: team.teamInfo.id,
@@ -77,6 +84,13 @@ const Table = forwardRef(
       });
 
       setTeamData(formattedData);
+
+      // Report team counts to parent for real-time validation modal statistics
+      const createdCount = data.teams.length;
+      const joinedCount = data.teams.filter(t => t.players && t.players.length > 0).length;
+      if (onTeamsCountUpdate) {
+        onTeamsCountUpdate(createdCount, joinedCount);
+      }
 
       // Update selectedTeam if StatusModal or SubmissionModal is open
       if ((showStatusModal || showSubmissionModal) && selectedTeam) {
@@ -99,7 +113,17 @@ const Table = forwardRef(
           setSelectedTeam(null);
         }
       }
-    };
+    }, [
+      selectedLevels,
+      maxGameLevels,
+      pendingStatusChange,
+      gameStatusRef,
+      onLevelChange,
+      onTeamsCountUpdate,
+      showStatusModal,
+      showSubmissionModal,
+      selectedTeam,
+    ]);
 
     // Sorting function
     const handleSort = (key) => {
@@ -157,7 +181,7 @@ const Table = forwardRef(
       setSortedTeamData(sortedData);
     }, [teamData, sortConfig]);
 
-    const requestTeamData = () => {
+    const requestTeamData = useCallback(() => {
       setLoading(true);
       socket.emit("request-all-teams-data", (response) => {
         console.log("TABLE : Request team data:");
@@ -167,7 +191,7 @@ const Table = forwardRef(
           console.error("Error fetching team data:", response.error);
         }
       });
-    };
+    }, [socket, processTeamData]);
 
     useEffect(() => {
       requestTeamData();
@@ -187,17 +211,13 @@ const Table = forwardRef(
       };
     }, [
       socket,
-      gameStatusRef,
-      onLevelChange,
-      pendingStatusChange,
-      showStatusModal,
-      showSubmissionModal,
-      selectedTeam,
+      processTeamData,
+      requestTeamData,
     ]);
 
-    const handleRefresh = () => {
+    const handleRefresh = useCallback(() => {
       requestTeamData();
-    };
+    }, [requestTeamData]);
 
     useImperativeHandle(ref, () => ({
       handleRefresh,
@@ -533,7 +553,7 @@ const Table = forwardRef(
         {/* Status Modal */}
         {showStatusModal && (
           <StatusModal
-            maxGameLevels={3}
+            maxGameLevels={maxGameLevels}
             team={selectedTeam}
             onClose={closeAllModals}
             socket={socket}

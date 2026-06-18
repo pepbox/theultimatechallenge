@@ -324,12 +324,11 @@ function BodyGame() {
 
   return (
     <div
-      className="mx-[26px] flex flex-col justify-between font-mono"
+      className="mx-[26px] flex flex-col justify-between font-mono pb-32"
       style={{ minHeight: `${window.innerHeight}px` }}
     >
       <div className="mb-[26px] flex flex-col h-[100%] pt-[26px]">
         {/* Header */}
-        <UserTimer sessionId={sessionId} />
 
         <div className="text-white w-full h-[36px] flex justify-between items-center">
           <div
@@ -566,6 +565,7 @@ function BodyGame() {
           />
         )}
       </div>
+      <UserTimer sessionId={sessionId} />
     </div>
   );
 }

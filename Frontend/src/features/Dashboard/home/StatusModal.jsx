@@ -2,12 +2,8 @@ import React, { useState, useEffect } from "react";
 import { X } from "lucide-react";
 import axios from "axios";
 
-const StatusModal = ({ team, onClose, transactionsEnabled, maxGameLevels }) => {
-  const [questionsData, setQuestionsData] = useState({
-    level1: maxGameLevels >= 1 ? [] : undefined,
-    level2: maxGameLevels >= 2 ? [] : undefined,
-    level3: maxGameLevels >= 3 ? [] : undefined,
-  });
+const StatusModal = ({ team, onClose, transactionsEnabled }) => {
+  const [questionsData, setQuestionsData] = useState({});
   const [originalQuestionStatuses, setOriginalQuestionStatuses] = useState(
     new Map()
   );
@@ -17,29 +13,22 @@ const StatusModal = ({ team, onClose, transactionsEnabled, maxGameLevels }) => {
   useEffect(() => {
     // Initialize questions data from team data
     if (team && team.questions) {
-      const level1Questions = team.questions.filter((q) => q.level === 1);
-      const level2Questions = team.questions.filter((q) => q.level === 2);
-      const level3Questions = team.questions.filter((q) => q.level === 3);
+      const grouped = {};
+      const levels = Array.from(
+        new Set(team.questions.map((q) => q.level))
+      ).sort((a, b) => a - b);
 
-      setQuestionsData({
-        level1: maxGameLevels >= 1 ? level1Questions : undefined,
-        level2: maxGameLevels >= 2 ? level2Questions : undefined,
-        level3: maxGameLevels >= 3 ? level3Questions : undefined,
+      levels.forEach((lvl) => {
+        grouped[lvl] = team.questions.filter((q) => q.level === lvl);
       });
 
-      // setQuestionsData({
-      //   level1: level1Questions,
-      //   level2: level2Questions,
-      //   level3: level3Questions
-      // });
+      setQuestionsData(grouped);
 
       // Store original statuses for comparison
       const originalStatuses = new Map();
-      [...level1Questions, ...level2Questions, ...level3Questions].forEach(
-        (q) => {
-          originalStatuses.set(q.id, q.status);
-        }
-      );
+      team.questions.forEach((q) => {
+        originalStatuses.set(q.id, q.status);
+      });
       setOriginalQuestionStatuses(originalStatuses);
 
       // Clear any pending changes when team data changes
@@ -49,8 +38,8 @@ const StatusModal = ({ team, onClose, transactionsEnabled, maxGameLevels }) => {
 
   const handleQuestionToggle = (level, questionId) => {
     // Only allow toggling if transactions are enabled and the question is in "attending" status
-    const question = questionsData[level].find((q) => q.id === questionId);
-    if (!transactionsEnabled || question.status !== "attending") {
+    const question = questionsData[level]?.find((q) => q.id === questionId);
+    if (!question || !transactionsEnabled || question.status !== "attending") {
       if (!transactionsEnabled) {
         alert("Transactions must be enabled to modify question status");
       }
@@ -153,8 +142,6 @@ const StatusModal = ({ team, onClose, transactionsEnabled, maxGameLevels }) => {
   };
 
   const renderQuestionGrid = (level, questions) => {
-    const levelKey = `level${level}`;
-
     return (
       <div className="mb-6">
         <h3 className="text-lg font-semibold text-gray-800 mb-3">
@@ -203,11 +190,11 @@ const StatusModal = ({ team, onClose, transactionsEnabled, maxGameLevels }) => {
             return (
               <button
                 key={question.id}
-                onClick={() => handleQuestionToggle(levelKey, question.id)}
+                onClick={() => handleQuestionToggle(level, question.id)}
                 className={buttonClass}
                 disabled={
                   isCompleted ||
-                  !question.status === "attending" ||
+                  question.status !== "attending" ||
                   !transactionsEnabled
                 }
                 title={
@@ -294,11 +281,13 @@ const StatusModal = ({ team, onClose, transactionsEnabled, maxGameLevels }) => {
           </div>
         </div>
 
-        {/* Level 1 Questions */}
-        {Object.values(questionsData)?.map((questions, index) => {
-          if(!questions || questions.length === 0) return null;
-          return renderQuestionGrid(index + 1, questions);
-        })}
+        {/* Questions grids grouped dynamically */}
+        {Object.entries(questionsData)
+          .sort(([a], [b]) => Number(a) - Number(b))
+          .map(([levelStr, questions]) => {
+            if (!questions || questions.length === 0) return null;
+            return renderQuestionGrid(Number(levelStr), questions);
+          })}
 
         {/* Action Buttons */}
         <div className="flex space-x-3 mt-6">

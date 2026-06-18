@@ -5,6 +5,8 @@ import { getSocket } from "../../../services/sockets/theUltimateChallenge";
 
 function Login() {
   const [numberOfTeams, setNumberOfTeams] = useState(0);
+  const [companyName, setCompanyName] = useState("");
+  const [companyLogo, setCompanyLogo] = useState(null);
   const [loading, setLoading] = useState(true);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -63,6 +65,8 @@ function Login() {
         const data = await response.json();
         if (data.success) {
           setNumberOfTeams(data.numberOfTeams);
+          setCompanyName(data.companyName || "");
+          setCompanyLogo(data.companyLogo || null);
         } else {
           setError(data.message || "Failed to load teams");
         }
@@ -142,9 +146,16 @@ function Login() {
           <CircularProgress color="primary" />
         ) : (
           <div className="w-[100%] mx-[24px] text-[20px] font-bold text-center flex flex-col gap-[12px]">
-            <div className="mx-auto">
+            <div className="mx-auto flex flex-col items-center gap-2">
+              {companyLogo && (
+                <img
+                  src={companyLogo}
+                  alt={companyName || "Company Logo"}
+                  className="max-h-[60px] object-contain mb-2 rounded-lg"
+                />
+              )}
               <h1 className="text-[20px] text-white">
-                The Ultimate Team Challenge
+                {companyName || "The Ultimate Team Challenge"}
               </h1>
             </div>
             <div className="space-y-[20px]">

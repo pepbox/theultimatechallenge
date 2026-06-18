@@ -18,7 +18,7 @@ const getNumberOfTeams = async (req, res) => {
     }
 
     const challengeSession = await TheUltimateChallenge.findById(sessionId)
-      .select('numberOfTeams companyName')
+      .select('numberOfTeams companyName companyLogo')
       .lean();
 
     if (!challengeSession) {
@@ -31,6 +31,7 @@ const getNumberOfTeams = async (req, res) => {
     res.status(200).json({
       success: true,
       companyName: challengeSession.companyName,
+      companyLogo: challengeSession.companyLogo || null,
       numberOfTeams: challengeSession.numberOfTeams
     });
 

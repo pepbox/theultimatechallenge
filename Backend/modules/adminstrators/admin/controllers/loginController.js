@@ -316,10 +316,50 @@ const restoreCookie = async (req, res) => {
   }
 }
 
+const loginWithSuperadminPasscode = async (req, res) => {
+  try {
+    const { passcode } = req.body;
+    if (!passcode) {
+      return res.status(400).json({ success: false, error: 'Passcode is required' });
+    }
+    const expectedPasscode = process.env.SUPERADMIN_LIBRARY_PASSCODE;
+    if (!expectedPasscode || passcode !== expectedPasscode) {
+      return res.status(401).json({ success: false, error: 'Invalid passcode' });
+    }
+
+    const tokenPayload = {
+      isSuperAdmin: true,
+      adminName: 'Super Admin'
+    };
+
+    const token = jwt.sign(tokenPayload, JWT_SECRET, {
+      expiresIn: JWT_EXPIRES_IN
+    });
+
+    const cookieOptions = {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 24 * 60 * 60 * 1000 // 1 day
+    };
+
+    res.cookie('adminToken', token, cookieOptions);
+
+    return res.status(200).json({
+      success: true,
+      message: 'Authenticated successfully'
+    });
+  } catch (error) {
+    console.error('Error in passcode login:', error);
+    return res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+};
+
 module.exports = {
   loginAdmin,
   logoutAdmin,
   updateSocketId,
   validateAdminSession,
-  restoreCookie
+  restoreCookie,
+  loginWithSuperadminPasscode
 };

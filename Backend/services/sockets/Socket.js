@@ -81,7 +81,9 @@ function setupSocket(io) {
                         currentLevel: session.currentLevel,
                         teamScore: team.teamScore,
                         caption: team.caption,
-                        isPaused: session.isPaused
+                        isPaused: session.isPaused,
+                        companyName: session.companyName,
+                        companyLogo: session.companyLogo || null
                     },
                     questions: questionData
                 };
@@ -186,7 +188,9 @@ function setupSocket(io) {
                         currentLevel: session.currentLevel,
                         teamScore: updatedTeam.teamScore,
                         caption: updatedTeam.caption,
-                        isPaused: session.isPaused
+                        isPaused: session.isPaused,
+                        companyName: session.companyName,
+                        companyLogo: session.companyLogo || null
                     },
                     questions: questionData
                 };
@@ -353,7 +357,9 @@ function setupSocket(io) {
                         currentLevel: session.currentLevel,
                         teamScore: updatedTeam.teamScore,
                         caption: updatedTeam.caption,
-                        isPaused: session.isPaused
+                        isPaused: session.isPaused,
+                        companyName: session.companyName,
+                        companyLogo: session.companyLogo || null
                     },
                     questions: questionData
                 };
@@ -455,6 +461,26 @@ function setupSocket(io) {
                 if (typeof data.isPaused !== 'boolean') {
                     return callback({ success: false, error: "Invalid isPaused value" });
                 }
+
+                if (data.isPaused === false) {
+                    let numQuestionsSelected = 0;
+                    if (session.selectedQuestions) {
+                        for (let l = 1; l <= 10; l++) {
+                            if (session.selectedQuestions[l] && session.selectedQuestions[l].length > 0) {
+                                numQuestionsSelected += session.selectedQuestions[l].length;
+                            }
+                        }
+                    }
+                    if (numQuestionsSelected === 0) {
+                        return callback({ success: false, error: "Cannot start game: No questions have been selected yet." });
+                    }
+
+                    const numTeamsCreated = await Team.countDocuments({ session: session._id });
+                    if (numTeamsCreated === 0) {
+                        return callback({ success: false, error: "Cannot start game: No teams have been created yet." });
+                    }
+                }
+
                 session.isPaused = data.isPaused;
                 await session.save();
 
@@ -901,7 +927,9 @@ function setupSocket(io) {
                             currentLevel: session.currentLevel,
                             teamScore: team.teamScore,
                             caption: team.caption,
-                            isPaused: session.isPaused
+                            isPaused: session.isPaused,
+                            companyName: session.companyName,
+                            companyLogo: session.companyLogo || null
                         },
                         questions: questionData
                     };

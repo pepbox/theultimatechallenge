@@ -3,7 +3,6 @@ const mongoose = require('mongoose');
 const questionSchema = new mongoose.Schema({
   level: {
     type: Number,
-    enum: [1, 2, 3],
     required: true
   },
   text: {
@@ -35,7 +34,18 @@ const questionSchema = new mongoose.Schema({
   questionImageUrl: {
     type: String,
     default: null
+  },
+  folder: {
+    type: String,
+    default: 'General',
+    trim: true
+  },
+  isCustom: {
+    type: Boolean,
+    default: false
   }
-});
+}, { timestamps: true });
+
+questionSchema.index({ folder: 1, level: 1, createdAt: -1 });
 
 module.exports = mongoose.model('Question', questionSchema);

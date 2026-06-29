@@ -258,59 +258,7 @@ function QuestionLibraryPage() {
     }
   }, [sessionId, fetchFolders, fetchSelectedQuestions, location.search, verifyingPasscode, passcodeError, foldersError]);
 
-  if (verifyingPasscode) {
-    return (
-      <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#f8fafc', fontFamily: 'Inter, system-ui, sans-serif' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
-          <div style={{ width: 40, height: 40, border: '4px solid #e2e8f0', borderTop: '4px solid #f97316', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
-          <p style={{ margin: 0, fontSize: 16, color: '#475569', fontWeight: 500 }}>Authenticating Super Admin passcode...</p>
-        </div>
-        <style>{`
-          @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-          }
-        `}</style>
-      </div>
-    );
-  }
 
-  if (passcodeError) {
-    return (
-      <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#f8fafc', fontFamily: 'Inter, system-ui, sans-serif', padding: 20 }}>
-        <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #fee2e2', padding: '32px 24px', maxWidth: 440, width: '100%', boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.05)', textAlign: 'center' }}>
-          <div style={{ fontSize: 48, marginBottom: 16 }}>🔒</div>
-          <h2 style={{ margin: '0 0 8px', fontSize: 20, fontWeight: 700, color: '#991b1b' }}>Access Denied</h2>
-          <p style={{ margin: '0 0 24px', fontSize: 14, color: '#64748b', lineHeight: 1.5 }}>
-            {passcodeError}
-          </p>
-          <button
-            onClick={() => {
-              setPasscodeError(null);
-              navigate('/admin/questions', { replace: true });
-            }}
-            style={{ width: '100%', padding: '10px 16px', borderRadius: 8, border: 'none', background: '#f97316', color: '#fff', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}
-          >
-            Go Back
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  if (foldersError) {
-    return (
-      <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#f8fafc', fontFamily: 'Inter, system-ui, sans-serif', padding: 20 }}>
-        <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #fee2e2', padding: '32px 24px', maxWidth: 440, width: '100%', boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.05)', textAlign: 'center' }}>
-          <div style={{ fontSize: 48, marginBottom: 16 }}>🚫</div>
-          <h2 style={{ margin: '0 0 8px', fontSize: 20, fontWeight: 700, color: '#991b1b' }}>Unauthorized</h2>
-          <p style={{ margin: '0 0 24px', fontSize: 14, color: '#64748b', lineHeight: 1.5 }}>
-            You do not have permission to access the Question Library. Please authenticate via the Super Admin panel.
-          </p>
-        </div>
-      </div>
-    );
-  }
 
   const handleToggleQuestion = useCallback((questionId, level) => {
     setSelectedIds((prev) => {
@@ -511,6 +459,60 @@ function QuestionLibraryPage() {
   };
 
   const totalSelected = Object.values(selectedIds).reduce((sum, list) => sum + list.length, 0);
+
+  if (verifyingPasscode) {
+    return (
+      <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#f8fafc', fontFamily: 'Inter, system-ui, sans-serif' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
+          <div style={{ width: 40, height: 40, border: '4px solid #e2e8f0', borderTop: '4px solid #f97316', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
+          <p style={{ margin: 0, fontSize: 16, color: '#475569', fontWeight: 500 }}>Authenticating Super Admin passcode...</p>
+        </div>
+        <style>{`
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+        `}</style>
+      </div>
+    );
+  }
+
+  if (passcodeError) {
+    return (
+      <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#f8fafc', fontFamily: 'Inter, system-ui, sans-serif', padding: 20 }}>
+        <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #fee2e2', padding: '32px 24px', maxWidth: 440, width: '100%', boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.05)', textAlign: 'center' }}>
+          <div style={{ fontSize: 48, marginBottom: 16 }}>🔒</div>
+          <h2 style={{ margin: '0 0 8px', fontSize: 20, fontWeight: 700, color: '#991b1b' }}>Access Denied</h2>
+          <p style={{ margin: '0 0 24px', fontSize: 14, color: '#64748b', lineHeight: 1.5 }}>
+            {passcodeError}
+          </p>
+          <button
+            onClick={() => {
+              setPasscodeError(null);
+              navigate('/admin/questions', { replace: true });
+            }}
+            style={{ width: '100%', padding: '10px 16px', borderRadius: 8, border: 'none', background: '#f97316', color: '#fff', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}
+          >
+            Go Back
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (foldersError) {
+    return (
+      <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#f8fafc', fontFamily: 'Inter, system-ui, sans-serif', padding: 20 }}>
+        <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #fee2e2', padding: '32px 24px', maxWidth: 440, width: '100%', boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.05)', textAlign: 'center' }}>
+          <div style={{ fontSize: 48, marginBottom: 16 }}>🚫</div>
+          <h2 style={{ margin: '0 0 8px', fontSize: 20, fontWeight: 700, color: '#991b1b' }}>Unauthorized</h2>
+          <p style={{ margin: '0 0 24px', fontSize: 14, color: '#64748b', lineHeight: 1.5 }}>
+            You do not have permission to access the Question Library. Please authenticate via the Super Admin panel.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{ minHeight: '100vh', background: '#f8fafc', fontFamily: 'Inter, system-ui, sans-serif' }}>

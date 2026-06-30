@@ -803,6 +803,7 @@ function QuestionLibraryPage() {
                   onCopy={handleSingleCopyOpen}
                   onMove={handleSingleMoveOpen}
                   showCheckbox={true}
+                  isSuperAdmin={!sessionId}
                 />
               ))}
             </div>

@@ -19,7 +19,7 @@ const ANSWER_TYPE_LABELS = {
   fileUpload: 'File Upload',
 };
 
-function QuestionCard({ question, selected, onToggle, onEdit, onDelete, onCopy, onMove, showCheckbox = true }) {
+function QuestionCard({ question, selected, onToggle, onEdit, onDelete, onCopy, onMove, showCheckbox = true, isSuperAdmin = true }) {
   const diffColor = DIFFICULTY_COLORS[question.difficulty] || { bg: '#f3f4f6', text: '#374151' };
   const levelColor = LEVEL_COLORS[question.level] || { bg: '#f3f4f6', text: '#374151' };
 
@@ -118,16 +118,18 @@ function QuestionCard({ question, selected, onToggle, onEdit, onDelete, onCopy, 
         >
           Edit
         </button>
-        <button
-          onClick={() => onDelete(question)}
-          style={{
-            fontSize: 12, fontWeight: 500, padding: '4px 10px',
-            border: '1px solid #fca5a5', borderRadius: 6,
-            background: '#fff', color: '#ef4444', cursor: 'pointer',
-          }}
-        >
-          Delete
-        </button>
+        {isSuperAdmin && (
+          <button
+            onClick={() => onDelete(question)}
+            style={{
+              fontSize: 12, fontWeight: 500, padding: '4px 10px',
+              border: '1px solid #fca5a5', borderRadius: 6,
+              background: '#fff', color: '#ef4444', cursor: 'pointer',
+            }}
+          >
+            Delete
+          </button>
+        )}
         <button
           onClick={() => onCopy(question)}
           style={{

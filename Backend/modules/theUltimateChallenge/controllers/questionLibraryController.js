@@ -126,7 +126,10 @@ const updateQuestion = async (req, res) => {
  */
 const deleteQuestion = async (req, res) => {
   try {
-    verifyAdminToken(req);
+    const admin = verifyAdminToken(req);
+    if (!admin.isSuperAdmin) {
+      return res.status(403).json({ success: false, message: 'Forbidden: Only Super Admins can delete questions' });
+    }
     const { id } = req.params;
 
     const question = await Question.findByIdAndDelete(id);

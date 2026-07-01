@@ -8,6 +8,7 @@ const theUltimateChallengeSchema = new mongoose.Schema({
   teamFormationGame: { type: Boolean, default: false },
   teamFormationSessionId: { type: String, default: null },  
   currentLevel:{type:Number,default:1},
+  teamType: { type: String, enum: ['number', 'color'], default: 'number' },
   numberOfTeams: { type: Number, required: true, default: 10 },
   numberOfTeamsJoined: { type: Number, default: 0 },
   numberOfPlayersJoined: { type: Number, required: true, default: 0 },

@@ -21,7 +21,7 @@ const verifyAdminToken = (req) => {
  */
 const getQuestions = async (req, res) => {
   try {
-    verifyAdminToken(req);
+    const admin = verifyAdminToken(req);
     const { level, folder, search, difficulty, sort = 'newest', page = 1, limit = 100 } = req.query;
 
     const filter = {};
@@ -38,10 +38,24 @@ const getQuestions = async (req, res) => {
       Question.countDocuments(filter),
     ]);
 
+    const questionsWithPermissions = questions.map(q => {
+      let canModify = false;
+      if (admin.isSuperAdmin) {
+        canModify = true;
+      } else if (q.createdBy && q.session && admin.adminId && admin.sessionId) {
+        canModify = q.createdBy.toString() === admin.adminId.toString() && 
+                    q.session.toString() === admin.sessionId.toString();
+      }
+      return {
+        ...q,
+        canModify
+      };
+    });
+
     return res.status(200).json({
       success: true,
       data: {
-        questions,
+        questions: questionsWithPermissions,
         pagination: { total, page: Number(page), limit: Number(limit) },
       },
     });
@@ -56,7 +70,7 @@ const getQuestions = async (req, res) => {
  */
 const createQuestion = async (req, res) => {
   try {
-    verifyAdminToken(req);
+    const admin = verifyAdminToken(req);
     const { text, level, category, difficulty, points, answerType, correctAnswer, questionImageUrl, folder } = req.body;
 
     if (!text || !level || !category || !difficulty || !points || !answerType) {
@@ -74,6 +88,8 @@ const createQuestion = async (req, res) => {
       questionImageUrl: questionImageUrl || null,
       folder: folder || 'General',
       isCustom: true,
+      session: admin.sessionId || null,
+      createdBy: admin.adminId || null,
     });
 
     const saved = await question.save();
@@ -95,12 +111,20 @@ const createQuestion = async (req, res) => {
  */
 const updateQuestion = async (req, res) => {
   try {
-    verifyAdminToken(req);
+    const admin = verifyAdminToken(req);
     const { id } = req.params;
     const { text, level, category, difficulty, points, answerType, correctAnswer, questionImageUrl, folder } = req.body;
 
     const question = await Question.findById(id);
     if (!question) return res.status(404).json({ success: false, message: 'Question not found' });
+
+    if (!admin.isSuperAdmin) {
+      const isCreator = question.createdBy && admin.adminId && question.createdBy.toString() === admin.adminId.toString();
+      const isSameSession = question.session && admin.sessionId && question.session.toString() === admin.sessionId.toString();
+      if (!isCreator || !isSameSession) {
+        return res.status(403).json({ success: false, message: 'Forbidden: You can only edit questions created by you in this session' });
+      }
+    }
 
     if (text !== undefined) question.text = text;
     if (level !== undefined) question.level = Number(level);
@@ -127,13 +151,20 @@ const updateQuestion = async (req, res) => {
 const deleteQuestion = async (req, res) => {
   try {
     const admin = verifyAdminToken(req);
-    if (!admin.isSuperAdmin) {
-      return res.status(403).json({ success: false, message: 'Forbidden: Only Super Admins can delete questions' });
-    }
     const { id } = req.params;
 
-    const question = await Question.findByIdAndDelete(id);
+    const question = await Question.findById(id);
     if (!question) return res.status(404).json({ success: false, message: 'Question not found' });
+
+    if (!admin.isSuperAdmin) {
+      const isCreator = question.createdBy && admin.adminId && question.createdBy.toString() === admin.adminId.toString();
+      const isSameSession = question.session && admin.sessionId && question.session.toString() === admin.sessionId.toString();
+      if (!isCreator || !isSameSession) {
+        return res.status(403).json({ success: false, message: 'Forbidden: You can only delete questions created by you in this session' });
+      }
+    }
+
+    await Question.findByIdAndDelete(id);
 
     return res.status(200).json({ success: true, message: 'Question deleted' });
   } catch (error) {
@@ -359,7 +390,7 @@ const getSelectedQuestionsForSession = async (req, res) => {
  */
 const moveQuestions = async (req, res) => {
   try {
-    verifyAdminToken(req);
+    const admin = verifyAdminToken(req);
     const { questionIds, targetFolder } = req.body;
 
     if (!questionIds || !Array.isArray(questionIds) || questionIds.length === 0) {
@@ -367,6 +398,17 @@ const moveQuestions = async (req, res) => {
     }
     if (!targetFolder) {
       return res.status(400).json({ success: false, message: 'targetFolder is required' });
+    }
+
+    const questions = await Question.find({ _id: { $in: questionIds } });
+    if (!admin.isSuperAdmin) {
+      for (const q of questions) {
+        const isCreator = q.createdBy && admin.adminId && q.createdBy.toString() === admin.adminId.toString();
+        const isSameSession = q.session && admin.sessionId && q.session.toString() === admin.sessionId.toString();
+        if (!isCreator || !isSameSession) {
+          return res.status(403).json({ success: false, message: 'Forbidden: You can only move questions created by you in this session' });
+        }
+      }
     }
 
     // Update the folder field for all matching questions

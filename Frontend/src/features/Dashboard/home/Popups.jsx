@@ -85,43 +85,126 @@ export const GameStatusChangePopup = ({ isOpen, onClose, onConfirm, numQuestions
 };
 
 export const CreateTeamsPopup = ({ isOpen, onClose, onConfirm }) => {
+  const [type, setType] = useState("number"); // "number" or "color"
   const [count, setCount] = useState("5");
+  const [selectedColors, setSelectedColors] = useState([]);
   const [error, setError] = useState("");
+
+  const colors = [
+    "Red", "Green", "Blue", "Yellow", "Orange", "White", "Pink", 
+    "Purple", "Maroon", "Light Blue", "Silver", "Brown", "Indigo", "Olive Green"
+  ];
 
   if (!isOpen) return null;
 
-  const handleSubmit = () => {
-    const num = Number(count);
-    if (isNaN(num) || num < 1 || num > 100) {
-      setError("Please enter a number between 1 and 100");
-      return;
-    }
+  const toggleColor = (color) => {
     setError("");
-    onConfirm(num);
+    if (selectedColors.includes(color)) {
+      setSelectedColors(selectedColors.filter(c => c !== color));
+    } else {
+      setSelectedColors([...selectedColors, color]);
+    }
+  };
+
+  const handleSubmit = () => {
+    if (type === "number") {
+      const num = Number(count);
+      if (isNaN(num) || num < 1 || num > 100) {
+        setError("Please enter a number between 1 and 100");
+        return;
+      }
+      setError("");
+      onConfirm({ type: "number", count: num });
+    } else {
+      if (selectedColors.length === 0) {
+        setError("Please select at least one color");
+        return;
+      }
+      setError("");
+      onConfirm({ type: "color", colors: selectedColors });
+    }
   };
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-slate-50/50 z-50 backdrop-blur-[1px]">
-      <div className="bg-white rounded-xl p-6 w-80 shadow-lg border border-gray-100">
+      <div className={`bg-white rounded-xl p-6 shadow-lg border border-gray-100 font-sans transition-all duration-300 ${type === "color" ? "w-[440px]" : "w-80"}`}>
         <h2 className="text-xl font-bold text-center mb-2 text-gray-900 font-sans">
           Create Teams
         </h2>
 
-        <p className="text-center text-xs text-gray-500 mb-4 font-sans">
-          Specify the number of new teams to generate sequential names for (e.g. Team 1, Team 2, etc.)
-        </p>
-
-        <div className="mb-4">
-          <input
-            type="number"
-            min="1"
-            max="100"
-            value={count}
-            onChange={(e) => setCount(e.target.value)}
-            className="w-full px-3 py-2 border rounded-lg border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-500 text-center text-lg font-bold font-mono"
-          />
-          {error && <p className="text-red-500 text-xs mt-1 text-center font-sans">{error}</p>}
+        {/* Toggle tabs */}
+        <div className="flex bg-slate-100 p-1 rounded-lg mb-4 text-xs font-semibold">
+          <button
+            onClick={() => { setType("number"); setError(""); }}
+            className={`flex-1 py-1.5 rounded-md text-center transition-all ${type === "number" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-900"}`}
+          >
+            Number-based
+          </button>
+          <button
+            onClick={() => { setType("color"); setError(""); }}
+            className={`flex-1 py-1.5 rounded-md text-center transition-all ${type === "color" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-900"}`}
+          >
+            Color-based
+          </button>
         </div>
+
+        {type === "number" ? (
+          <div>
+            <p className="text-center text-xs text-gray-500 mb-4 font-sans">
+              Specify the number of new teams to generate sequential names for (e.g. Team 1, Team 2, etc.)
+            </p>
+
+            <div className="mb-4">
+              <input
+                type="number"
+                min="1"
+                max="100"
+                value={count}
+                onChange={(e) => setCount(e.target.value)}
+                className="w-full px-3 py-2 border rounded-lg border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#FCA61E] text-center text-lg font-bold font-mono"
+              />
+            </div>
+          </div>
+        ) : (
+          <div>
+            <p className="text-center text-xs text-gray-500 mb-4 font-sans">
+              Select one or more team colors from the options below:
+            </p>
+
+            <div className="grid grid-cols-2 gap-2 mb-4 max-h-[220px] overflow-y-auto pr-1">
+              {colors.map(color => {
+                const isSelected = selectedColors.includes(color);
+                return (
+                  <button
+                    key={color}
+                    onClick={() => toggleColor(color)}
+                    className={`px-3 py-2 rounded-lg border text-left text-xs font-semibold flex items-center gap-2 transition-all ${
+                      isSelected 
+                        ? "border-[#FCA61E] bg-orange-50/50 text-gray-900" 
+                        : "border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
+                    }`}
+                  >
+                    <span 
+                      className="w-3.5 h-3.5 rounded-full border border-gray-200/50 flex-shrink-0" 
+                      style={{
+                        backgroundColor: color.toLowerCase() === "white" 
+                          ? "#ffffff" 
+                          : color.toLowerCase() === "light blue" 
+                          ? "#add8e6" 
+                          : color.toLowerCase() === "olive green" 
+                          ? "#808000" 
+                          : color.toLowerCase()
+                      }}
+                    />
+                    {color}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {error && <p className="text-red-500 text-xs mb-4 text-center font-sans">{error}</p>}
 
         <div className="flex justify-between gap-4">
           <button

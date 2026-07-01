@@ -265,11 +265,11 @@ function Layout() {
     setPendingStatusChange(null);
   };
 
-  const handleCreateTeams = async (count) => {
+  const handleCreateTeams = async (teamsPayload) => {
     try {
       const response = await axios.post(
         `${import.meta.env.VITE_BACKEND_BASE_URL}/api/v1/admin/create-teams`,
-        { sessionId, count },
+        { sessionId, ...teamsPayload },
         { withCredentials: true }
       );
       if (response.data.success) {

@@ -23,6 +23,8 @@ function QuestionCard({ question, selected, onToggle, onEdit, onDelete, onCopy, 
   const diffColor = DIFFICULTY_COLORS[question.difficulty] || { bg: '#f3f4f6', text: '#374151' };
   const levelColor = LEVEL_COLORS[question.level] || { bg: '#f3f4f6', text: '#374151' };
 
+  const canModify = question.canModify !== undefined ? question.canModify : isSuperAdmin;
+
   return (
     <div
       style={{
@@ -108,17 +110,19 @@ function QuestionCard({ question, selected, onToggle, onEdit, onDelete, onCopy, 
         style={{ display: 'flex', flexDirection: 'column', gap: 6, minWidth: 64 }}
         onClick={(e) => e.stopPropagation()}
       >
-        <button
-          onClick={() => onEdit(question)}
-          style={{
-            fontSize: 12, fontWeight: 500, padding: '4px 10px',
-            border: '1px solid #d1d5db', borderRadius: 6,
-            background: '#fff', color: '#374151', cursor: 'pointer',
-          }}
-        >
-          Edit
-        </button>
-        {isSuperAdmin && (
+        {canModify && (
+          <button
+            onClick={() => onEdit(question)}
+            style={{
+              fontSize: 12, fontWeight: 500, padding: '4px 10px',
+              border: '1px solid #d1d5db', borderRadius: 6,
+              background: '#fff', color: '#374151', cursor: 'pointer',
+            }}
+          >
+            Edit
+          </button>
+        )}
+        {canModify && (
           <button
             onClick={() => onDelete(question)}
             style={{
@@ -140,16 +144,18 @@ function QuestionCard({ question, selected, onToggle, onEdit, onDelete, onCopy, 
         >
           Copy
         </button>
-        <button
-          onClick={() => onMove(question)}
-          style={{
-            fontSize: 12, fontWeight: 500, padding: '4px 10px',
-            border: '1px solid #d1d5db', borderRadius: 6,
-            background: '#fff', color: '#3b82f6', cursor: 'pointer',
-          }}
-        >
-          Move
-        </button>
+        {canModify && (
+          <button
+            onClick={() => onMove(question)}
+            style={{
+              fontSize: 12, fontWeight: 500, padding: '4px 10px',
+              border: '1px solid #d1d5db', borderRadius: 6,
+              background: '#fff', color: '#3b82f6', cursor: 'pointer',
+            }}
+          >
+            Move
+          </button>
+        )}
       </div>
     </div>
   );

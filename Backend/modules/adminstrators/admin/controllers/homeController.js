@@ -506,6 +506,8 @@ const getPopulatedQuestionsForSession = async (req, res) => {
     }
 };
 
+
+
 const createTeams = async (req, res) => {
     try {
         const token = req.cookies.adminToken;
@@ -513,9 +515,9 @@ const createTeams = async (req, res) => {
             return res.status(401).json({ error: 'Admin token missing' });
         }
 
-        const { sessionId, count } = req.body;
-        if (!sessionId || !count) {
-            return res.status(400).json({ error: 'sessionId and count are required' });
+        const { sessionId, type = 'number', count, colors } = req.body;
+        if (!sessionId) {
+            return res.status(400).json({ error: 'sessionId is required' });
         }
 
         const session = await TheUltimateChallenge.findById(sessionId);
@@ -523,17 +525,42 @@ const createTeams = async (req, res) => {
             return res.status(404).json({ error: 'Session not found' });
         }
 
-        const numTeamsToCreate = Number(count);
-        if (isNaN(numTeamsToCreate) || numTeamsToCreate < 1) {
-            return res.status(400).json({ error: 'count must be a positive number' });
+        let teamNamesToCreate = [];
+        if (type === 'color') {
+            if (!colors || !Array.isArray(colors) || colors.length === 0) {
+                return res.status(400).json({ error: 'colors array is required for color team type' });
+            }
+            teamNamesToCreate = colors;
+        } else {
+            const numTeamsToCreate = Number(count);
+            if (!count || isNaN(numTeamsToCreate) || numTeamsToCreate < 1) {
+                return res.status(400).json({ error: 'count must be a positive number for number team type' });
+            }
+            // Sequential naming logic
+            const existingTeams = await Team.find({ session: sessionId }).lean();
+            const existingNames = new Set(existingTeams.map(t => t.name));
+            let suffix = 1;
+            for (let i = 0; i < numTeamsToCreate; i++) {
+                let teamName = `Team ${suffix}`;
+                while (existingNames.has(teamName)) {
+                    suffix++;
+                    teamName = `Team ${suffix}`;
+                }
+                existingNames.add(teamName);
+                teamNamesToCreate.push(teamName);
+                suffix++;
+            }
         }
 
-        // Find existing teams for this session to determine sequential naming (e.g. Team 1, Team 2)
+        // Set the teamType on the session
+        session.teamType = type;
+
+        // Find existing teams for this session
         const existingTeams = await Team.find({ session: sessionId }).lean();
         const existingNames = new Set(existingTeams.map(t => t.name));
 
         // Determine target total teams count and update session.numberOfTeams
-        const newTotalTeamsCount = existingTeams.length + numTeamsToCreate;
+        const newTotalTeamsCount = existingTeams.length + teamNamesToCreate.length;
         session.numberOfTeams = newTotalTeamsCount;
         await session.save();
 
@@ -550,12 +577,10 @@ const createTeams = async (req, res) => {
         }
 
         const createdTeams = [];
-        let suffix = 1;
-        for (let i = 0; i < numTeamsToCreate; i++) {
-            let teamName = `Team ${suffix}`;
-            while (existingNames.has(teamName)) {
-                suffix++;
-                teamName = `Team ${suffix}`;
+        for (const teamName of teamNamesToCreate) {
+            // Avoid creating duplicate team name in same session
+            if (existingNames.has(teamName)) {
+                continue;
             }
             existingNames.add(teamName);
 
@@ -566,7 +591,6 @@ const createTeams = async (req, res) => {
             });
             await team.save();
             createdTeams.push(team);
-            suffix++;
         }
 
         // Trigger realtime update via socket to admin dashboard
@@ -580,7 +604,7 @@ const createTeams = async (req, res) => {
 
         return res.status(201).json({
             success: true,
-            message: `Successfully created ${numTeamsToCreate} team(s)`,
+            message: `Successfully created ${createdTeams.length} team(s)`,
             data: createdTeams
         });
     } catch (error) {

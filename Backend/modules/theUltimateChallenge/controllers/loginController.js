@@ -18,7 +18,7 @@ const getNumberOfTeams = async (req, res) => {
     }
 
     const challengeSession = await TheUltimateChallenge.findById(sessionId)
-      .select('numberOfTeams companyName companyLogo')
+      .select('numberOfTeams companyName companyLogo teamType')
       .lean();
 
     if (!challengeSession) {
@@ -28,11 +28,16 @@ const getNumberOfTeams = async (req, res) => {
       });
     }
 
+    // Find all created teams for this session
+    const teams = await Team.find({ session: sessionId }).select('name').lean();
+
     res.status(200).json({
       success: true,
       companyName: challengeSession.companyName,
       companyLogo: challengeSession.companyLogo || null,
-      numberOfTeams: challengeSession.numberOfTeams
+      numberOfTeams: challengeSession.numberOfTeams,
+      teamType: challengeSession.teamType || 'number',
+      teams: teams.map(t => ({ _id: t._id, name: t.name }))
     });
 
   } catch (error) {

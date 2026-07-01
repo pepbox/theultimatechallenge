@@ -43,6 +43,16 @@ const questionSchema = new mongoose.Schema({
   isCustom: {
     type: Boolean,
     default: false
+  },
+  session: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'TheUltimateChallenge',
+    default: null
+  },
+  createdBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Admin',
+    default: null
   }
 }, { timestamps: true });
 

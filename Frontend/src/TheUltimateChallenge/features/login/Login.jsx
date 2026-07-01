@@ -10,7 +10,8 @@ function Login() {
   const [loading, setLoading] = useState(true);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
-  const [teamNumber, setTeamNumber] = useState("1");
+  const [teamNumber, setTeamNumber] = useState("");
+  const [teamsList, setTeamsList] = useState([]);
   const [error, setError] = useState("");
   const navigate = useNavigate();
   const { sessionId } = useParams();
@@ -67,6 +68,12 @@ function Login() {
           setNumberOfTeams(data.numberOfTeams);
           setCompanyName(data.companyName || "");
           setCompanyLogo(data.companyLogo || null);
+          setTeamsList(data.teams || []);
+          if (data.teams && data.teams.length > 0) {
+            setTeamNumber(data.teams[0].name);
+          } else {
+            setTeamNumber("Team 1");
+          }
         } else {
           setError(data.message || "Failed to load teams");
         }
@@ -108,7 +115,7 @@ function Login() {
             firstName,
             lastName,
             sessionId,
-            teamName: `Team ${teamNumber}`,
+            teamName: teamNumber,
             socketId: socket.id, // Use the current socket ID
           }),
         }
@@ -131,10 +138,12 @@ function Login() {
     }
   };
 
-  const teamOptions = Array.from({ length: numberOfTeams }, (_, i) => ({
-    value: `${i + 1}`,
-    label: `Team ${i + 1}`,
-  }));
+  const teamOptions = teamsList.length > 0
+    ? teamsList.map((t) => ({ value: t.name, label: t.name }))
+    : Array.from({ length: numberOfTeams }, (_, i) => ({
+        value: `Team ${i + 1}`,
+        label: `Team ${i + 1}`,
+      }));
 
   return (
     <div
@@ -194,7 +203,7 @@ function Login() {
                     onChange={(e) => setTeamNumber(e.target.value)}
                   >
                     <option value="" disabled>
-                      Team Number
+                      {teamsList.length > 0 ? "Select Team" : "Team Number"}
                     </option>
                     {teamOptions.map((team) => (
                       <option

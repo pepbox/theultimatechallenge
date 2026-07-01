@@ -336,6 +336,14 @@ function QuestionLibraryPage() {
   };
 
   const handleBulkMoveOpen = () => {
+    const cannotMove = allSelectedIds.some(id => {
+      const q = questions.find(question => question._id === id);
+      return q && q.canModify === false;
+    });
+    if (cannotMove) {
+      setActionError("You can only move questions created by you in this session.");
+      return;
+    }
     setCopyMoveTargetIds(allSelectedIds);
     setCopyMoveMode('move');
     setCopyMoveOpen(true);

@@ -61,6 +61,11 @@ const statusConfig = {
     text: "Completed",
     className: "w-[95px]",
   },
+  pending_verification: {
+    color: "#F59E0B",
+    text: "Pending...",
+    className: "w-[95px]",
+  },
 };
 
 const Card = ({
@@ -93,7 +98,14 @@ const Card = ({
     socket.emit("start-question", { questionId: id });
 
     // Navigate to appropriate game page
-    const gameType = answerType === "text" ? "mindgame" : "bodygame";
+    let gameType;
+    if (answerType === "text") {
+      gameType = "mindgame";
+    } else if (answerType === "manual_verification") {
+      gameType = "manualgame";
+    } else {
+      gameType = "bodygame";
+    }
     navigate(`/theultimatechallenge/${gameType}/${sessionId}`, {
       state: {
         id,
@@ -137,6 +149,7 @@ const Card = ({
       style={{
         backgroundColor: config.backgroundColor,
         borderColor: config.borderColor,
+        opacity: status === "pending_verification" ? 0.85 : 1,
       }}
     >
       <div

@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 
 const DIFFICULTIES = ['easy', 'medium', 'hard'];
-const ANSWER_TYPES = ['text', 'image', 'video', 'fileUpload'];
+const ANSWER_TYPES = ['text', 'image', 'video', 'fileUpload', 'manual_verification'];
 const LEVELS = [1, 2, 3];
 
 const EMPTY_FORM = {
@@ -274,9 +274,15 @@ function QuestionEditorDialog({ open, mode, initialQuestion, folders, defaultFol
             </FormRow>
           </div>
 
-          <FormRow label="Correct Answer (optional)">
-            <Input value={form.correctAnswer} onChange={set('correctAnswer')} placeholder="Enter correct answer text" />
-          </FormRow>
+          {form.answerType === 'manual_verification' ? (
+            <div style={{ background: '#fffbeb', border: '1px solid #fbbf24', borderRadius: 8, padding: '10px 14px', color: '#92400e', fontSize: 13 }}>
+              <strong>Manual Verification:</strong> Players will see the question and request admin verification. No file upload required. Admin will manually verify and award points.
+            </div>
+          ) : (
+            <FormRow label="Correct Answer (optional)">
+              <Input value={form.correctAnswer} onChange={set('correctAnswer')} placeholder="Enter correct answer text" />
+            </FormRow>
+          )}
 
           <FormRow label="Folder">
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>

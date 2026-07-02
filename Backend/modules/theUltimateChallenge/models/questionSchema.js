@@ -28,7 +28,7 @@ const questionSchema = new mongoose.Schema({
   },
   answerType: {
     type: String,
-    enum: ['fileUpload', 'text','image','video'],
+    enum: ['fileUpload', 'text','image','video','manual_verification'],
     required: true
   },
   questionImageUrl: {

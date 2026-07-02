@@ -10,7 +10,7 @@ const teamSchema = new mongoose.Schema({
   currentLevel: { type: Number, default: 1 },
   questionStatus: [{
     question: { type: mongoose.Schema.Types.ObjectId, ref: 'Question' },
-    status: { type: String, enum: ['available', 'attending', 'done'], default: 'available' },
+    status: { type: String, enum: ['available', 'attending', 'done', 'pending_verification'], default: 'available' },
     currentPlayer: { type: mongoose.Schema.Types.ObjectId, ref: 'Player', default: null },
     pointsEarned: { type: Number, default: 0 },
     answerUrl: {

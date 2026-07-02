@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from "react";
-import { ChevronLeft, Camera, X, Video } from "lucide-react";
+import { ChevronLeft, Camera, X, Video, ClipboardCheck, CheckCircle, XCircle } from "lucide-react";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
 import { getSocket } from "../../../services/sockets/theUltimateChallenge";
 import axios from "axios";
@@ -24,10 +24,25 @@ function BodyGame() {
   const [submitError, setSubmitError] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
-  const [isAnswerSubmitted, setIsAnswerSubmitted] = useState(false);
+  const [isAnswerSubmitted, setIsAnswerSubmittedState] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [showUploadMenu, setShowUploadMenu] = useState(false);
+  const [verificationRequested, setVerificationRequestedState] = useState(false);
+  const [verificationRejected, setVerificationRejected] = useState(false);
+  const [isRequestingVerification, setIsRequestingVerification] = useState(false);
   const socket = getSocket();
+
+  // Refs to avoid stale closures in useEffect cleanup
+  const verificationRequestedRef = useRef(false);
+  const isAnswerSubmittedRef = useRef(false);
+  const setVerificationRequested = (val) => {
+    verificationRequestedRef.current = val;
+    setVerificationRequestedState(val);
+  };
+  const setIsAnswerSubmitted = (val) => {
+    isAnswerSubmittedRef.current = val;
+    setIsAnswerSubmittedState(val);
+  };
 
   // Function to check if there's an unsaved answer
   const hasUnsavedAnswer = () => {
@@ -120,14 +135,38 @@ function BodyGame() {
     socket.on("admin-updated-total-score", onAdminUpdatedTotalScore);
     socket.on("game-ended", onGameEnded);
 
+    // Manual verification events for video questions
+    const onVerificationApproved = (data) => {
+      if (data.questionId?.toString() === cardData?.id?.toString()) {
+        navigate(`/theultimatechallenge/taskcomplete/${sessionId}`, {
+          state: { pointsEarned: data.pointsEarned, message: "Verification approved!", isCorrect: true },
+        });
+      }
+    };
+    const onVerificationRejected = (data) => {
+      if (data.questionId?.toString() === cardData?.id?.toString()) {
+        setVerificationRequested(false);
+        setVerificationRejected(true);
+        setIsRequestingVerification(false);
+      }
+    };
+    socket.on("manual-verification-approved", onVerificationApproved);
+    socket.on("manual-verification-rejected", onVerificationRejected);
+
     return () => {
       if (socket && cardData?.id) {
-        socket.emit("reset-question-status", { questionId: cardData.id });
         socket.off("error");
         socket.off("team-data", onTeamData);
         socket.off("session-pause-updated", onPauseUpdated);
         socket.off("question-status-changed-by-admin", onQuestionStatusChanged);
         socket.off("admin-updated-total-score", onAdminUpdatedTotalScore);
+        socket.off("manual-verification-approved", onVerificationApproved);
+        socket.off("manual-verification-rejected", onVerificationRejected);
+        // Only reset if the player hasn't submitted or requested verification.
+        // Refs are always fresh — no stale closure issue.
+        if (!isAnswerSubmittedRef.current && !verificationRequestedRef.current) {
+          socket.emit("reset-question-status", { questionId: cardData.id });
+        }
       }
     };
   }, [
@@ -135,16 +174,12 @@ function BodyGame() {
     cardData?.id,
     navigate,
     sessionId,
-    selectedFile,
-    isAnswerSubmitted,
-    isSubmitting,
   ]);
 
   // Validate card data on load
   useEffect(() => {
     if (
       !cardData ||
-      !cardData.questionImageUrl ||
       !cardData.text ||
       !cardData.id
     ) {
@@ -180,11 +215,19 @@ function BodyGame() {
   };
 
   const handleBackClick = () => {
-    handleNavigation(resetQuestionStatus);
+    if (verificationRequested) {
+      navigate(`/theultimatechallenge/quizsection/${sessionId}`);
+    } else {
+      handleNavigation(resetQuestionStatus);
+    }
   };
 
   const handlePlayLater = () => {
-    handleNavigation(resetQuestionStatus);
+    if (verificationRequested) {
+      navigate(`/theultimatechallenge/quizsection/${sessionId}`);
+    } else {
+      handleNavigation(resetQuestionStatus);
+    }
   };
 
   const handleFileChange = (e) => {
@@ -452,9 +495,11 @@ function BodyGame() {
         )}
 
         <button
-          className="w-full h-[40px] bg-[#BA2732] rounded-[12px] mb-2 disabled:opacity-50 flex items-center justify-center gap-2"
-          onClick={fileUploaded ? handleSubmit : () => openUploadOptions()}
-          disabled={isSubmitting}
+          className={`w-full h-[40px] bg-[#BA2732] rounded-[12px] mb-2 disabled:opacity-50 flex items-center justify-center gap-2 transition-opacity ${
+            verificationRequested ? 'opacity-30 cursor-not-allowed' : ''
+          }`}
+          onClick={!verificationRequested ? (fileUploaded ? handleSubmit : () => openUploadOptions()) : undefined}
+          disabled={isSubmitting || verificationRequested}
         >
           {isSubmitting ? (
             <span className="text-white">Uploading... {uploadProgress}%</span>
@@ -526,6 +571,65 @@ function BodyGame() {
                 <span>Upload Video</span>
               </button>
             </div>
+          </div>
+        )}
+
+        {/* Manual Verification button — only for video answerType */}
+        {cardData.answerType === "video" && (
+          <div className="w-full mt-3 flex flex-col gap-2">
+            {/* Divider */}
+            <div className="flex items-center gap-2">
+              <div className="flex-1 h-px bg-white/20" />
+              <span className="text-white/40 text-xs font-mono">or</span>
+              <div className="flex-1 h-px bg-white/20" />
+            </div>
+
+            {/* Rejection notice */}
+            {verificationRejected && !verificationRequested && (
+              <div className="w-full border-2 border-red-500/60 bg-red-500/15 rounded-[14px] p-3 flex items-center gap-3">
+                <XCircle className="text-red-400 flex-shrink-0" size={18} />
+                <div>
+                  <p className="text-red-300 text-xs font-mono font-semibold">Verification Rejected</p>
+                  <p className="text-red-300/70 text-xs font-mono">Admin rejected your request. You can try again or upload a video.</p>
+                </div>
+              </div>
+            )}
+
+            <button
+              className={`w-full h-[44px] rounded-[12px] flex items-center justify-center gap-2 transition-all duration-300 font-mono text-sm ${
+                verificationRequested
+                  ? 'bg-amber-500/30 border-2 border-amber-400/50 cursor-not-allowed'
+                  : isRequestingVerification
+                  ? 'bg-purple-700/60 border-2 border-purple-400/40 cursor-not-allowed'
+                  : 'bg-[#5B2DC8] border-2 border-purple-400/30 hover:bg-[#4a22a8] active:scale-95 cursor-pointer'
+              }`}
+              onClick={() => {
+                if (verificationRequested || isRequestingVerification) return;
+                setIsRequestingVerification(true);
+                setVerificationRejected(false);
+                socket.emit('request-manual-verification', { questionId: cardData.id }, (response) => {
+                  setIsRequestingVerification(false);
+                  if (response?.success) {
+                    setVerificationRequested(true);
+                  }
+                });
+              }}
+              disabled={verificationRequested || isRequestingVerification}
+            >
+              {verificationRequested ? (
+                <><CheckCircle className="text-amber-400" size={18} /><span className="text-amber-300">Verification Requested ✓</span></>
+              ) : isRequestingVerification ? (
+                <><div className="w-4 h-4 border-2 border-purple-300 border-t-transparent rounded-full animate-spin" /><span className="text-purple-200">Sending...</span></>
+              ) : (
+                <><ClipboardCheck className="text-white" size={18} /><span className="text-white">{verificationRejected ? 'Request Verification Again' : 'Request Manual Verification'}</span></>
+              )}
+            </button>
+
+            {verificationRequested && (
+              <p className="text-amber-300/60 text-[11px] font-mono text-center">
+                Waiting for admin to review... Upload is disabled.
+              </p>
+            )}
           </div>
         )}
 

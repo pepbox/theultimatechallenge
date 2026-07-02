@@ -19,7 +19,8 @@ import { CachedRounded } from "@mui/icons-material";
 import useAdminAuth from "../../../hooks/admin/useAuth.js";
 import useTimer from "../../user/timer/hooks/useTimer.js";
 import SuccessPopup from "../../../components/SuccessPopup.jsx";
-import { Download, Upload, Pencil } from "lucide-react";
+import { Download, Upload, Pencil, ClipboardCheck } from "lucide-react";
+import ManualVerificationModal from "./ManualVerificationModal.jsx";
 
 
 const RotatingIcon = styled(CachedRounded)(({ rotating }) => ({
@@ -68,6 +69,11 @@ function Layout() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isEditingBranding, setIsEditingBranding] = useState(false);
   const [isBlockedPopupOpen, setIsBlockedPopupOpen] = useState(false);
+
+  // Manual Verification state
+  const [pendingVerifications, setPendingVerifications] = useState([]);
+  const [isVerificationModalOpen, setIsVerificationModalOpen] = useState(false);
+  const [verificationProcessingIds, setVerificationProcessingIds] = useState(new Set());
 
   // Branding states
   const [brandingName, setBrandingName] = useState("");
@@ -356,6 +362,78 @@ function Layout() {
 
   const handleToggleTimer = (e) => {
     toggleTimerVisibility(e.target.checked);
+  };
+
+  // ─── Manual Verification socket listeners ───────────────────────────────────
+  useEffect(() => {
+    if (!socket) return;
+
+    const onVerificationRequest = (data) => {
+      setPendingVerifications((prev) => {
+        // Avoid duplicates
+        const exists = prev.some(
+          (r) => r.teamId.toString() === data.teamId.toString() && r.questionId.toString() === data.questionId.toString()
+        );
+        if (exists) return prev;
+        return [...prev, data];
+      });
+    };
+
+    // When all-teams-data arrives, reconcile pending list (remove 'done' items)
+    const onAllTeamsData = (data) => {
+      if (!data?.teams) return;
+      setPendingVerifications((prev) =>
+        prev.filter((req) => {
+          const team = data.teams.find((t) => t.teamInfo.id.toString() === req.teamId.toString());
+          if (!team) return false;
+          const q = team.questions.find((q) => q.id.toString() === req.questionId.toString());
+          // Keep only if still pending_verification
+          return q && q.status === 'pending_verification';
+        })
+      );
+    };
+
+    socket.on('manual-verification-request', onVerificationRequest);
+    socket.on('all-teams-data', onAllTeamsData);
+
+    return () => {
+      socket.off('manual-verification-request', onVerificationRequest);
+      socket.off('all-teams-data', onAllTeamsData);
+    };
+  }, [socket]);
+
+  const handleVerify = (teamId, questionId) => {
+    const key = `${teamId}_${questionId}`;
+    setVerificationProcessingIds((prev) => new Set([...prev, key]));
+    socket.emit('approve-manual-verification', { teamId, questionId }, (response) => {
+      setVerificationProcessingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(key);
+        return next;
+      });
+      if (response?.success) {
+        setPendingVerifications((prev) =>
+          prev.filter((r) => !(r.teamId.toString() === teamId.toString() && r.questionId.toString() === questionId.toString()))
+        );
+      }
+    });
+  };
+
+  const handleReject = (teamId, questionId) => {
+    const key = `${teamId}_${questionId}`;
+    setVerificationProcessingIds((prev) => new Set([...prev, key]));
+    socket.emit('reject-manual-verification', { teamId, questionId }, (response) => {
+      setVerificationProcessingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(key);
+        return next;
+      });
+      if (response?.success) {
+        setPendingVerifications((prev) =>
+          prev.filter((r) => !(r.teamId.toString() === teamId.toString() && r.questionId.toString() === questionId.toString()))
+        );
+      }
+    });
   };
 
   return (
@@ -665,12 +743,30 @@ function Layout() {
           sessionData={sessionInfo}
         />
       )}
-      {/* {endSessionModal && (
-        <EndSessionModal
-          onClose={() => setEndSessionModal(false)}
-          sessionId={sessionId}
-        />
-      )} */}
+
+      {/* ─── Manual Verification FAB ─────────────────────────────────────────── */}
+      <button
+        onClick={() => setIsVerificationModalOpen(true)}
+        className="fixed bottom-6 right-6 z-[999] w-14 h-14 rounded-2xl bg-[#5B2DC8] hover:bg-[#4a22a8] active:scale-95 shadow-xl flex items-center justify-center transition-all duration-200 border border-purple-400/30"
+        title="Manual Verification Requests"
+      >
+        <ClipboardCheck size={24} className="text-white" />
+        {pendingVerifications.length > 0 && (
+          <span className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-red-500 text-white text-[11px] font-bold flex items-center justify-center shadow-md border border-white">
+            {pendingVerifications.length > 9 ? '9+' : pendingVerifications.length}
+          </span>
+        )}
+      </button>
+
+      {/* ─── Manual Verification Modal ───────────────────────────────────────── */}
+      <ManualVerificationModal
+        isOpen={isVerificationModalOpen}
+        onClose={() => setIsVerificationModalOpen(false)}
+        requests={pendingVerifications}
+        onVerify={handleVerify}
+        onReject={handleReject}
+        processingIds={verificationProcessingIds}
+      />
     </div>
   );
 }

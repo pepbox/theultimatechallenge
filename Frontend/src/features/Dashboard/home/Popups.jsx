@@ -106,6 +106,15 @@ export const CreateTeamsPopup = ({ isOpen, onClose, onConfirm }) => {
     }
   };
 
+  const toggleSelectAllColors = () => {
+    setError("");
+    if (selectedColors.length === colors.length) {
+      setSelectedColors([]);
+    } else {
+      setSelectedColors([...colors]);
+    }
+  };
+
   const handleSubmit = () => {
     if (type === "number") {
       const num = Number(count);
@@ -167,9 +176,21 @@ export const CreateTeamsPopup = ({ isOpen, onClose, onConfirm }) => {
           </div>
         ) : (
           <div>
-            <p className="text-center text-xs text-gray-500 mb-4 font-sans">
+            <p className="text-center text-xs text-gray-500 mb-2 font-sans">
               Select one or more team colors from the options below:
             </p>
+
+            <div className="flex justify-end items-center mb-2 px-1">
+              <label className="flex items-center gap-2 text-xs text-gray-700 cursor-pointer hover:text-gray-900">
+                <input
+                  type="checkbox"
+                  checked={selectedColors.length === colors.length}
+                  onChange={toggleSelectAllColors}
+                  className="w-3.5 h-3.5 rounded border-gray-300 text-[#FCA61E] focus:ring-[#FCA61E]"
+                />
+                <span className="font-semibold">Select All</span>
+              </label>
+            </div>
 
             <div className="grid grid-cols-2 gap-2 mb-4 max-h-[220px] overflow-y-auto pr-1">
               {colors.map(color => {

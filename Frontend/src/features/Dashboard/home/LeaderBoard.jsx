@@ -187,7 +187,7 @@ const LeaderBoard = ({ isTimerOpen, sessionId }) => {
   };
 
   return (
-    <div className="w-full sm:w-2/3 md:w-1/2 lg:w-1/4 mx-auto p-2 sm:p-4 font-sans">
+    <div className="w-full p-2 sm:p-4 font-sans">
       {isTimerOpen && <RoundTimer sessionId={sessionId} />}
       <LeaderBoardContent />
     </div>

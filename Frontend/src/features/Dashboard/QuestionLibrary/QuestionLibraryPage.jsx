@@ -725,11 +725,7 @@ function QuestionLibraryPage() {
 
           {/* Stats row & Select All */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-            <span style={{ fontSize: 13, color: '#6b7280' }}>
-              {questionsLoading ? 'Loading…' : `${pagination.total} question${pagination.total !== 1 ? 's' : ''}`}
-              {selectedFolder !== 'all' ? ` in "${selectedFolder}"` : ''}
-            </span>
-            {questions.length > 0 && (
+             {questions.length > 0 && (
               <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#374151', cursor: 'pointer', userSelect: 'none', fontWeight: 500 }}>
                 <input
                   type="checkbox"
@@ -743,6 +739,11 @@ function QuestionLibraryPage() {
                 Select All
               </label>
             )}
+            <span style={{ fontSize: 13, color: '#6b7280' }}>
+              {questionsLoading ? 'Loading…' : `${pagination.total} question${pagination.total !== 1 ? 's' : ''}`}
+              {selectedFolder !== 'all' ? ` in "${selectedFolder}"` : ''}
+            </span>
+           
           </div>
 
           {allSelectedIds.length > 0 && (

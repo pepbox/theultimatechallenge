@@ -20,7 +20,7 @@ import useAdminAuth from "../../../hooks/admin/useAuth.js";
 import useTimer from "../../user/timer/hooks/useTimer.js";
 import SuccessPopup from "../../../components/SuccessPopup.jsx";
 import { Download, Upload, Pencil, ClipboardCheck } from "lucide-react";
-import ManualVerificationModal from "./ManualVerificationModal.jsx";
+import ManualVerificationSection from "./ManualVerificationSection.jsx";
 
 
 const RotatingIcon = styled(CachedRounded)(({ rotating }) => ({
@@ -72,7 +72,6 @@ function Layout() {
 
   // Manual Verification state
   const [pendingVerifications, setPendingVerifications] = useState([]);
-  const [isVerificationModalOpen, setIsVerificationModalOpen] = useState(false);
   const [verificationProcessingIds, setVerificationProcessingIds] = useState(new Set());
 
   // Branding states
@@ -692,12 +691,18 @@ function Layout() {
             onTeamsCountUpdate={handleTeamsCountUpdate}
           />
         </div>
-        {/* <div className=" lg:w-80 xl:w-[700px]"> */}
-        <LeaderBoard
-          isTimerOpen={timerStatus != "NOT_SHOW"}
-          sessionId={sessionId}
-        />
-        {/* </div> */}
+        <div className="w-full sm:w-2/3 md:w-1/2 lg:w-1/4 flex flex-col gap-4 font-sans">
+          <ManualVerificationSection
+            requests={pendingVerifications}
+            onVerify={handleVerify}
+            onReject={handleReject}
+            processingIds={verificationProcessingIds}
+          />
+          <LeaderBoard
+            isTimerOpen={timerStatus != "NOT_SHOW"}
+            sessionId={sessionId}
+          />
+        </div>
       </div>
 
       <GameLevelChangePopup
@@ -743,30 +748,6 @@ function Layout() {
           sessionData={sessionInfo}
         />
       )}
-
-      {/* ─── Manual Verification FAB ─────────────────────────────────────────── */}
-      <button
-        onClick={() => setIsVerificationModalOpen(true)}
-        className="fixed bottom-6 right-6 z-[999] w-14 h-14 rounded-2xl bg-[#5B2DC8] hover:bg-[#4a22a8] active:scale-95 shadow-xl flex items-center justify-center transition-all duration-200 border border-purple-400/30"
-        title="Manual Verification Requests"
-      >
-        <ClipboardCheck size={24} className="text-white" />
-        {pendingVerifications.length > 0 && (
-          <span className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-red-500 text-white text-[11px] font-bold flex items-center justify-center shadow-md border border-white">
-            {pendingVerifications.length > 9 ? '9+' : pendingVerifications.length}
-          </span>
-        )}
-      </button>
-
-      {/* ─── Manual Verification Modal ───────────────────────────────────────── */}
-      <ManualVerificationModal
-        isOpen={isVerificationModalOpen}
-        onClose={() => setIsVerificationModalOpen(false)}
-        requests={pendingVerifications}
-        onVerify={handleVerify}
-        onReject={handleReject}
-        processingIds={verificationProcessingIds}
-      />
     </div>
   );
 }

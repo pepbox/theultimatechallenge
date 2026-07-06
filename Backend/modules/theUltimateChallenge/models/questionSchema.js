@@ -37,7 +37,7 @@ const questionSchema = new mongoose.Schema({
   },
   folder: {
     type: String,
-    default: 'General',
+    default: 'Default L1-L2-L3 (13-13-13)',
     trim: true
   },
   isCustom: {

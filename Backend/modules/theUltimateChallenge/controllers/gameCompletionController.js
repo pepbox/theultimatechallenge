@@ -68,7 +68,7 @@ const getGameCompletionData = async (req,res) => {
     return res.status(200).json({
       success:true,
       sessionId: sessionId,
-      leaderboard,
+      leaderboard: [],
       yourTeam: yourTeamBlock
     });
   } catch(error){

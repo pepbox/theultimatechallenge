@@ -12,7 +12,7 @@ const EMPTY_FORM = {
   points: 10,
   answerType: 'text',
   correctAnswer: '',
-  folder: 'General',
+  folder: 'Default L1-L2-L3 (13-13-13)',
   questionImageUrl: '',
 };
 
@@ -80,12 +80,12 @@ function QuestionEditorDialog({ open, mode, initialQuestion, folders, defaultFol
         points: initialQuestion.points || 10,
         answerType: initialQuestion.answerType || 'text',
         correctAnswer: initialQuestion.correctAnswer || '',
-        folder: initialQuestion.folder || defaultFolder || 'General',
+        folder: initialQuestion.folder || defaultFolder || 'Default L1-L2-L3 (13-13-13)',
         questionImageUrl: initialQuestion.questionImageUrl || '',
       });
       setImagePreview(initialQuestion.questionImageUrl || '');
     } else {
-      setForm({ ...EMPTY_FORM, folder: defaultFolder || 'General' });
+      setForm({ ...EMPTY_FORM, folder: defaultFolder || 'Default L1-L2-L3 (13-13-13)' });
       setImagePreview('');
     }
     setImageFile(null);
@@ -147,8 +147,8 @@ function QuestionEditorDialog({ open, mode, initialQuestion, folders, defaultFol
       if (!folderName) {
         return setError('Please enter a valid new folder name');
       }
-      if (folderName === 'General') {
-        return setError('Folder name "General" always exists');
+      if (folderName === 'General' || folderName === 'Default L1-L2-L3 (13-13-13)') {
+        return setError('This system folder always exists');
       }
       finalFolder = folderName;
     }
@@ -178,7 +178,8 @@ function QuestionEditorDialog({ open, mode, initialQuestion, folders, defaultFol
 
   if (!open) return null;
 
-  const allFolders = folders.includes('General') ? folders : ['General', ...folders];
+  const folderNames = folders.map(f => typeof f === 'string' ? f : f.name);
+  const allFolders = folderNames.includes('Default L1-L2-L3 (13-13-13)') ? folderNames : ['Default L1-L2-L3 (13-13-13)', ...folderNames];
 
   const CATEGORIES = ["Collab", "Team work", "Discory", "Mind-Bender"];
   const activeCategories = [...CATEGORIES];

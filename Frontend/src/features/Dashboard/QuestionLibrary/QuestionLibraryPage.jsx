@@ -84,7 +84,7 @@ function RenameDialog({ open, current, onConfirm, onCancel }) {
 
 // ─── Copy/Move Questions dialog ───────────────────────────────────────────────
 function CopyMoveQuestionsDialog({ open, folders, targetCount, mode, onConfirm, onCancel }) {
-  const [selectedFolder, setSelectedFolder] = useState('General');
+  const [selectedFolder, setSelectedFolder] = useState('Default L1-L2-L3 (13-13-13)');
 
   if (!open) return null;
 
@@ -107,9 +107,10 @@ function CopyMoveQuestionsDialog({ open, folders, targetCount, mode, onConfirm, 
             fontSize: 14, outline: 'none', marginBottom: 20, boxSizing: 'border-box'
           }}
         >
-          {folders.map(f => (
-            <option key={f} value={f}>{f}</option>
-          ))}
+          {folders.map(f => {
+            const fName = typeof f === 'string' ? f : f.name;
+            return <option key={fName} value={fName}>{fName}</option>;
+          })}
         </select>
 
         <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
@@ -158,6 +159,7 @@ function QuestionLibraryPage() {
   });
   const [sessionLevels, setSessionLevels] = useState(3);
   const [savingSelection, setSavingSelection] = useState(false);
+  const [companyName, setCompanyName] = useState('');
   const [saveMsg, setSaveMsg] = useState('');
 
   // Editor dialog
@@ -252,6 +254,9 @@ function QuestionLibraryPage() {
           }
           if (data?.numberOfLevels) {
             setSessionLevels(data.numberOfLevels);
+          }
+          if (data?.companyName) {
+            setCompanyName(data.companyName);
           }
         }).catch(() => {});
       }
@@ -525,7 +530,7 @@ function QuestionLibraryPage() {
   return (
     <div style={{ minHeight: '100vh', background: '#f8fafc', fontFamily: 'Inter, system-ui, sans-serif' }}>
       {/* Top bar */}
-      <div style={{ background: '#fff', borderBottom: '1px solid #e5e7eb', padding: '12px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+      <div style={{ background: '#fff', borderBottom: '1px solid #e5e7eb', padding: '12px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, position: 'relative' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           {sessionId ? (
             <>
@@ -545,8 +550,10 @@ function QuestionLibraryPage() {
               <span style={{ color: '#d1d5db' }}>|</span>
             </>
           )}
-          <h1 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: '#111827' }}>Question Library</h1>
         </div>
+        <h1 style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%, -50%)', margin: 0, fontSize: 18, fontWeight: 700, color: '#111827', whiteSpace: 'nowrap' }}>
+          {sessionId ? `Current Library${companyName ? ` - ${companyName}` : ''}` : 'Question Library'}
+        </h1>
         <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
           {saveMsg && <span style={{ fontSize: 13, color: '#15803d', fontWeight: 500 }}>{saveMsg}</span>}
           {sessionId && totalSelected > 0 && (
@@ -587,31 +594,35 @@ function QuestionLibraryPage() {
             📁 All Questions
           </SidebarButton>
 
-          {folders.map(folder => (
-            <div key={folder} style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <SidebarButton
-                selected={selectedFolder === folder}
-                onClick={() => setSelectedFolder(folder)}
-                indent={0}
-              >
-                📂 {folder}
-              </SidebarButton>
-              {folder !== 'General' && (
-                <div style={{ display: 'flex', gap: 2 }}>
-                  <button
-                    title="Rename"
-                    onClick={() => { setRenameFolderTarget(folder); setRenameDialogOpen(true); }}
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, color: '#9ca3af', padding: '4px 2px' }}
-                  >✏️</button>
-                  <button
-                    title="Delete"
-                    onClick={() => setDeleteFolderTarget(folder)}
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, color: '#9ca3af', padding: '4px 2px' }}
-                  >🗑️</button>
-                </div>
-              )}
-            </div>
-          ))}
+          {folders.map(folder => {
+            const fName = typeof folder === 'string' ? folder : folder.name;
+            const canMod = typeof folder === 'string' ? (folder !== 'General' && folder !== 'Default L1-L2-L3 (13-13-13)') : folder.canModify;
+            return (
+              <div key={fName} style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <SidebarButton
+                  selected={selectedFolder === fName}
+                  onClick={() => setSelectedFolder(fName)}
+                  indent={0}
+                >
+                  📂 {fName}
+                </SidebarButton>
+                {canMod && (
+                  <div style={{ display: 'flex', gap: 2 }}>
+                    <button
+                      title="Rename"
+                      onClick={() => { setRenameFolderTarget(fName); setRenameDialogOpen(true); }}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, color: '#9ca3af', padding: '4px 2px' }}
+                    >✏️</button>
+                    <button
+                      title="Delete"
+                      onClick={() => setDeleteFolderTarget(fName)}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, color: '#9ca3af', padding: '4px 2px' }}
+                    >🗑️</button>
+                  </div>
+                )}
+              </div>
+            );
+          })}
 
           {/* Add folder */}
           <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -826,7 +837,7 @@ function QuestionLibraryPage() {
         mode={editorMode}
         initialQuestion={editingQuestion}
         folders={folders}
-        defaultFolder={selectedFolder === 'all' ? 'General' : selectedFolder}
+        defaultFolder={selectedFolder === 'all' ? 'Default L1-L2-L3 (13-13-13)' : selectedFolder}
         onClose={() => setEditorOpen(false)}
         onSaved={handleEditorSave}
         onUploadImage={uploadImage}
@@ -845,7 +856,7 @@ function QuestionLibraryPage() {
       <ConfirmDialog
         open={!!deleteFolderTarget}
         title={`Delete "${deleteFolderTarget}" Folder?`}
-        message="All questions in this folder will be moved to General. This cannot be undone."
+        message="All questions in this folder will be moved to Default L1-L2-L3 (13-13-13). This cannot be undone."
         onConfirm={handleDeleteFolder}
         onCancel={() => setDeleteFolderTarget('')}
         danger

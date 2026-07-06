@@ -86,7 +86,7 @@ const createQuestion = async (req, res) => {
       answerType,
       correctAnswer: correctAnswer || null,
       questionImageUrl: questionImageUrl || null,
-      folder: folder || 'General',
+      folder: folder || 'Default L1-L2-L3 (13-13-13)',
       isCustom: true,
       session: admin.sessionId || null,
       createdBy: admin.adminId || null,
@@ -95,8 +95,18 @@ const createQuestion = async (req, res) => {
     const saved = await question.save();
 
     // Ensure folder exists in folder collection
-    if (folder && folder !== 'General') {
-      await QuestionFolder.findOneAndUpdate({ name: folder }, { name: folder }, { upsert: true });
+    if (folder && folder !== 'Default L1-L2-L3 (13-13-13)') {
+      await QuestionFolder.findOneAndUpdate(
+        { name: folder },
+        { 
+          $setOnInsert: {
+            name: folder,
+            session: admin.sessionId || null,
+            createdBy: admin.adminId || null
+          }
+        },
+        { upsert: true }
+      );
     }
 
     return res.status(201).json({ success: true, data: { question: saved } });
@@ -207,10 +217,29 @@ const uploadQuestionImage = async (req, res) => {
  */
 const getFolders = async (req, res) => {
   try {
-    verifyAdminToken(req);
+    const admin = verifyAdminToken(req);
     const folders = await QuestionFolder.find().sort({ name: 1 }).lean();
-    const names = ['General', ...folders.map(f => f.name).filter(n => n !== 'General')];
-    return res.status(200).json({ success: true, data: { folders: names } });
+    
+    const foldersWithPermissions = folders.map(f => {
+      let canModify = false;
+      if (admin.isSuperAdmin) {
+        canModify = true;
+      } else if (f.createdBy && f.session && admin.adminId && admin.sessionId) {
+        canModify = f.createdBy.toString() === admin.adminId.toString() &&
+                    f.session.toString() === admin.sessionId.toString();
+      }
+      return {
+        name: f.name,
+        canModify
+      };
+    });
+
+    const result = [
+      { name: 'Default L1-L2-L3 (13-13-13)', canModify: false },
+      ...foldersWithPermissions.filter(f => f.name !== 'Default L1-L2-L3 (13-13-13)' && f.name !== 'General')
+    ];
+
+    return res.status(200).json({ success: true, data: { folders: result } });
   } catch (error) {
     console.error('getFolders error:', error);
     return res.status(500).json({ success: false, message: 'Failed to fetch folders', error: error.message });
@@ -223,19 +252,23 @@ const getFolders = async (req, res) => {
  */
 const createFolder = async (req, res) => {
   try {
-    verifyAdminToken(req);
+    const admin = verifyAdminToken(req);
     const { name } = req.body;
     if (!name || typeof name !== 'string' || !name.trim()) {
       return res.status(400).json({ success: false, message: 'Folder name is required' });
     }
     const trimmed = name.trim();
-    if (trimmed === 'General') {
-      return res.status(400).json({ success: false, message: '"General" folder always exists' });
+    if (trimmed === 'General' || trimmed === 'Default L1-L2-L3 (13-13-13)') {
+      return res.status(400).json({ success: false, message: 'This system folder always exists' });
     }
     const existing = await QuestionFolder.findOne({ name: trimmed });
     if (existing) return res.status(409).json({ success: false, message: 'Folder already exists' });
 
-    await QuestionFolder.create({ name: trimmed });
+    await QuestionFolder.create({
+      name: trimmed,
+      session: admin.sessionId || null,
+      createdBy: admin.adminId || null
+    });
     return res.status(201).json({ success: true, data: { folder: trimmed } });
   } catch (error) {
     console.error('createFolder error:', error);
@@ -249,16 +282,26 @@ const createFolder = async (req, res) => {
  */
 const renameFolder = async (req, res) => {
   try {
-    verifyAdminToken(req);
+    const admin = verifyAdminToken(req);
     const oldName = decodeURIComponent(req.params.name);
     const { newName } = req.body;
 
-    if (oldName === 'General') return res.status(400).json({ success: false, message: 'Cannot rename the General folder' });
+    if (oldName === 'General' || oldName === 'Default L1-L2-L3 (13-13-13)') {
+      return res.status(400).json({ success: false, message: 'Cannot rename a system folder' });
+    }
     if (!newName || !newName.trim()) return res.status(400).json({ success: false, message: 'New name is required' });
     const trimmed = newName.trim();
 
     const folder = await QuestionFolder.findOne({ name: oldName });
     if (!folder) return res.status(404).json({ success: false, message: 'Folder not found' });
+
+    if (!admin.isSuperAdmin) {
+      const isCreator = folder.createdBy && admin.adminId && folder.createdBy.toString() === admin.adminId.toString();
+      const isSameSession = folder.session && admin.sessionId && folder.session.toString() === admin.sessionId.toString();
+      if (!isCreator || !isSameSession) {
+        return res.status(403).json({ success: false, message: 'Forbidden: You can only rename folders created by you in this session' });
+      }
+    }
 
     const conflict = await QuestionFolder.findOne({ name: trimmed });
     if (conflict) return res.status(409).json({ success: false, message: 'A folder with that name already exists' });
@@ -282,15 +325,28 @@ const renameFolder = async (req, res) => {
  */
 const deleteFolder = async (req, res) => {
   try {
-    verifyAdminToken(req);
+    const admin = verifyAdminToken(req);
     const name = decodeURIComponent(req.params.name);
 
-    if (name === 'General') return res.status(400).json({ success: false, message: 'Cannot delete the General folder' });
+    if (name === 'General' || name === 'Default L1-L2-L3 (13-13-13)') {
+      return res.status(400).json({ success: false, message: 'Cannot delete a system folder' });
+    }
 
-    await Question.updateMany({ folder: name }, { folder: 'General' });
+    const folder = await QuestionFolder.findOne({ name });
+    if (!folder) return res.status(404).json({ success: false, message: 'Folder not found' });
+
+    if (!admin.isSuperAdmin) {
+      const isCreator = folder.createdBy && admin.adminId && folder.createdBy.toString() === admin.adminId.toString();
+      const isSameSession = folder.session && admin.sessionId && folder.session.toString() === admin.sessionId.toString();
+      if (!isCreator || !isSameSession) {
+        return res.status(403).json({ success: false, message: 'Forbidden: You can only delete folders created by you in this session' });
+      }
+    }
+
+    await Question.updateMany({ folder: name }, { folder: 'Default L1-L2-L3 (13-13-13)' });
     await QuestionFolder.deleteOne({ name });
 
-    return res.status(200).json({ success: true, data: { fallbackFolder: 'General' } });
+    return res.status(200).json({ success: true, data: { fallbackFolder: 'Default L1-L2-L3 (13-13-13)' } });
   } catch (error) {
     console.error('deleteFolder error:', error);
     return res.status(500).json({ success: false, message: 'Failed to delete folder', error: error.message });
@@ -364,7 +420,7 @@ const getSelectedQuestionsForSession = async (req, res) => {
     verifyAdminToken(req);
     const { sessionId } = req.params;
 
-    const session = await TheUltimateChallenge.findById(sessionId).select('selectedQuestions isCustomQuestionSelection numberOfLevels');
+    const session = await TheUltimateChallenge.findById(sessionId).select('selectedQuestions isCustomQuestionSelection numberOfLevels companyName');
     if (!session) return res.status(404).json({ success: false, message: 'Session not found' });
 
     const fallback = {};
@@ -376,6 +432,7 @@ const getSelectedQuestionsForSession = async (req, res) => {
         selectedQuestions: session.selectedQuestions || fallback,
         isCustomQuestionSelection: session.isCustomQuestionSelection,
         numberOfLevels: session.numberOfLevels,
+        companyName: session.companyName,
       },
     });
   } catch (error) {
@@ -418,8 +475,18 @@ const moveQuestions = async (req, res) => {
     );
 
     // Ensure target folder exists in folders list
-    if (targetFolder !== 'General') {
-      await QuestionFolder.findOneAndUpdate({ name: targetFolder }, { name: targetFolder }, { upsert: true });
+    if (targetFolder !== 'Default L1-L2-L3 (13-13-13)') {
+      await QuestionFolder.findOneAndUpdate(
+        { name: targetFolder },
+        { 
+          $setOnInsert: {
+            name: targetFolder,
+            session: admin.sessionId || null,
+            createdBy: admin.adminId || null
+          }
+        },
+        { upsert: true }
+      );
     }
 
     return res.status(200).json({ success: true, message: `Successfully moved ${questionIds.length} question(s) to ${targetFolder}` });
@@ -463,8 +530,18 @@ const copyQuestions = async (req, res) => {
     await Question.insertMany(copies);
 
     // Ensure target folder exists in folders list
-    if (targetFolder !== 'General') {
-      await QuestionFolder.findOneAndUpdate({ name: targetFolder }, { name: targetFolder }, { upsert: true });
+    if (targetFolder !== 'Default L1-L2-L3 (13-13-13)') {
+      await QuestionFolder.findOneAndUpdate(
+        { name: targetFolder },
+        { 
+          $setOnInsert: {
+            name: targetFolder,
+            session: admin.sessionId || null,
+            createdBy: admin.adminId || null
+          }
+        },
+        { upsert: true }
+      );
     }
 
     return res.status(200).json({ success: true, message: `Successfully copied ${questions.length} question(s) to ${targetFolder}` });

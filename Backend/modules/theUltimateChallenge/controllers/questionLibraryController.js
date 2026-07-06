@@ -343,10 +343,9 @@ const deleteFolder = async (req, res) => {
       }
     }
 
-    await Question.updateMany({ folder: name }, { folder: 'Default L1-L2-L3 (13-13-13)' });
     await QuestionFolder.deleteOne({ name });
 
-    return res.status(200).json({ success: true, data: { fallbackFolder: 'Default L1-L2-L3 (13-13-13)' } });
+    return res.status(200).json({ success: true, message: 'Folder deleted successfully' });
   } catch (error) {
     console.error('deleteFolder error:', error);
     return res.status(500).json({ success: false, message: 'Failed to delete folder', error: error.message });

@@ -856,7 +856,7 @@ function QuestionLibraryPage() {
       <ConfirmDialog
         open={!!deleteFolderTarget}
         title={`Delete "${deleteFolderTarget}" Folder?`}
-        message="All questions in this folder will be moved to Default L1-L2-L3 (13-13-13). This cannot be undone."
+        message="Are you sure you want to delete this folder? This cannot be undone."
         onConfirm={handleDeleteFolder}
         onCancel={() => setDeleteFolderTarget('')}
         danger

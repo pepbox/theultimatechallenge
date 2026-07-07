@@ -5,11 +5,15 @@ import Card from "./Card";
 import { getSocket } from "../../../services/sockets/theUltimateChallenge";
 import { useNavigate, useParams } from "react-router-dom";
 import UserTimer from "../../../features/user/timer/components/UserTimer";
+import PlayerScorecard from "./PlayerScorecard";
+import axios from "axios";
 
 function Layout() {
   const [overlayToggle, setOverlayToggle] = useState(false);
   const [windowHeight, setWindowHeight] = useState(window.innerHeight);
   const [teamData, setTeamData] = useState(null);
+  const [showScorecard, setShowScorecard] = useState(false);
+  const [leaderboard, setLeaderboard] = useState([]);
   const [error, setError] = useState(null);
   const socket = getSocket();
   const { sessionId } = useParams();
@@ -24,6 +28,9 @@ function Layout() {
       console.log("Team data received:", data);
       setTeamData(data);
       setOverlayToggle(data.teamInfo.isPaused);
+      if (typeof data.teamInfo.showScorecard === "boolean") {
+        setShowScorecard(data.teamInfo.showScorecard);
+      }
     };
     const onGameEnded = ({ sessionId: endedId }) => {
       console.log("Game ended for session:", endedId, "  ", sessionId);
@@ -48,10 +55,21 @@ function Layout() {
       setOverlayToggle(data.isPaused);
     };
 
+    const onScorecardUpdated = (data) => {
+      console.log("Scorecard status updated:", data);
+      setShowScorecard(data.showScorecard);
+      if (data.leaderboard) {
+        setLeaderboard(data.leaderboard);
+      }
+    };
+
     // Emit request for team data
     socket.emit("request-team-data", (response) => {
       if (response.success) {
         setTeamData(response.data);
+        if (typeof response.data.teamInfo.showScorecard === "boolean") {
+          setShowScorecard(response.data.teamInfo.showScorecard);
+        }
       } else {
         setError(response.error || "Failed to fetch team data");
       }
@@ -61,7 +79,7 @@ function Layout() {
     socket.on("team-data", onTeamData);
     socket.on("error", onError);
     socket.on("session-pause-updated", onPauseUpdated);
-
+    socket.on("scorecard-visibility-updated", onScorecardUpdated);
     socket.on("game-ended", onGameEnded);
 
     return () => {
@@ -69,9 +87,34 @@ function Layout() {
       socket.off("team-data", onTeamData);
       socket.off("error", onError);
       socket.off("session-pause-updated", onPauseUpdated);
+      socket.off("scorecard-visibility-updated", onScorecardUpdated);
+      socket.off("game-ended", onGameEnded);
       window.removeEventListener("resize", handleResize);
     };
   }, [socket]);
+
+  // Fetch leaderboard when scorecard is toggled on
+  useEffect(() => {
+    if (showScorecard) {
+      const fetchLeaderboard = async () => {
+        try {
+          const res = await axios.get(
+            `${import.meta.env.VITE_BACKEND_BASE_URL}/api/v1/theultimatechallenge/leaderboard`,
+            {
+              params: { sessionId },
+              withCredentials: true,
+            }
+          );
+          if (res.data && res.data.success) {
+            setLeaderboard(res.data.leaderboard);
+          }
+        } catch (err) {
+          console.error("Error fetching leaderboard:", err);
+        }
+      };
+      fetchLeaderboard();
+    }
+  }, [showScorecard, sessionId]);
 
   if (error) {
     return <div className="text-red-500 p-4">Error: {error}</div>;
@@ -86,10 +129,19 @@ function Layout() {
       className="relative flex justify-center font-mono"
       style={{ minHeight: `${windowHeight}px` }}
     >
-      {overlayToggle && <Overlay />}
-      <Header teamData={teamData} />
-      <Card teamData={teamData} socket={socket} />
-      <UserTimer sessionId={sessionId} />
+      {showScorecard ? (
+        <PlayerScorecard
+          leaderboard={leaderboard}
+          ownTeamName={teamData.teamName}
+        />
+      ) : (
+        <>
+          {overlayToggle && <Overlay />}
+          <Header teamData={teamData} />
+          <Card teamData={teamData} socket={socket} />
+          <UserTimer sessionId={sessionId} />
+        </>
+      )}
     </div>
   );
 }

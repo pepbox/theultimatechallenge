@@ -451,3 +451,37 @@ export const GameStartBlockedPopup = ({ isOpen, onClose, numQuestionsSelected, n
   );
 };
 
+export const ScorecardTogglePopup = ({ isOpen, onClose, onConfirm, isSharing }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 flex items-center justify-center bg-slate-50/50 z-50 backdrop-blur-[1px]">
+      <div className="bg-white rounded-xl p-6 w-[340px] shadow-lg border border-gray-100 font-sans">
+        <h2 className="text-xl font-bold text-center mb-2 text-gray-900">
+          Share Scorecard
+        </h2>
+
+        <p className="text-center text-gray-600 mb-6 text-sm">
+          Are you sure you want to <strong>{isSharing ? "share" : "hide"}</strong> the scorecard {isSharing ? "with" : "from"} players? {isSharing && "This will display the real-time leaderboard on players' screens."}
+        </p>
+
+        <div className="flex justify-between gap-4">
+          <button
+            onClick={onConfirm}
+            className="flex-1 bg-black text-white py-2.5 rounded-lg font-medium hover:bg-gray-800 transition-colors text-sm"
+          >
+            Confirm
+          </button>
+
+          <button
+            onClick={onClose}
+            className="flex-1 border border-gray-300 py-2.5 rounded-lg font-medium hover:bg-gray-50 transition-colors text-sm text-gray-700"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+

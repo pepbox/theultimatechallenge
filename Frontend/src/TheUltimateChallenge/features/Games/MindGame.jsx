@@ -49,10 +49,17 @@ function MindGame() {
       }
     };
 
+    const onScorecardUpdated = (data) => {
+      if (data.showScorecard) {
+        navigate(`/theultimatechallenge/quizsection/${sessionId}`);
+      }
+    };
+
     socket.on("session-pause-updated", onPauseUpdated);
     socket.on("team-data", onTeamData);
     socket.on("question-status-changed-by-admin", onQuestionStatusChanged);
     socket.on("admin-updated-total-score", onAdminUpdatedTotalScore);
+    socket.on("scorecard-visibility-updated", onScorecardUpdated);
     socket.on("game-ended", onGameEnded);
 
     return () => {
@@ -63,6 +70,7 @@ function MindGame() {
         socket.off("session-pause-updated", onPauseUpdated);
         socket.off("question-status-changed-by-admin", onQuestionStatusChanged);
         socket.off("admin-updated-total-score", onAdminUpdatedTotalScore);
+        socket.off("scorecard-visibility-updated", onScorecardUpdated);
       }
     };
   }, [socket, cardData?.id, navigate, sessionId]);

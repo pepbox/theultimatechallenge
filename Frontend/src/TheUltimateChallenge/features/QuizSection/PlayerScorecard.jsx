@@ -1,95 +1,34 @@
-import { useState, useEffect } from "react";
+import React from "react";
 import GoldCrown from "../../../assets/images/dashboard/GoldCrown.webp";
 import SilverCrown from "../../../assets/images/dashboard/SliverCrown.webp";
 import BrownCrown from "../../../assets/images/dashboard/BronzeCrown.webp";
-import { getSocket, connectSocket } from "../../../services/sockets/admin";
 
-const LeaderBoardFullPage = () => {
-  const [allTeams, setAllTeams] = useState([]);
-  const [topTeams, setTopTeams] = useState([]);
-  const [remainingTeams, setRemainingTeams] = useState([]);
-  const [socket, setSocket] = useState(null);
+function PlayerScorecard({ leaderboard = [], ownTeamName }) {
+  const normalizedLeaderboard = (leaderboard || []).map(team => ({
+    id: team.id || team.teamId || "",
+    name: team.name || team.teamName || "",
+    score: typeof team.score === 'number' ? team.score : 0,
+    rank: typeof team.rank === 'number' ? team.rank : 0
+  }));
 
-  useEffect(() => {
-    // Initialize socket connection
-    const initSocket = async () => {
-      await connectSocket();
-      const socketInstance = getSocket();
-      setSocket(socketInstance);
-    };
+  const topTeams = normalizedLeaderboard.slice(0, 3);
+  const remainingTeams = normalizedLeaderboard.slice(3);
 
-    initSocket();
-  }, []);
-
-  const processTeamData = (data) => {
-    if (!data || !data.teams) return;
-    const sortedTeams = data.teams
-      .map((team) => ({
-        id: team.teamInfo.id,
-        name: team.teamInfo.name,
-        score: team.teamInfo.teamScore,
-      }))
-      .sort((a, b) => b.score - a.score);
-
-    let currentRank = 0;
-    let prevScore = null;
-    const rankedTeams = sortedTeams.map((team) => {
-      if (team.score !== prevScore) {
-        currentRank++;
-        prevScore = team.score;
-      }
-      return {
-        ...team,
-        rank: currentRank,
-      };
-    });
-
-    setAllTeams(rankedTeams);
-    setTopTeams(rankedTeams.slice(0, 3));
-    setRemainingTeams(rankedTeams.slice(3));
+  const isOwnTeam = (name) => {
+    return ownTeamName && name && name.toLowerCase() === ownTeamName.toLowerCase();
   };
 
-  useEffect(() => {
-    if (!socket) return;
-
-    console.log("LeaderBoard Full Page component mounted, socket:", socket);
-
-    // Request team data when component mounts
-    socket.emit("request-all-teams-data", (response) => {
-      if (response.success) {
-        processTeamData(response.data);
-      } else {
-        console.error("Error fetching team data:", response.error);
-      }
-    });
-
-    // Store handler reference to ensure proper cleanup
-    const handleTeamDataUpdate = (data) => {
-      console.log("Received updated team data: IN LEADERBOARD FULL PAGE", data);
-      processTeamData(data);
-    };
-
-    // Listen for real-time team data updates
-    socket.on("all-teams-data", handleTeamDataUpdate);
-
-    // Cleanup - remove only this specific handler
-    return () => {
-      socket.off("all-teams-data", handleTeamDataUpdate);
-    };
-  }, [socket]);
-
   return (
-    <div className="min-h-screen bg-gradient-to-b from-orange-50 to-white p-3 sm:p-4">
+    <div className="min-h-screen w-full bg-gradient-to-b from-orange-50 to-white p-3 sm:p-4 font-sans text-gray-800">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="text-center mb-3">
           <h1 className="text-xl sm:text-3xl font-bold text-gray-800">
-            Ultimate Team Challenge
+            The Ultimate Challenge
           </h1>
           <h2 className="text-xl sm:text-2xl font-semibold text-gray-800">
             Leaderboard
           </h2>
-          <p></p>
         </div>
 
         {/* Combined Leaderboard Container */}
@@ -97,7 +36,9 @@ const LeaderBoardFullPage = () => {
           <div className="flex justify-between items-start px-2 sm:px-4 md:px-8 relative my-4">
             {/* Silver Crown - Rank 2 */}
             {topTeams[1] ? (
-              <div className="flex flex-col items-center justify-center w-1/3 px-1">
+              <div className={`flex flex-col items-center justify-center w-1/3 px-1 py-2 rounded-xl transition-all ${
+                isOwnTeam(topTeams[1].name) ? "bg-orange-50 border border-orange-200 ring-2 ring-orange-200" : ""
+              }`}>
                 <div className="w-16 h-16 sm:w-20 sm:h-20 mb-2">
                   <img
                     src={SilverCrown}
@@ -105,8 +46,11 @@ const LeaderBoardFullPage = () => {
                     className="w-full h-full object-contain"
                   />
                 </div>
-                <div className="text-xs sm:text-sm lg:text-base font-semibold text-center break-words">
+                <div className="text-xs sm:text-sm lg:text-base font-semibold text-center break-words flex items-center justify-center gap-1">
                   {topTeams[1].name}
+                  {isOwnTeam(topTeams[1].name) && (
+                    <span className="bg-orange-500 text-white text-[9px] font-bold px-1 py-0.5 rounded">You</span>
+                  )}
                 </div>
                 <div className="text-[10px] sm:text-xs text-gray-600 text-center mt-0.5">
                   {topTeams[1].score.toLocaleString()}
@@ -132,7 +76,9 @@ const LeaderBoardFullPage = () => {
 
             {/* Gold Crown - Rank 1 */}
             {topTeams[0] ? (
-              <div className="flex flex-col items-center justify-start w-1/3 px-1 -mt-4">
+              <div className={`flex flex-col items-center justify-start w-1/3 px-1 -mt-4 py-2 rounded-xl transition-all ${
+                isOwnTeam(topTeams[0].name) ? "bg-orange-50 border border-orange-200 ring-2 ring-orange-200" : ""
+              }`}>
                 <div className="w-20 h-20 sm:w-24 sm:h-24 mb-2">
                   <img
                     src={GoldCrown}
@@ -140,8 +86,11 @@ const LeaderBoardFullPage = () => {
                     className="w-full h-full object-contain"
                   />
                 </div>
-                <div className="text-sm sm:text-base lg:text-lg font-bold text-center break-words">
+                <div className="text-sm sm:text-base lg:text-lg font-bold text-center break-words flex items-center justify-center gap-1">
                   {topTeams[0].name}
+                  {isOwnTeam(topTeams[0].name) && (
+                    <span className="bg-orange-500 text-white text-[9px] font-bold px-1 py-0.5 rounded">You</span>
+                  )}
                 </div>
                 <div className="text-xs sm:text-sm text-gray-600 text-center mt-0.5">
                   {topTeams[0].score.toLocaleString()}
@@ -167,7 +116,9 @@ const LeaderBoardFullPage = () => {
 
             {/* Bronze Crown - Rank 3 */}
             {topTeams[2] ? (
-              <div className="flex flex-col items-center justify-center w-1/3 px-1">
+              <div className={`flex flex-col items-center justify-center w-1/3 px-1 py-2 rounded-xl transition-all ${
+                isOwnTeam(topTeams[2].name) ? "bg-orange-50 border border-orange-200 ring-2 ring-orange-200" : ""
+              }`}>
                 <div className="w-14 h-14 sm:w-18 sm:h-18 mb-2">
                   <img
                     src={BrownCrown}
@@ -175,8 +126,11 @@ const LeaderBoardFullPage = () => {
                     className="w-full h-full object-contain"
                   />
                 </div>
-                <div className="text-xs sm:text-sm lg:text-base font-semibold text-center break-words">
+                <div className="text-xs sm:text-sm lg:text-base font-semibold text-center break-words flex items-center justify-center gap-1">
                   {topTeams[2].name}
+                  {isOwnTeam(topTeams[2].name) && (
+                    <span className="bg-orange-500 text-white text-[9px] font-bold px-1 py-0.5 rounded">You</span>
+                  )}
                 </div>
                 <div className="text-[10px] sm:text-xs text-gray-600 text-center mt-0.5">
                   {topTeams[2].score.toLocaleString()}
@@ -219,30 +173,40 @@ const LeaderBoardFullPage = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {remainingTeams.map((team, index) => (
-                    <tr
-                      key={team.id}
-                      className="border-b border-gray-100 hover:bg-gray-50 transition-colors"
-                    >
-                      <td className="py-2.5 px-3">
-                        <div className="flex items-center">
-                          <span className="font-bold text-sm text-gray-700">
-                            {team.rank}
+                  {remainingTeams.map((team) => {
+                    const highlight = isOwnTeam(team.name);
+                    return (
+                      <tr
+                        key={team.id || team.name}
+                        className={`border-b border-gray-100 hover:bg-gray-50 transition-colors ${
+                          highlight ? "bg-orange-50 hover:bg-orange-100 font-bold" : ""
+                        }`}
+                      >
+                        <td className="py-2.5 px-3">
+                          <div className="flex items-center">
+                            <span className={`text-sm ${highlight ? "text-orange-600 font-bold" : "text-gray-700"}`}>
+                              {team.rank}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="py-2.5 px-3">
+                          <span className={`text-sm flex items-center gap-1.5 ${highlight ? "text-orange-700 font-bold" : "text-gray-800"}`}>
+                            {team.name}
+                            {highlight && (
+                              <span className="bg-orange-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-md uppercase tracking-wider">
+                                You
+                              </span>
+                            )}
                           </span>
-                        </div>
-                      </td>
-                      <td className="py-2.5 px-3">
-                        <span className="font-medium text-gray-800 text-sm">
-                          {team.name}
-                        </span>
-                      </td>
-                      <td className="py-2.5 px-3 text-right">
-                        <span className="font-semibold text-gray-900 text-sm">
-                          {team.score.toLocaleString()}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
+                        </td>
+                        <td className="py-2.5 px-3 text-right">
+                          <span className={`text-sm ${highlight ? "text-orange-700 font-bold" : "text-gray-900 font-semibold"}`}>
+                            {team.score.toLocaleString()}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -250,8 +214,8 @@ const LeaderBoardFullPage = () => {
         </div>
 
         {/* No teams message */}
-        {allTeams.length === 0 && (
-          <div className="bg-white rounded-2xl shadow-lg p-8 text-center">
+        {normalizedLeaderboard.length === 0 && (
+          <div className="bg-white rounded-2xl shadow-lg p-8 text-center mt-4">
             <p className="text-gray-500 text-lg">
               No teams available at the moment.
             </p>
@@ -260,6 +224,6 @@ const LeaderBoardFullPage = () => {
       </div>
     </div>
   );
-};
+}
 
-export default LeaderBoardFullPage;
+export default PlayerScorecard;

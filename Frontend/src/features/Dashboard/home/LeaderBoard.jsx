@@ -6,22 +6,40 @@ import RoundTimer from "./RoundTimer";
 import { getSocket } from "../../../services/sockets/admin";
 import { ExpandIcon } from "lucide-react";
 import useTimer from "../../user/timer/hooks/useTimer";
+import { ScorecardTogglePopup } from "./Popups";
 
 const LeaderBoard = ({ isTimerOpen, sessionId }) => {
   const [topTeams, setTopTeams] = useState([]);
+  const [showScorecard, setShowScorecard] = useState(false);
+  const [isPopupOpen, setIsPopupOpen] = useState(false);
   const socket = getSocket();
 
   const processTeamData = (data) => {
-    const sortedTeams = data.teams
-      .sort((a, b) => b.teamInfo.teamScore - a.teamInfo.teamScore)
-      .slice(0, 3)
-      .map((team, index) => ({
+    if (!data || !data.teams) return;
+    
+    if (typeof data.showScorecard === "boolean") {
+      setShowScorecard(data.showScorecard);
+    }
+
+    const sortedTeams = [...data.teams]
+      .sort((a, b) => b.teamInfo.teamScore - a.teamInfo.teamScore);
+
+    let currentRank = 0;
+    let prevScore = null;
+    const rankedTeams = sortedTeams.map((team) => {
+      const score = team.teamInfo.teamScore;
+      if (score !== prevScore) {
+        currentRank++;
+        prevScore = score;
+      }
+      return {
         id: team.teamInfo.id,
         name: team.teamInfo.name,
-        score: team.teamInfo.teamScore,
-        rank: index + 1,
-      }));
-    setTopTeams(sortedTeams);
+        score: score,
+        rank: currentRank,
+      };
+    });
+    setTopTeams(rankedTeams.slice(0, 3));
   };
 
   useEffect(() => {
@@ -42,14 +60,32 @@ const LeaderBoard = ({ isTimerOpen, sessionId }) => {
       processTeamData(data);
     };
 
-    // Listen for real-time team data updates
-    socket.on("all-teams-data", handleTeamDataUpdate);
+    const handleScorecardUpdate = (data) => {
+      console.log("Scorecard status updated:", data);
+      setShowScorecard(data.showScorecard);
+    };
 
-    // Cleanup - remove only this specific handler
+    // Listen for real-time updates
+    socket.on("all-teams-data", handleTeamDataUpdate);
+    socket.on("scorecard-visibility-updated", handleScorecardUpdate);
+
+    // Cleanup
     return () => {
       socket.off("all-teams-data", handleTeamDataUpdate);
+      socket.off("scorecard-visibility-updated", handleScorecardUpdate);
     };
   }, [socket]);
+
+  const handleToggleScorecard = () => {
+    setIsPopupOpen(false);
+    socket.emit("toggle-scorecard-visibility", { showScorecard: !showScorecard }, (res) => {
+      if (res.success) {
+        setShowScorecard(res.showScorecard);
+      } else {
+        console.error("Error toggling scorecard visibility:", res.error);
+      }
+    });
+  };
 
   const handleOpenFullPage = () => {
     window.open(`/admin/${sessionId}/leaderboard`, "_blank");
@@ -100,7 +136,7 @@ const LeaderBoard = ({ isTimerOpen, sessionId }) => {
               <div
                 className={`${rankCircleClass} rounded-full bg-gray-200 flex items-center justify-center mt-1 mb-2 font-bold`}
               >
-                2
+                {topTeams[1].rank}
               </div>
             </div>
           ) : (
@@ -133,7 +169,7 @@ const LeaderBoard = ({ isTimerOpen, sessionId }) => {
               <div
                 className={`${rankCircleClass} rounded-full bg-yellow-300 flex items-center justify-center mt-1 mb-2 font-bold`}
               >
-                1
+                {topTeams[0].rank}
               </div>
             </div>
           ) : (
@@ -166,7 +202,7 @@ const LeaderBoard = ({ isTimerOpen, sessionId }) => {
               <div
                 className={`${rankCircleClass} rounded-full bg-orange-300 flex items-center justify-center mt-1 mb-2 font-bold`}
               >
-                3
+                {topTeams[2].rank}
               </div>
             </div>
           ) : (
@@ -190,6 +226,26 @@ const LeaderBoard = ({ isTimerOpen, sessionId }) => {
     <div className="w-full p-2 sm:p-4 font-sans">
       {isTimerOpen && <RoundTimer sessionId={sessionId} />}
       <LeaderBoardContent />
+      
+      <div className="mt-4 flex justify-center">
+        <button
+          onClick={() => setIsPopupOpen(true)}
+          className={`w-full py-2.5 rounded-xl font-semibold shadow-sm transition-all text-sm tracking-wide border ${
+            showScorecard
+              ? "bg-red-50 text-red-600 border-red-200 hover:bg-red-100"
+              : "bg-black text-white border-black hover:bg-gray-800"
+          }`}
+        >
+          {showScorecard ? "Hide Scorecard from Players" : "Show Scorecard to Players"}
+        </button>
+      </div>
+
+      <ScorecardTogglePopup
+        isOpen={isPopupOpen}
+        onClose={() => setIsPopupOpen(false)}
+        onConfirm={handleToggleScorecard}
+        isSharing={!showScorecard}
+      />
     </div>
   );
 };

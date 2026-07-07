@@ -146,7 +146,7 @@ function QuestionLibraryPage() {
   const [passcodeError, setPasscodeError] = useState(null);
 
   // Filters
-  const [selectedFolder, setSelectedFolder] = useState('all');
+  const [selectedFolder, setSelectedFolder] = useState('Default L1-L2-L3 (13-13-13)');
   const [searchText, setSearchText] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [filterLevel, setFilterLevel] = useState('');
@@ -418,7 +418,7 @@ function QuestionLibraryPage() {
   const handleDeleteFolder = async () => {
     setActionError('');
     try {
-      if (selectedFolder === deleteFolderTarget) setSelectedFolder('all');
+      if (selectedFolder === deleteFolderTarget) setSelectedFolder('Default L1-L2-L3 (13-13-13)');
       await deleteFolder(deleteFolderTarget);
       setDeleteFolderTarget('');
     } catch (err) {
@@ -590,9 +590,7 @@ function QuestionLibraryPage() {
         <div style={{ width: 260, minWidth: 260, background: '#fff', borderRight: '1px solid #e5e7eb', padding: '16px 12px', display: 'flex', flexDirection: 'column', gap: 4 }}>
           <p style={{ margin: '0 0 8px 4px', fontSize: 11, fontWeight: 700, color: '#9ca3af', letterSpacing: '0.06em', textTransform: 'uppercase' }}>Folders</p>
 
-          <SidebarButton selected={selectedFolder === 'all'} onClick={() => setSelectedFolder('all')}>
-            📁 All Questions
-          </SidebarButton>
+
 
           {folders.map(folder => {
             const fName = typeof folder === 'string' ? folder : folder.name;
@@ -653,9 +651,8 @@ function QuestionLibraryPage() {
           {filterLevels.map(level => (
             <div key={level} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
               <SidebarButton
-                selected={selectedFolder === 'all' && filterLevel === String(level)}
+                selected={filterLevel === String(level)}
                 onClick={() => {
-                  setSelectedFolder('all');
                   setFilterLevel(String(level));
                 }}
               >

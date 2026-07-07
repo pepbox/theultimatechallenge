@@ -62,10 +62,17 @@ function ManualGame() {
       }
     };
 
+    const onScorecardUpdated = (data) => {
+      if (data.showScorecard) {
+        navigate(`/theultimatechallenge/quizsection/${sessionId}`);
+      }
+    };
+
     socket.on("session-pause-updated", onPauseUpdated);
     socket.on("team-data", onTeamData);
     socket.on("manual-verification-approved", onApproved);
     socket.on("manual-verification-rejected", onRejected);
+    socket.on("scorecard-visibility-updated", onScorecardUpdated);
     socket.on("game-ended", onGameEnded);
 
     return () => {
@@ -73,6 +80,7 @@ function ManualGame() {
       socket.off("team-data", onTeamData);
       socket.off("manual-verification-approved", onApproved);
       socket.off("manual-verification-rejected", onRejected);
+      socket.off("scorecard-visibility-updated", onScorecardUpdated);
       socket.off("game-ended", onGameEnded);
       // Only reset status if player never sent a verification request.
       // isRequestedRef.current is always fresh — no stale closure.

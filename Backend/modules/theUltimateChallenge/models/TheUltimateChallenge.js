@@ -23,6 +23,7 @@ const theUltimateChallengeSchema = new mongoose.Schema({
     pausedTime: { type: Date, default: null }
   },
   sessionEnded: { type: Boolean, default: false },
+  showScorecard: { type: Boolean, default: false },
   completionDate: { type: Date, default: null },
   selectedQuestions: {
     1: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Question' }],

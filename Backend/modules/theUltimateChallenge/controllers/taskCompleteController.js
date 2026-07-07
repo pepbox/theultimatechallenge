@@ -57,6 +57,7 @@ const emitAllTeamsData = async (sessionId, io) => {
             teamScore: team.teamScore,
             caption: team.caption,
             isPaused: session.isPaused,
+            showScorecard: session.showScorecard || false,
           },
           players: players.map((p) => ({
             id: p._id,
@@ -79,9 +80,43 @@ const emitAllTeamsData = async (sessionId, io) => {
     const payload = {
       sessionId,
       isPaused: session.isPaused,
+      showScorecard: session.showScorecard || false,
       teams: teamData,
     };
     io.to(admin.socketId).emit('all-teams-data', payload);
+
+    // If scorecard sharing is enabled, broadcast updated leaderboard to all players in the session
+    if (session.showScorecard) {
+      const sorted = teams.map(t => ({
+        id: t._id.toString(),
+        name: t.name,
+        score: t.teamScore || 0
+      })).sort((a, b) => b.score - a.score);
+
+      let currentRank = 0;
+      let prevScore = null;
+      const leaderboard = sorted.map((t) => {
+        if (t.score !== prevScore) {
+          currentRank++;
+          prevScore = t.score;
+        }
+        return {
+          ...t,
+          rank: currentRank
+        };
+      });
+
+      const teamIds = teams.map(team => team._id);
+      const playersList = await Player.find({ team: { $in: teamIds } });
+      const playerSocketIds = playersList.map(p => p.socketId).filter(id => id);
+
+      playerSocketIds.forEach(socketId => {
+        io.to(socketId).emit("scorecard-visibility-updated", {
+          showScorecard: true,
+          leaderboard
+        });
+      });
+    }
   } catch (err) {
     console.error('Error emitting all teams data:', err);
   }
@@ -129,6 +164,7 @@ const emitTeamDataToPlayers = async (teamId, sessionId, io) => {
         teamScore: team.teamScore,
         caption: team.caption,
         isPaused: session.isPaused,
+        showScorecard: session.showScorecard || false,
       },
       questions: questionData,
     };

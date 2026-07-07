@@ -3,7 +3,7 @@ const multer = require('multer');
 const { addQuestion, addMultipleQuestions, getAllQuestions } = require('../controllers/questionController');
 
 const { joinSession, getNumberOfTeams, updateSocketId, restoreCookie } = require('../controllers/loginController');
-const { getGameCompletionData, logoutPlayer } = require('../controllers/gameCompletionController');
+const { getGameCompletionData, logoutPlayer, getLeaderboard } = require('../controllers/gameCompletionController');
 const { getTeamData } = require('../controllers/quizSectionController');
 const { uploadFileAnswer, submitTextAnswer } = require('../controllers/taskCompleteController');
 const { getTimerStatus } = require('../controllers/timerController');
@@ -45,6 +45,7 @@ router.get('/get-timer-status', getTimerStatus);
 // Game completion
 router.get('/game-completion-data', getGameCompletionData);
 router.post('/logout', logoutPlayer);
+router.get('/leaderboard', getLeaderboard);
 
 // ─── Question Library (Admin) ─────────────────────────────────────────────────
 router.get('/library/questions', getQuestions);

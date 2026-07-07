@@ -64,6 +64,7 @@ const getTeamData = async (req, res) => {
       caption: team.caption,
       teamScore: team.teamScore,
       currentLevel: session.currentLevel,
+      showScorecard: session.showScorecard || false,
       session: {
         companyName: team.session.companyName,
         numberOfLevels: team.session.numberOfLevels,

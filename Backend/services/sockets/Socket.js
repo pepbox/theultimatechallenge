@@ -83,7 +83,8 @@ function setupSocket(io) {
                         caption: team.caption,
                         isPaused: session.isPaused,
                         companyName: session.companyName,
-                        companyLogo: session.companyLogo || null
+                        companyLogo: session.companyLogo || null,
+                        showScorecard: session.showScorecard || false
                     },
                     questions: questionData
                 };
@@ -531,7 +532,8 @@ function setupSocket(io) {
                             currentLevel: session.currentLevel,
                             teamScore: team.teamScore,
                             caption: team.caption,
-                            isPaused: session.isPaused
+                            isPaused: session.isPaused,
+                            showScorecard: session.showScorecard || false
                         },
                         players: players.map(p => ({
                             id: p._id,
@@ -545,6 +547,7 @@ function setupSocket(io) {
                 const allTeamsPayload = {
                     sessionId: decoded.sessionId,
                     isPaused: session.isPaused,
+                    showScorecard: session.showScorecard || false,
                     currentLevel: session.currentLevel,
                     teams: teamData
                 };
@@ -558,6 +561,113 @@ function setupSocket(io) {
 
             } catch (err) {
                 console.error("Error toggling session pause:", err);
+                callback({ success: false, error: err.message });
+            }
+        });
+
+        socket.on("toggle-scorecard-visibility", async (data, callback) => {
+            try {
+                // 1. Verify admin token
+                const cookies = socket.handshake.headers.cookie;
+                if (!cookies) {
+                    return callback({ success: false, error: "No cookies found" });
+                }
+
+                const parsedCookies = cookie.parse(cookies);
+                const token = parsedCookies.adminToken;
+
+                if (!token) {
+                    return callback({ success: false, error: "Admin token missing" });
+                }
+
+                const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+                // 2. Get the session
+                const session = await TheUltimateChallenge.findById(decoded.sessionId);
+                if (!session) {
+                    return callback({ success: false, error: "Session not found" });
+                }
+
+                if (typeof data.showScorecard !== 'boolean') {
+                    return callback({ success: false, error: "Invalid showScorecard value" });
+                }
+
+                session.showScorecard = data.showScorecard;
+                await session.save();
+
+                // 3. Emit to all players and admin in this session
+                const teams = await Team.find({ session: session._id });
+                const teamIds = teams.map(team => team._id);
+                const players = await Player.find({ team: { $in: teamIds } });
+                const playerSocketIds = players.map(p => p.socketId).filter(id => id);
+
+                playerSocketIds.forEach(socketId => {
+                    io.to(socketId).emit("scorecard-visibility-updated", {
+                        showScorecard: session.showScorecard
+                    });
+                });
+
+                const admin = await Admin.findById(decoded.adminId);
+                if (admin && admin.socketId) {
+                    io.to(admin.socketId).emit("scorecard-visibility-updated", {
+                        showScorecard: session.showScorecard
+                    });
+                }
+
+                // Send updated all-teams-data to admin so dashboard reflects the change
+                const teamData = await Promise.all(teams.map(async (team) => {
+                    const players = await Player.find({ team: team._id });
+                    const questionData = team.questionStatus.map(q => ({
+                        id: q.question._id,
+                        text: q.question.text,
+                        level: q.question.level,
+                        category: q.question.category,
+                        answerType: q.question.answerType,
+                        questionImageUrl: q.question.questionImageUrl,
+                        points: q.question.points,
+                        difficulty: q.question.difficulty,
+                        status: q.status,
+                        currentPlayer: q.currentPlayer,
+                        pointsEarned: q.pointsEarned,
+                        answerUrl: q.answerUrl,
+                        submittedAnswer: q.submittedAnswer
+                    }));
+
+                    return {
+                        teamInfo: {
+                            id: team._id,
+                            name: team.name,
+                            currentLevel: session.currentLevel,
+                            teamScore: team.teamScore,
+                            caption: team.caption,
+                            isPaused: session.isPaused,
+                            showScorecard: session.showScorecard || false
+                        },
+                        players: players.map(p => ({
+                            id: p._id,
+                            name: p.name,
+                            isCaption: p.isCaption
+                        })),
+                        questions: questionData
+                    };
+                }));
+
+                const allTeamsPayload = {
+                    sessionId: decoded.sessionId,
+                    isPaused: session.isPaused,
+                    showScorecard: session.showScorecard || false,
+                    currentLevel: session.currentLevel,
+                    teams: teamData
+                };
+
+                if (admin && admin.socketId) {
+                    io.to(admin.socketId).emit("all-teams-data", allTeamsPayload);
+                }
+
+                callback({ success: true, showScorecard: session.showScorecard });
+
+            } catch (err) {
+                console.error("Error toggling scorecard visibility:", err);
                 callback({ success: false, error: err.message });
             }
         });
@@ -628,7 +738,8 @@ function setupSocket(io) {
                             currentLevel: session.currentLevel,
                             teamScore: team.teamScore,
                             caption: team.caption,
-                            isPaused: session.isPaused
+                            isPaused: session.isPaused,
+                            showScorecard: session.showScorecard || false
                         },
                         players: players.map(p => ({
                             id: p._id,
@@ -643,6 +754,7 @@ function setupSocket(io) {
                 const payload = {
                     sessionId: decoded.sessionId,
                     isPaused: session.isPaused,
+                    showScorecard: session.showScorecard || false,
                     teams: teamData
                 };
 
@@ -1104,13 +1216,46 @@ function setupSocket(io) {
                 const teamPlayers = await Player.find({ team: team._id });
                 const teamSocketIds = teamPlayers.map(p => p.socketId).filter(id => id);
                 const teamPayload = {
-                    teamInfo: { name: updatedTeam.name, currentLevel: session.currentLevel, teamScore: updatedTeam.teamScore, caption: updatedTeam.caption, isPaused: session.isPaused, companyName: session.companyName, companyLogo: session.companyLogo || null },
+                    teamInfo: { name: updatedTeam.name, currentLevel: session.currentLevel, teamScore: updatedTeam.teamScore, caption: updatedTeam.caption, isPaused: session.isPaused, companyName: session.companyName, companyLogo: session.companyLogo || null, showScorecard: session.showScorecard || false },
                     questions: qData2
                 };
                 teamSocketIds.forEach(sid => {
                     io.to(sid).emit('team-data', teamPayload);
                     io.to(sid).emit('manual-verification-approved', { questionId: data.questionId, pointsEarned });
                 });
+
+                // If scorecard sharing is enabled, broadcast updated leaderboard to all players in the session
+                if (session.showScorecard) {
+                    const sorted = allTeams.map(t => ({
+                        id: t._id.toString(),
+                        name: t.name,
+                        score: t.teamScore || 0
+                    })).sort((a, b) => b.score - a.score);
+
+                    let currentRank = 0;
+                    let prevScore = null;
+                    const leaderboard = sorted.map((t) => {
+                        if (t.score !== prevScore) {
+                            currentRank++;
+                            prevScore = t.score;
+                        }
+                        return {
+                            ...t,
+                            rank: currentRank
+                        };
+                    });
+
+                    const allTeamIds = allTeams.map(t => t._id);
+                    const allPlayers = await Player.find({ team: { $in: allTeamIds } });
+                    const allPlayerSocketIds = allPlayers.map(p => p.socketId).filter(id => id);
+
+                    allPlayerSocketIds.forEach(socketId => {
+                        io.to(socketId).emit("scorecard-visibility-updated", {
+                            showScorecard: true,
+                            leaderboard
+                        });
+                    });
+                }
 
                 if (callback) callback({ success: true, pointsEarned });
             } catch (err) {
@@ -1186,7 +1331,7 @@ function setupSocket(io) {
                         submittedAnswer: q.submittedAnswer
                     }));
                     return {
-                        teamInfo: { id: t._id, name: t.name, currentLevel: session.currentLevel, teamScore: t.teamScore, caption: t.caption, isPaused: session.isPaused },
+                        teamInfo: { id: t._id, name: t.name, currentLevel: session.currentLevel, teamScore: t.teamScore, caption: t.caption, isPaused: session.isPaused, showScorecard: session.showScorecard || false },
                         players: players.map(p => ({ id: p._id, name: p.name, isCaption: p.isCaption })),
                         questions: qData
                     };
@@ -1194,7 +1339,7 @@ function setupSocket(io) {
 
                 const admin = await Admin.findOne({ session: session._id });
                 if (admin && admin.socketId) {
-                    io.to(admin.socketId).emit('all-teams-data', { sessionId: session._id, isPaused: session.isPaused, currentLevel: session.currentLevel, teams: teamData });
+                    io.to(admin.socketId).emit('all-teams-data', { sessionId: session._id, isPaused: session.isPaused, showScorecard: session.showScorecard || false, currentLevel: session.currentLevel, teams: teamData });
                 }
 
                 // Emit team-data and rejection event to players
@@ -1217,7 +1362,7 @@ function setupSocket(io) {
                 const teamPlayers = await Player.find({ team: team._id });
                 const teamSocketIds = teamPlayers.map(p => p.socketId).filter(id => id);
                 const teamPayload = {
-                    teamInfo: { name: updatedTeam.name, currentLevel: session.currentLevel, teamScore: updatedTeam.teamScore, caption: updatedTeam.caption, isPaused: session.isPaused, companyName: session.companyName, companyLogo: session.companyLogo || null },
+                    teamInfo: { name: updatedTeam.name, currentLevel: session.currentLevel, teamScore: updatedTeam.teamScore, caption: updatedTeam.caption, isPaused: session.isPaused, companyName: session.companyName, companyLogo: session.companyLogo || null, showScorecard: session.showScorecard || false },
                     questions: qData2
                 };
                 teamSocketIds.forEach(sid => {

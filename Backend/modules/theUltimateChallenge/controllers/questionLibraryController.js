@@ -343,6 +343,7 @@ const deleteFolder = async (req, res) => {
       }
     }
 
+    await Question.deleteMany({ folder: name });
     await QuestionFolder.deleteOne({ name });
 
     return res.status(200).json({ success: true, message: 'Folder deleted successfully' });
@@ -501,7 +502,7 @@ const moveQuestions = async (req, res) => {
  */
 const copyQuestions = async (req, res) => {
   try {
-    verifyAdminToken(req);
+    const admin = verifyAdminToken(req);
     const { questionIds, targetFolder } = req.body;
 
     if (!questionIds || !Array.isArray(questionIds) || questionIds.length === 0) {

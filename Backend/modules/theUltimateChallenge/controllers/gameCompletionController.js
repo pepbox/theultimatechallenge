@@ -3,7 +3,7 @@ const Team = require('../models/teamSchema');
 const Player = require('../models/playerSchema');
 const jwt = require('jsonwebtoken');
 
-// Helper to compute leaderboard with tie-breakers
+// Helper to compute leaderboard with tie-breakers (Dense Ranking: 1-2-2-3)
 const buildLeaderboard = (teams) => {
   const rows = teams.map(t => {
     const answered = t.questionStatus.filter(q => q.status === 'done').length;
@@ -19,7 +19,16 @@ const buildLeaderboard = (teams) => {
     if (b.answered !== a.answered) return b.answered - a.answered;
     return a.teamName.localeCompare(b.teamName);
   });
-  rows.forEach((r,idx) => r.rank = idx + 1);
+  
+  let currentRank = 0;
+  let prevScore = null;
+  rows.forEach((r) => {
+    if (r.score !== prevScore) {
+      currentRank++;
+      prevScore = r.score;
+    }
+    r.rank = currentRank;
+  });
   return rows;
 };
 
@@ -68,7 +77,7 @@ const getGameCompletionData = async (req,res) => {
     return res.status(200).json({
       success:true,
       sessionId: sessionId,
-      leaderboard: [],
+      leaderboard: leaderboard,
       yourTeam: yourTeamBlock
     });
   } catch(error){
@@ -86,4 +95,23 @@ const logoutPlayer = async (req,res) => {
   }
 };
 
-module.exports = { getGameCompletionData, logoutPlayer };
+const getLeaderboard = async (req, res) => {
+  try {
+    const { sessionId } = req.query;
+    if (!sessionId) {
+      return res.status(400).json({ success: false, message: 'sessionId is required' });
+    }
+    const session = await TheUltimateChallenge.findById(sessionId);
+    if (!session) {
+      return res.status(404).json({ success: false, message: 'Session not found' });
+    }
+    const teams = await Team.find({ session: sessionId });
+    const leaderboard = buildLeaderboard(teams);
+    return res.status(200).json({ success: true, leaderboard });
+  } catch (error) {
+    console.error('getLeaderboard error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to fetch leaderboard', error: error.message });
+  }
+};
+
+module.exports = { getGameCompletionData, logoutPlayer, getLeaderboard };

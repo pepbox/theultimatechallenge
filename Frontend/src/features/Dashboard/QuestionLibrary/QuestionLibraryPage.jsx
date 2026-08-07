@@ -140,6 +140,7 @@ function QuestionLibraryPage() {
   const [copyMoveOpen, setCopyMoveOpen] = useState(false);
   const [copyMoveMode, setCopyMoveMode] = useState('copy'); // 'copy' or 'move'
   const [copyMoveTargetIds, setCopyMoveTargetIds] = useState([]);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   // Passcode verification states
   const [verifyingPasscode, setVerifyingPasscode] = useState(false);
@@ -529,9 +530,87 @@ function QuestionLibraryPage() {
 
   return (
     <div style={{ minHeight: '100vh', background: '#f8fafc', fontFamily: 'Inter, system-ui, sans-serif' }}>
+      <style>{`
+        @media (max-width: 768px) {
+          .ql-topbar {
+            flex-direction: column !important;
+            align-items: stretch !important;
+            padding: 12px 16px !important;
+            gap: 12px !important;
+          }
+          .ql-back-container {
+            justify-content: flex-start !important;
+          }
+          .ql-title {
+            position: static !important;
+            transform: none !important;
+            text-align: left !important;
+            font-size: 16px !important;
+            margin: 0 !important;
+            white-space: normal !important;
+          }
+          .ql-topbar-actions {
+            width: 100% !important;
+            justify-content: flex-start !important;
+            flex-wrap: wrap !important;
+            gap: 8px !important;
+          }
+          .ql-topbar-actions button {
+            flex: 1 !important;
+            text-align: center !important;
+            padding: 8px 12px !important;
+            font-size: 12px !important;
+          }
+          .ql-main-wrapper {
+            flex-direction: column !important;
+          }
+          .ql-sidebar {
+            display: none !important;
+            width: 100% !important;
+            min-width: 100% !important;
+            border-right: none !important;
+            border-bottom: 1px solid #e5e7eb !important;
+            box-sizing: border-box !important;
+          }
+          .ql-sidebar.ql-sidebar-open {
+            display: flex !important;
+          }
+          .ql-sidebar-toggle-btn {
+            display: flex !important;
+          }
+          .ql-main-content {
+            padding: 16px !important;
+          }
+          .ql-filter-bar {
+            flex-direction: column !important;
+            align-items: stretch !important;
+            gap: 12px !important;
+          }
+          .ql-search-input {
+            width: 100% !important;
+          }
+          .ql-filter-group {
+            flex-wrap: wrap !important;
+            gap: 8px !important;
+          }
+          .ql-sort-group {
+            margin-left: 0 !important;
+          }
+          .ql-bulk-actions {
+            flex-wrap: wrap !important;
+            gap: 8px !important;
+          }
+          .ql-clear-btn {
+            margin-left: 0 !important;
+            width: 100% !important;
+            text-align: left !important;
+            padding-top: 4px !important;
+          }
+        }
+      `}</style>
       {/* Top bar */}
-      <div style={{ background: '#fff', borderBottom: '1px solid #e5e7eb', padding: '12px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, position: 'relative' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+      <div className="ql-topbar" style={{ background: '#fff', borderBottom: '1px solid #e5e7eb', padding: '12px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, position: 'relative' }}>
+        <div className="ql-back-container" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           {sessionId ? (
             <>
               <button
@@ -551,10 +630,10 @@ function QuestionLibraryPage() {
             </>
           )}
         </div>
-        <h1 style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%, -50%)', margin: 0, fontSize: 18, fontWeight: 700, color: '#111827', whiteSpace: 'nowrap' }}>
+        <h1 className="ql-title" style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%, -50%)', margin: 0, fontSize: 18, fontWeight: 700, color: '#111827', whiteSpace: 'nowrap' }}>
           {sessionId ? `Current Library${companyName ? ` - ${companyName}` : ''}` : 'Question Library'}
         </h1>
-        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+        <div className="ql-topbar-actions" style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
           {saveMsg && <span style={{ fontSize: 13, color: '#15803d', fontWeight: 500 }}>{saveMsg}</span>}
           {sessionId && totalSelected > 0 && (
             <button
@@ -585,12 +664,34 @@ function QuestionLibraryPage() {
         </div>
       )}
 
-      <div style={{ display: 'flex', minHeight: 'calc(100vh - 61px)' }}>
+      <div className="ql-main-wrapper" style={{ display: 'flex', minHeight: 'calc(100vh - 61px)' }}>
+        {/* Mobile Toggle Button */}
+        <button
+          className="ql-sidebar-toggle-btn"
+          onClick={() => setMobileSidebarOpen(!mobileSidebarOpen)}
+          style={{
+            display: 'none',
+            width: '100%',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            padding: '12px 16px',
+            background: '#fff',
+            borderBottom: '1px solid #e5e7eb',
+            fontSize: '13px',
+            fontWeight: 600,
+            color: '#f97316',
+            border: 'none',
+            cursor: 'pointer',
+            boxSizing: 'border-box',
+          }}
+        >
+          <span>📂 Folders & Levels (Current: {selectedFolder}{filterLevel ? `, L${filterLevel}` : ''})</span>
+          <span>{mobileSidebarOpen ? '▲ Hide' : '▼ Show'}</span>
+        </button>
+
         {/* ── Sidebar ── */}
-        <div style={{ width: 260, minWidth: 260, background: '#fff', borderRight: '1px solid #e5e7eb', padding: '16px 12px', display: 'flex', flexDirection: 'column', gap: 4 }}>
+        <div className={`ql-sidebar ${mobileSidebarOpen ? 'ql-sidebar-open' : ''}`} style={{ width: 260, minWidth: 260, background: '#fff', borderRight: '1px solid #e5e7eb', padding: '16px 12px', display: 'flex', flexDirection: 'column', gap: 4 }}>
           <p style={{ margin: '0 0 8px 4px', fontSize: 11, fontWeight: 700, color: '#9ca3af', letterSpacing: '0.06em', textTransform: 'uppercase' }}>Folders</p>
-
-
 
           {folders.map(folder => {
             const fName = typeof folder === 'string' ? folder : folder.name;
@@ -599,7 +700,10 @@ function QuestionLibraryPage() {
               <div key={fName} style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                 <SidebarButton
                   selected={selectedFolder === fName}
-                  onClick={() => setSelectedFolder(fName)}
+                  onClick={() => {
+                    setSelectedFolder(fName);
+                    if (window.innerWidth <= 768) setMobileSidebarOpen(false);
+                  }}
                   indent={0}
                 >
                   📂 {fName}
@@ -654,6 +758,7 @@ function QuestionLibraryPage() {
                 selected={filterLevel === String(level)}
                 onClick={() => {
                   setFilterLevel(String(level));
+                  if (window.innerWidth <= 768) setMobileSidebarOpen(false);
                 }}
               >
                 ⭐ Level {level}
@@ -693,16 +798,17 @@ function QuestionLibraryPage() {
         </div>
 
         {/* ── Main content ── */}
-        <div style={{ flex: 1, padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 16, minWidth: 0 }}>
+        <div className="ql-main-content" style={{ flex: 1, padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 16, minWidth: 0 }}>
           {/* Filter bar */}
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center' }}>
+          <div className="ql-filter-bar" style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center' }}>
             <input
               placeholder="Search questions…"
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
+              className="ql-search-input"
               style={{ border: '1px solid #e5e7eb', borderRadius: 8, padding: '8px 14px', fontSize: 13, outline: 'none', width: 260, boxSizing: 'border-box' }}
             />
-            <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+            <div className="ql-filter-group" style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
               <span style={{ fontSize: 12, color: '#9ca3af', fontWeight: 600 }}>LEVEL</span>
               <Badge active={filterLevel === ''} onClick={() => setFilterLevel('')}>
                 All
@@ -713,7 +819,7 @@ function QuestionLibraryPage() {
                 </Badge>
               ))}
             </div>
-            <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+            <div className="ql-filter-group" style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
               <span style={{ fontSize: 12, color: '#9ca3af', fontWeight: 600 }}>DIFFICULTY</span>
               {['', 'easy', 'medium', 'hard'].map(d => (
                 <Badge key={d} active={filterDifficulty === d} onClick={() => setFilterDifficulty(d)}>
@@ -721,7 +827,7 @@ function QuestionLibraryPage() {
                 </Badge>
               ))}
             </div>
-            <div style={{ marginLeft: 'auto', display: 'flex', gap: 6, alignItems: 'center' }}>
+            <div className="ql-filter-group ql-sort-group" style={{ marginLeft: 'auto', display: 'flex', gap: 6, alignItems: 'center' }}>
               <span style={{ fontSize: 12, color: '#9ca3af', fontWeight: 600 }}>SORT</span>
               {['newest', 'oldest'].map(s => (
                 <Badge key={s} active={sort === s} onClick={() => setSort(s)}>
@@ -755,7 +861,7 @@ function QuestionLibraryPage() {
           </div>
 
           {allSelectedIds.length > 0 && (
-            <div style={{
+            <div className="ql-bulk-actions" style={{
               display: 'flex', alignItems: 'center', gap: 12, padding: '10px 16px',
               background: '#fff7ed', border: '1px solid #fed7aa', borderRadius: 10,
               fontSize: 13, color: '#ea580c', fontWeight: 500
@@ -783,6 +889,7 @@ function QuestionLibraryPage() {
                 onClick={() => {
                   setSelectedIds({ 1: [], 2: [], 3: [], 4: [], 5: [], 6: [], 7: [], 8: [], 9: [], 10: [] });
                 }}
+                className="ql-clear-btn"
                 style={{
                   background: 'none', border: 'none', cursor: 'pointer', color: '#9ca3af', marginLeft: 'auto', fontSize: 12
                 }}

@@ -27,6 +27,7 @@ function QuestionCard({ question, selected, onToggle, onEdit, onDelete, onCopy, 
 
   return (
     <div
+      className="q-card-container"
       style={{
         border: (selected && showCheckbox) ? '2px solid #f97316' : '1px solid #e5e7eb',
         borderRadius: 12,
@@ -40,6 +41,28 @@ function QuestionCard({ question, selected, onToggle, onEdit, onDelete, onCopy, 
       }}
       onClick={() => { if (showCheckbox) onToggle(question._id); }}
     >
+      <style>{`
+        @media (max-width: 600px) {
+          .q-card-container {
+            flex-wrap: wrap !important;
+            gap: 8px !important;
+          }
+          .q-card-actions {
+            flex-direction: row !important;
+            justify-content: flex-end !important;
+            gap: 8px !important;
+            width: 100% !important;
+            min-width: 100% !important;
+            border-top: 1px solid #f3f4f6 !important;
+            padding-top: 10px !important;
+            margin-top: 4px !important;
+          }
+          .q-card-actions button {
+            flex: 1 !important;
+            text-align: center !important;
+          }
+        }
+      `}</style>
       {/* Checkbox */}
       {showCheckbox && (
         <div
@@ -107,6 +130,7 @@ function QuestionCard({ question, selected, onToggle, onEdit, onDelete, onCopy, 
 
       {/* Actions */}
       <div
+        className="q-card-actions"
         style={{ display: 'flex', flexDirection: 'column', gap: 6, minWidth: 64 }}
         onClick={(e) => e.stopPropagation()}
       >

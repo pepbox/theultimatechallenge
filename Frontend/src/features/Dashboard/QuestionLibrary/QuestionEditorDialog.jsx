@@ -198,6 +198,13 @@ function QuestionEditorDialog({ open, mode, initialQuestion, folders, defaultFol
       }}
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
+      <style>{`
+        @media (max-width: 600px) {
+          .q-editor-grid-3, .q-editor-grid-2 {
+            grid-template-columns: 1fr !important;
+          }
+        }
+      `}</style>
       <div
         style={{
           background: '#fff', borderRadius: 16, width: '100%', maxWidth: 580,
@@ -234,7 +241,7 @@ function QuestionEditorDialog({ open, mode, initialQuestion, folders, defaultFol
             />
           </FormRow>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
+          <div className="q-editor-grid-3" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
             <FormRow label="Level">
               <Select value={form.level} onChange={handleLevelChange}>
                 {dialogLevels.map(l => <option key={l} value={l}>Level {l}</option>)}
@@ -261,7 +268,7 @@ function QuestionEditorDialog({ open, mode, initialQuestion, folders, defaultFol
             </FormRow>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <div className="q-editor-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
             <FormRow label="Category *">
               <Select value={form.category} onChange={set('category')}>
                 <option value="" disabled>Select Category</option>

@@ -1377,6 +1377,325 @@ function setupSocket(io) {
             }
         });
 
+        // ─── Admin override: Mark as done ───────────────────────────────────
+        socket.on('admin-mark-question-done', async (data, callback) => {
+            try {
+                const cookies = socket.handshake.headers.cookie;
+                if (!cookies) {
+                    if (callback) callback({ success: false, error: 'No cookies found' });
+                    return;
+                }
+                const parsedCookies = cookie.parse(cookies);
+                const adminToken = parsedCookies.adminToken;
+                if (!adminToken) {
+                    if (callback) callback({ success: false, error: 'Admin token missing' });
+                    return;
+                }
+
+                const decoded = jwt.verify(adminToken, process.env.JWT_SECRET);
+                const session = await TheUltimateChallenge.findById(decoded.sessionId);
+                if (!session) {
+                    if (callback) callback({ success: false, error: 'Session not found' });
+                    return;
+                }
+
+                const team = await Team.findById(data.teamId).populate({
+                    path: 'questionStatus.question',
+                    model: 'Question'
+                });
+                if (!team) {
+                    if (callback) callback({ success: false, error: 'Team not found' });
+                    return;
+                }
+
+                const questionStatus = team.questionStatus.find(
+                    qs => qs.question._id.toString() === data.questionId
+                );
+                if (!questionStatus) {
+                    if (callback) callback({ success: false, error: 'Question not found for team' });
+                    return;
+                }
+
+                if (questionStatus.status === 'done') {
+                    if (callback) callback({ success: true, message: 'Question is already done' });
+                    return;
+                }
+
+                const prevPointsEarned = questionStatus.pointsEarned || 0;
+                const pointsEarned = questionStatus.question.points;
+                const diff = pointsEarned - prevPointsEarned;
+
+                // Update in DB atomically
+                await Team.updateOne(
+                    { _id: team._id, 'questionStatus.question': data.questionId },
+                    {
+                        $set: {
+                            'questionStatus.$.status': 'done',
+                            'questionStatus.$.pointsEarned': pointsEarned,
+                        },
+                        $inc: { teamScore: diff },
+                    }
+                );
+
+                // Emit all-teams-data to admin
+                const allTeams = await Team.find({ session: session._id }).populate({ path: 'questionStatus.question', model: 'Question' });
+                const teamData = await Promise.all(allTeams.map(async (t) => {
+                    const players = await Player.find({ team: t._id });
+                    const qData = t.questionStatus.map(q => ({
+                        id: q.question._id,
+                        text: q.question.text,
+                        level: q.question.level,
+                        category: q.question.category,
+                        answerType: q.question.answerType,
+                        questionImageUrl: q.question.questionImageUrl,
+                        points: q.question.points,
+                        difficulty: q.question.difficulty,
+                        status: q.status,
+                        currentPlayer: q.currentPlayer,
+                        pointsEarned: q.pointsEarned,
+                        answerUrl: q.answerUrl,
+                        submittedAnswer: q.submittedAnswer
+                    }));
+                    return {
+                        teamInfo: { id: t._id, name: t.name, currentLevel: session.currentLevel, teamScore: t.teamScore, caption: t.caption, isPaused: session.isPaused },
+                        players: players.map(p => ({ id: p._id, name: p.name, isCaption: p.isCaption })),
+                        questions: qData
+                    };
+                }));
+
+                const admin = await Admin.findOne({ session: session._id });
+                if (admin && admin.socketId) {
+                    io.to(admin.socketId).emit('all-teams-data', { sessionId: session._id, isPaused: session.isPaused, currentLevel: session.currentLevel, teams: teamData });
+                }
+
+                // Emit team-data to players
+                const updatedTeam = await Team.findById(team._id).populate({ path: 'questionStatus.question', model: 'Question' });
+                const qData2 = updatedTeam.questionStatus.map(q => ({
+                    id: q.question._id,
+                    text: q.question.text,
+                    level: q.question.level,
+                    category: q.question.category,
+                    answerType: q.question.answerType,
+                    questionImageUrl: q.question.questionImageUrl,
+                    points: q.question.points,
+                    difficulty: q.question.difficulty,
+                    status: q.status,
+                    currentPlayer: q.currentPlayer,
+                    pointsEarned: q.pointsEarned,
+                    answerUrl: q.answerUrl,
+                    submittedAnswer: q.submittedAnswer
+                }));
+                const teamPlayers = await Player.find({ team: team._id });
+                const teamSocketIds = teamPlayers.map(p => p.socketId).filter(id => id);
+                const teamPayload = {
+                    teamInfo: { name: updatedTeam.name, currentLevel: session.currentLevel, teamScore: updatedTeam.teamScore, caption: updatedTeam.caption, isPaused: session.isPaused, companyName: session.companyName, companyLogo: session.companyLogo || null, showScorecard: session.showScorecard || false },
+                    questions: qData2
+                };
+                teamSocketIds.forEach(sid => {
+                    io.to(sid).emit('team-data', teamPayload);
+                    io.to(sid).emit('manual-verification-approved', { questionId: data.questionId, pointsEarned });
+                });
+
+                // If scorecard sharing is enabled, broadcast updated leaderboard to all players in the session
+                if (session.showScorecard) {
+                    const sorted = allTeams.map(t => ({
+                        id: t._id.toString(),
+                        name: t.name,
+                        score: t.teamScore || 0
+                    })).sort((a, b) => b.score - a.score);
+
+                    let currentRank = 0;
+                    let prevScore = null;
+                    const leaderboard = sorted.map((t) => {
+                        if (t.score !== prevScore) {
+                            currentRank++;
+                            prevScore = t.score;
+                        }
+                        return {
+                            ...t,
+                            rank: currentRank
+                        };
+                    });
+
+                    const allTeamIds = allTeams.map(t => t._id);
+                    const allPlayers = await Player.find({ team: { $in: allTeamIds } });
+                    const allPlayerSocketIds = allPlayers.map(p => p.socketId).filter(id => id);
+
+                    allPlayerSocketIds.forEach(socketId => {
+                        io.to(socketId).emit("scorecard-visibility-updated", {
+                            showScorecard: true,
+                            leaderboard
+                        });
+                    });
+                }
+
+                if (callback) callback({ success: true, pointsEarned });
+            } catch (err) {
+                console.error('Error admin marking question done:', err);
+                if (callback) callback({ success: false, error: err.message });
+            }
+        });
+
+        // ─── Admin override: Mark as undone ─────────────────────────────────
+        socket.on('admin-mark-question-undone', async (data, callback) => {
+            try {
+                const cookies = socket.handshake.headers.cookie;
+                if (!cookies) {
+                    if (callback) callback({ success: false, error: 'No cookies found' });
+                    return;
+                }
+                const parsedCookies = cookie.parse(cookies);
+                const adminToken = parsedCookies.adminToken;
+                if (!adminToken) {
+                    if (callback) callback({ success: false, error: 'Admin token missing' });
+                    return;
+                }
+
+                const decoded = jwt.verify(adminToken, process.env.JWT_SECRET);
+                const session = await TheUltimateChallenge.findById(decoded.sessionId);
+                if (!session) {
+                    if (callback) callback({ success: false, error: 'Session not found' });
+                    return;
+                }
+
+                const team = await Team.findById(data.teamId).populate({
+                    path: 'questionStatus.question',
+                    model: 'Question'
+                });
+                if (!team) {
+                    if (callback) callback({ success: false, error: 'Team not found' });
+                    return;
+                }
+
+                const questionStatus = team.questionStatus.find(
+                    qs => qs.question._id.toString() === data.questionId
+                );
+                if (!questionStatus) {
+                    if (callback) callback({ success: false, error: 'Question not found for team' });
+                    return;
+                }
+
+                if (questionStatus.status !== 'done') {
+                    if (callback) callback({ success: true, message: 'Question is already undone' });
+                    return;
+                }
+
+                const prevPointsEarned = questionStatus.pointsEarned || 0;
+
+                // Update in DB atomically
+                await Team.updateOne(
+                    { _id: team._id, 'questionStatus.question': data.questionId },
+                    {
+                        $set: {
+                            'questionStatus.$.status': 'available',
+                            'questionStatus.$.pointsEarned': 0,
+                            'questionStatus.$.currentPlayer': null,
+                            'questionStatus.$.answerUrl': null,
+                            'questionStatus.$.submittedAnswer': null,
+                        },
+                        $inc: { teamScore: -prevPointsEarned },
+                    }
+                );
+
+                // Emit all-teams-data to admin
+                const allTeams = await Team.find({ session: session._id }).populate({ path: 'questionStatus.question', model: 'Question' });
+                const teamData = await Promise.all(allTeams.map(async (t) => {
+                    const players = await Player.find({ team: t._id });
+                    const qData = t.questionStatus.map(q => ({
+                        id: q.question._id,
+                        text: q.question.text,
+                        level: q.question.level,
+                        category: q.question.category,
+                        answerType: q.question.answerType,
+                        questionImageUrl: q.question.questionImageUrl,
+                        points: q.question.points,
+                        difficulty: q.question.difficulty,
+                        status: q.status,
+                        currentPlayer: q.currentPlayer,
+                        pointsEarned: q.pointsEarned,
+                        answerUrl: q.answerUrl,
+                        submittedAnswer: q.submittedAnswer
+                    }));
+                    return {
+                        teamInfo: { id: t._id, name: t.name, currentLevel: session.currentLevel, teamScore: t.teamScore, caption: t.caption, isPaused: session.isPaused },
+                        players: players.map(p => ({ id: p._id, name: p.name, isCaption: p.isCaption })),
+                        questions: qData
+                    };
+                }));
+
+                const admin = await Admin.findOne({ session: session._id });
+                if (admin && admin.socketId) {
+                    io.to(admin.socketId).emit('all-teams-data', { sessionId: session._id, isPaused: session.isPaused, currentLevel: session.currentLevel, teams: teamData });
+                }
+
+                // Emit team-data to players
+                const updatedTeam = await Team.findById(team._id).populate({ path: 'questionStatus.question', model: 'Question' });
+                const qData2 = updatedTeam.questionStatus.map(q => ({
+                    id: q.question._id,
+                    text: q.question.text,
+                    level: q.question.level,
+                    category: q.question.category,
+                    answerType: q.question.answerType,
+                    questionImageUrl: q.question.questionImageUrl,
+                    points: q.question.points,
+                    difficulty: q.question.difficulty,
+                    status: q.status,
+                    currentPlayer: q.currentPlayer,
+                    pointsEarned: q.pointsEarned,
+                    answerUrl: q.answerUrl,
+                    submittedAnswer: q.submittedAnswer
+                }));
+                const teamPlayers = await Player.find({ team: team._id });
+                const teamSocketIds = teamPlayers.map(p => p.socketId).filter(id => id);
+                const teamPayload = {
+                    teamInfo: { name: updatedTeam.name, currentLevel: session.currentLevel, teamScore: updatedTeam.teamScore, caption: updatedTeam.caption, isPaused: session.isPaused, companyName: session.companyName, companyLogo: session.companyLogo || null, showScorecard: session.showScorecard || false },
+                    questions: qData2
+                };
+                teamSocketIds.forEach(sid => {
+                    io.to(sid).emit('team-data', teamPayload);
+                    io.to(sid).emit('manual-verification-rejected', { questionId: data.questionId });
+                });
+
+                // If scorecard sharing is enabled, broadcast updated leaderboard to all players in the session
+                if (session.showScorecard) {
+                    const sorted = allTeams.map(t => ({
+                        id: t._id.toString(),
+                        name: t.name,
+                        score: t.teamScore || 0
+                    })).sort((a, b) => b.score - a.score);
+
+                    let currentRank = 0;
+                    let prevScore = null;
+                    const leaderboard = sorted.map((t) => {
+                        if (t.score !== prevScore) {
+                            currentRank++;
+                            prevScore = t.score;
+                        }
+                        return {
+                            ...t,
+                            rank: currentRank
+                        };
+                    });
+
+                    const allTeamIds = allTeams.map(t => t._id);
+                    const allPlayers = await Player.find({ team: { $in: allTeamIds } });
+                    const allPlayerSocketIds = allPlayers.map(p => p.socketId).filter(id => id);
+
+                    allPlayerSocketIds.forEach(socketId => {
+                        io.to(socketId).emit("scorecard-visibility-updated", {
+                            showScorecard: true,
+                            leaderboard
+                        });
+                    });
+                }
+
+                if (callback) callback({ success: true });
+            } catch (err) {
+                console.error('Error admin marking question undone:', err);
+                if (callback) callback({ success: false, error: err.message });
+            }
+        });
+
         socket.on('disconnect', async () => {
             console.log('A user disconnected', socket.id);
 

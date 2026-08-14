@@ -34,6 +34,38 @@ function SubmissionModal({ team, onClose, socket }) {
     setSelectedLevel(value);
   };
 
+  const [processingKeys, setProcessingKeys] = useState(new Set());
+
+  const handleMarkDone = (questionId) => {
+    if (!socket) return;
+    setProcessingKeys((prev) => new Set([...prev, questionId]));
+    socket.emit("admin-mark-question-done", { teamId: team.id, questionId }, (response) => {
+      setProcessingKeys((prev) => {
+        const next = new Set(prev);
+        next.delete(questionId);
+        return next;
+      });
+      if (response && !response.success) {
+        alert(response.error || "Failed to mark question as done");
+      }
+    });
+  };
+
+  const handleMarkUndone = (questionId) => {
+    if (!socket) return;
+    setProcessingKeys((prev) => new Set([...prev, questionId]));
+    socket.emit("admin-mark-question-undone", { teamId: team.id, questionId }, (response) => {
+      setProcessingKeys((prev) => {
+        const next = new Set(prev);
+        next.delete(questionId);
+        return next;
+      });
+      if (response && !response.success) {
+        alert(response.error || "Failed to mark question as undone");
+      }
+    });
+  };
+
   return (
     <div className="fixed inset-0 flex items-center justify-center z-[1000] bg-black/75 p-4">
       <div className="bg-gradient-to-b from-[#D4E5FF]/30 to-[#E5FFD4]/30 border-2 border-white/20 rounded-2xl p-4 sm:p-6 w-full max-w-4xl flex flex-col backdrop-blur-3xl shadow-2xl max-h-[95vh]">
@@ -100,6 +132,9 @@ function SubmissionModal({ team, onClose, socket }) {
                       <th className="p-3 text-sm font-medium text-white/80">
                         Status
                       </th>
+                      <th className="p-3 text-sm font-medium text-white/80">
+                        Action
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
@@ -140,6 +175,25 @@ function SubmissionModal({ team, onClose, socket }) {
                         </td>
                         <td className="p-3 text-sm capitalize">
                           {question.status}
+                        </td>
+                        <td className="p-3 text-sm text-center">
+                          {question.status === "done" ? (
+                            <button
+                              onClick={() => handleMarkUndone(question.id)}
+                              disabled={processingKeys.has(question.id)}
+                              className="px-3 py-1 bg-red-600/35 hover:bg-red-600/50 border border-red-500/30 text-red-200 text-xs font-bold rounded-lg transition-colors duration-150 disabled:opacity-50 cursor-pointer"
+                            >
+                              {processingKeys.has(question.id) ? "..." : "Mark Undone"}
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => handleMarkDone(question.id)}
+                              disabled={processingKeys.has(question.id)}
+                              className="px-3 py-1 bg-green-600/35 hover:bg-green-600/50 border border-green-500/30 text-green-200 text-xs font-bold rounded-lg transition-colors duration-150 disabled:opacity-50 cursor-pointer"
+                            >
+                              {processingKeys.has(question.id) ? "..." : "Mark Done"}
+                            </button>
+                          )}
                         </td>
                       </tr>
                     ))}
@@ -213,6 +267,32 @@ function SubmissionModal({ team, onClose, socket }) {
                               <span className="text-white/50 text-sm">N/A</span>
                             )}
                           </div>
+                        </div>
+                      </div>
+
+                      {/* Action Section */}
+                      <div className="border-t border-white/10 pt-3 mt-3 flex justify-between items-center">
+                        <span className="text-white/60 text-xs uppercase tracking-wide">
+                          Action
+                        </span>
+                        <div>
+                          {question.status === "done" ? (
+                            <button
+                              onClick={() => handleMarkUndone(question.id)}
+                              disabled={processingKeys.has(question.id)}
+                              className="px-4 py-1.5 bg-red-600/35 hover:bg-red-600/50 border border-red-500/30 text-red-200 text-xs font-bold rounded-lg transition-colors duration-150 disabled:opacity-50 cursor-pointer"
+                            >
+                              {processingKeys.has(question.id) ? "Processing..." : "Mark Undone"}
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => handleMarkDone(question.id)}
+                              disabled={processingKeys.has(question.id)}
+                              className="px-4 py-1.5 bg-green-600/35 hover:bg-green-600/50 border border-green-500/30 text-green-200 text-xs font-bold rounded-lg transition-colors duration-150 disabled:opacity-50 cursor-pointer"
+                            >
+                              {processingKeys.has(question.id) ? "Processing..." : "Mark Done"}
+                            </button>
+                          )}
                         </div>
                       </div>
                     </div>

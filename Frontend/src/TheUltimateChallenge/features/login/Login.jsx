@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { CircularProgress } from "@mui/material";
 import { getSocket } from "../../../services/sockets/theUltimateChallenge";
+import defaultLogo from "../../../assets/images/dashboard/Ultimate Team Challenge_Game Logo.webp";
 
 function Login() {
   const [numberOfTeams, setNumberOfTeams] = useState(0);
@@ -156,15 +157,13 @@ function Login() {
         ) : (
           <div className="w-[100%] mx-[24px] text-[20px] font-bold text-center flex flex-col gap-[12px]">
             <div className="mx-auto flex flex-col items-center gap-2">
-              {companyLogo && (
-                <img
-                  src={companyLogo}
-                  alt={companyName || "Company Logo"}
-                  className="max-h-[60px] object-contain mb-2 rounded-lg"
-                />
-              )}
+              <img
+                src={companyLogo || defaultLogo}
+                alt={companyName || "Ultimate Team Challenge"}
+                className="max-h-[60px] object-contain mb-2 rounded-lg"
+              />
               <h1 className="text-[20px] text-white">
-                {companyName || "The Ultimate Team Challenge"}
+                {companyName || "Ultimate Team Challenge"}
               </h1>
             </div>
             <div className="space-y-[20px]">

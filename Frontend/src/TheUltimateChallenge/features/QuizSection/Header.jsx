@@ -3,6 +3,7 @@ import coin from '../../assets/images/QuizSection/TeamGame/Coin.png';
 import Energy from '../../assets/images/QuizSection/TeamGame/Energy.png';
 import { useParams } from 'react-router-dom';
 import UserTimer from '../../../features/user/timer/components/UserTimer';
+import defaultLogo from "../../../assets/images/dashboard/Ultimate Team Challenge_Game Logo.webp";
 
 function Header({ teamData }) {
     const [task, setTask] = useState({})
@@ -25,20 +26,16 @@ function Header({ teamData }) {
     return (
         <>
             <header className='absolute top-0 left-0 w-[100%] h-[100px] bg-gradient-to-t from-[#595297]/50 to-[#23203E]/50 text-white rounded-b-[20px] font-mono backdrop-blur-[10px] flex flex-col items-center justify-center pt-1'>
-                {teamData.teamInfo.companyName && (
-                    <div className='flex items-center justify-center gap-3 mb-1 z-10 select-none'>
-                        {teamData.teamInfo.companyLogo && (
-                            <img
-                                src={teamData.teamInfo.companyLogo}
-                                alt="company logo"
-                                className="h-[72px] w-auto object-contain rounded-lg shadow-md"
-                            />
-                        )}
-                        <span className="text-lg sm:text-xl tracking-[2px] uppercase font-extrabold text-[#FFF]">
-                            {teamData.teamInfo.companyName}
-                        </span>
-                    </div>
-                )}
+                <div className='flex items-center justify-center gap-3 mb-1 z-10 select-none'>
+                    <img
+                        src={teamData.teamInfo.companyLogo || defaultLogo}
+                        alt="company logo"
+                        className="h-[72px] w-auto object-contain rounded-lg shadow-md"
+                    />
+                    <span className="text-lg sm:text-xl tracking-[2px] uppercase font-extrabold text-[#FFF]">
+                        {teamData.teamInfo.companyName || "Ultimate Team Challenge"}
+                    </span>
+                </div>
             
                 <div className='absolute top-[81px] left-[24px] w-[108px] h-[32px] rounded-[20px]  flex items-center   bg-gradient-to-l from-[#595297] to-[#23203E]/70 backdrop-blur-[10px] z-10'>
                     <div className='mx-auto flex gap-2 py-1 pl-2 pr-1 items-center'>

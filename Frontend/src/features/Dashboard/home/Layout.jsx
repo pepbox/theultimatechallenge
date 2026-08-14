@@ -3,6 +3,7 @@ import { useRef, useState, useEffect, useCallback } from "react";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import AddIcon from "@mui/icons-material/Add";
 import RemoveIcon from "@mui/icons-material/Remove";
+import defaultLogo from "../../../assets/images/dashboard/Ultimate Team Challenge_Game Logo.webp";
 import Table from "./Table";
 import LeaderBoard from "./LeaderBoard";
 import {
@@ -538,15 +539,11 @@ function Layout() {
 
               <div className="flex items-center gap-4 my-auto">
                 <div className="w-16 h-16 rounded-xl border border-gray-200 bg-gray-50 flex items-center justify-center overflow-hidden flex-shrink-0 shadow-sm">
-                  {sessionInfo.companyLogo ? (
-                    <img src={sessionInfo.companyLogo} alt="Logo" className="w-full h-full object-contain" />
-                  ) : (
-                    <span className="text-[10px] text-gray-400 font-semibold text-center px-1">No Logo</span>
-                  )}
+                  <img src={sessionInfo.companyLogo || defaultLogo} alt="Logo" className="w-full h-full object-contain" />
                 </div>
                 <div className="flex-1">
                   <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Company Name</span>
-                  <p className="text-base sm:text-lg font-bold text-gray-800 break-words">{sessionInfo.sessionName}</p>
+                  <p className="text-base sm:text-lg font-bold text-gray-800 break-words">{sessionInfo.sessionName || "Ultimate Team Challenge"}</p>
                 </div>
               </div>
               
@@ -576,11 +573,7 @@ function Layout() {
               
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-lg border border-gray-200 bg-gray-50 flex items-center justify-center overflow-hidden flex-shrink-0">
-                  {logoPreview ? (
-                    <img src={logoPreview} alt="Logo" className="w-full h-full object-contain" />
-                  ) : (
-                    <span className="text-[10px] text-gray-400 font-semibold text-center px-1">No Logo</span>
-                  )}
+                  <img src={logoPreview || defaultLogo} alt="Logo" className="w-full h-full object-contain" />
                 </div>
                 <div className="flex-1">
                   <label className="cursor-pointer bg-gray-100 hover:bg-gray-200 transition-colors duration-200 border border-gray-300 rounded-lg px-3 py-1.5 flex items-center justify-center gap-1 text-xs font-semibold text-gray-700">

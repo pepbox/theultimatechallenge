@@ -286,7 +286,11 @@ function BodyGame() {
 
   // Upload image options
   const openUploadOptions = () => {
-    setShowUploadMenu((v) => !v);
+    if (cardData.answerType === "fileUpload") {
+      if (fileInputRef.current) fileInputRef.current.click();
+    } else {
+      setShowUploadMenu((v) => !v);
+    }
   };
   const handleClickPhoto = () => {
     setShowUploadMenu(false);
@@ -517,8 +521,10 @@ function BodyGame() {
             <>
               {cardData.answerType === "image" ? (
                 <Camera className="text-white" />
-              ) : (
+              ) : cardData.answerType === "video" ? (
                 <Video className="text-white" />
+              ) : (
+                <ClipboardCheck className="text-white" />
               )}
               <span className="text-white">Submit Answer</span>
             </>
@@ -526,11 +532,13 @@ function BodyGame() {
             <>
               {cardData.answerType === "image" ? (
                 <Camera className="text-white" />
-              ) : (
+              ) : cardData.answerType === "video" ? (
                 <Video className="text-white" />
+              ) : (
+                <ClipboardCheck className="text-white" />
               )}
               <span className="text-white">
-                Upload {cardData.answerType === "image" ? "Image" : "Video"}
+                Upload {cardData.answerType === "image" ? "Image" : cardData.answerType === "video" ? "Video" : "File"}
               </span>
             </>
           )}
@@ -584,8 +592,8 @@ function BodyGame() {
           </div>
         )}
 
-        {/* Manual Verification button — only for video answerType */}
-        {cardData.answerType === "video" && (
+        {/* Manual Verification button — for video, image, or fileUpload answerType */}
+        {(cardData.answerType === "video" || cardData.answerType === "image" || cardData.answerType === "fileUpload") && (
           <div className="w-full mt-3 flex flex-col gap-2">
             {/* Divider */}
             <div className="flex items-center gap-2">
@@ -600,7 +608,14 @@ function BodyGame() {
                 <XCircle className="text-red-400 flex-shrink-0" size={18} />
                 <div>
                   <p className="text-red-300 text-xs font-mono font-semibold">Verification Rejected</p>
-                  <p className="text-red-300/70 text-xs font-mono">Admin rejected your request. You can try again or upload a video.</p>
+                  <p className="text-red-300/70 text-xs font-mono">
+                    Admin rejected your request. You can try again or{" "}
+                    {cardData.answerType === "image"
+                      ? "upload an image."
+                      : cardData.answerType === "video"
+                      ? "upload a video."
+                      : "upload a file."}
+                  </p>
                 </div>
               </div>
             )}
@@ -653,7 +668,7 @@ function BodyGame() {
               ? "image/*"
               : cardData.answerType === "video"
               ? "video/*"
-              : null
+              : "*/*"
           }
         />
 

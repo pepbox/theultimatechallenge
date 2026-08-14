@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { ArrowLeft, Printer, AlertCircle, Loader, Download } from "lucide-react";
+import defaultLogo from "../../../assets/images/dashboard/Ultimate Team Challenge_Game Logo.webp";
 import html2canvas from "html2canvas-pro";
 import { jsPDF } from "jspdf";
 
@@ -301,20 +302,16 @@ export default function GamePDFView() {
         {/* Top Title Banner */}
         <div className="flex flex-col items-center border-b-[3px] border-gray-100 pb-5 mb-8 select-none w-full">
           {/* Company Logo and Name on Top */}
-          {sessionInfo.companyName && (
-            <div className="flex items-center justify-center gap-3 mb-3">
-              {sessionInfo.companyLogo && (
-                <img
-                  src={sessionInfo.companyLogo}
-                  alt="company logo"
-                  className="h-16 w-auto object-contain rounded"
-                />
-              )}
-              <span className="text-lg font-black text-gray-800 tracking-widest uppercase">
-                {sessionInfo.companyName}
-              </span>
-            </div>
-          )}
+          <div className="flex items-center justify-center gap-3 mb-3">
+            <img
+              src={sessionInfo.companyLogo || defaultLogo}
+              alt="company logo"
+              className="h-16 w-auto object-contain rounded"
+            />
+            <span className="text-lg font-black text-gray-800 tracking-widest uppercase">
+              {sessionInfo.companyName || "Ultimate Team Challenge"}
+            </span>
+          </div>
           
           {/* Level and Title on the next line */}
           <div className="flex items-center justify-center gap-4">
@@ -345,27 +342,7 @@ export default function GamePDFView() {
                   }}
                 >
                   {/* Card S3 Image */}
-                  <div className={`w-full bg-gray-50 border-b border-gray-100 overflow-hidden relative ${isMindBender ? 'pl-[24px]' : ''}`}>
-                    {isMindBender && (
-                      <div
-                        className="absolute left-0 top-0 h-full w-[24px] z-10 flex items-center justify-center font-bold text-white text-[9px] uppercase tracking-wider select-none"
-                        style={{ 
-                          backgroundColor: config.headerColor,
-                          writingMode: "vertical-rl",
-                          transform: "rotate(180deg)"
-                        }}
-                      >
-                        Mind-bender
-                      </div>
-                    )}
-                    {!isMindBender && (
-                      <div
-                        className={`absolute top-0 ${question.category === 'Discovery' ? 'right-0 rounded-bl-[8px]' : 'left-0 rounded-br-[8px]'} z-10 px-3 py-1.5 text-[9px] font-bold text-white uppercase tracking-wider`}
-                        style={{ backgroundColor: config.headerColor }}
-                      >
-                        {question.category}
-                      </div>
-                    )}
+                  <div className="w-full bg-gray-50 border-b border-gray-100 overflow-hidden relative">
                     {question.questionImageUrl ? (
                       <img
                         src={question.questionImageUrl}
@@ -381,9 +358,19 @@ export default function GamePDFView() {
 
                   {/* Card Colored Description Body & Points */}
                   <div
-                    className="p-3.5 text-white flex flex-col justify-between items-center text-center"
+                    className="p-3.5 pt-6 text-white flex flex-col justify-between items-center text-center relative"
                     style={{ backgroundColor: config.bodyColor }}
                   >
+                    {/* Floating Category Badge */}
+                    <div className="absolute top-[-12px] left-1/2 transform -translate-x-1/2 select-none">
+                      <span
+                        className="px-3.5 py-1.5 text-[9px] font-black uppercase tracking-widest rounded-full bg-white shadow-md border"
+                        style={{ color: config.headerColor, borderColor: config.borderColor }}
+                      >
+                        {question.category}
+                      </span>
+                    </div>
+
                     <p className="text-[13px] leading-[18px] font-sans font-bold select-text mb-3 text-white">
                       {question.text}
                     </p>
@@ -412,27 +399,7 @@ export default function GamePDFView() {
                   }}
                 >
                   {/* Card S3 Image */}
-                  <div className={`w-full bg-gray-50 border-b border-gray-100 overflow-hidden relative ${isMindBender ? 'pl-[24px]' : ''}`}>
-                    {isMindBender && (
-                      <div
-                        className="absolute left-0 top-0 h-full w-[24px] z-10 flex items-center justify-center font-bold text-white text-[9px] uppercase tracking-wider select-none"
-                        style={{ 
-                          backgroundColor: config.headerColor,
-                          writingMode: "vertical-rl",
-                          transform: "rotate(180deg)"
-                        }}
-                      >
-                        Mind-bender
-                      </div>
-                    )}
-                    {!isMindBender && (
-                      <div
-                        className={`absolute top-0 ${question.category === 'Discovery' ? 'right-0 rounded-bl-[8px]' : 'left-0 rounded-br-[8px]'} z-10 px-3 py-1.5 text-[9px] font-bold text-white uppercase tracking-wider`}
-                        style={{ backgroundColor: config.headerColor }}
-                      >
-                        {question.category}
-                      </div>
-                    )}
+                  <div className="w-full bg-gray-50 border-b border-gray-100 overflow-hidden relative">
                     {question.questionImageUrl ? (
                       <img
                         src={question.questionImageUrl}
@@ -448,9 +415,19 @@ export default function GamePDFView() {
 
                   {/* Card Colored Description Body & Points */}
                   <div
-                    className="p-3.5 text-white flex flex-col justify-between items-center text-center"
+                    className="p-3.5 pt-6 text-white flex flex-col justify-between items-center text-center relative"
                     style={{ backgroundColor: config.bodyColor }}
                   >
+                    {/* Floating Category Badge */}
+                    <div className="absolute top-[-12px] left-1/2 transform -translate-x-1/2 select-none">
+                      <span
+                        className="px-3.5 py-1.5 text-[9px] font-black uppercase tracking-widest rounded-full bg-white shadow-md border"
+                        style={{ color: config.headerColor, borderColor: config.borderColor }}
+                      >
+                        {question.category}
+                      </span>
+                    </div>
+
                     <p className="text-[13px] leading-[18px] font-sans font-bold select-text mb-3 text-white">
                       {question.text}
                     </p>
@@ -479,27 +456,7 @@ export default function GamePDFView() {
                   }}
                 >
                   {/* Card S3 Image */}
-                  <div className={`w-full bg-gray-50 border-b border-gray-100 overflow-hidden relative ${isMindBender ? 'pl-[24px]' : ''}`}>
-                    {isMindBender && (
-                      <div
-                        className="absolute left-0 top-0 h-full w-[24px] z-10 flex items-center justify-center font-bold text-white text-[9px] uppercase tracking-wider select-none"
-                        style={{ 
-                          backgroundColor: config.headerColor,
-                          writingMode: "vertical-rl",
-                          transform: "rotate(180deg)"
-                        }}
-                      >
-                        Mind-bender
-                      </div>
-                    )}
-                    {!isMindBender && (
-                      <div
-                        className={`absolute top-0 ${question.category === 'Discovery' ? 'right-0 rounded-bl-[8px]' : 'left-0 rounded-br-[8px]'} z-10 px-3 py-1.5 text-[9px] font-bold text-white uppercase tracking-wider`}
-                        style={{ backgroundColor: config.headerColor }}
-                      >
-                        {question.category}
-                      </div>
-                    )}
+                  <div className="w-full bg-gray-50 border-b border-gray-100 overflow-hidden relative">
                     {question.questionImageUrl ? (
                       <img
                         src={question.questionImageUrl}
@@ -515,9 +472,19 @@ export default function GamePDFView() {
 
                   {/* Card Colored Description Body & Points */}
                   <div
-                    className="p-3.5 text-white flex flex-col justify-between items-center text-center"
+                    className="p-3.5 pt-6 text-white flex flex-col justify-between items-center text-center relative"
                     style={{ backgroundColor: config.bodyColor }}
                   >
+                    {/* Floating Category Badge */}
+                    <div className="absolute top-[-12px] left-1/2 transform -translate-x-1/2 select-none">
+                      <span
+                        className="px-3.5 py-1.5 text-[9px] font-black uppercase tracking-widest rounded-full bg-white shadow-md border"
+                        style={{ color: config.headerColor, borderColor: config.borderColor }}
+                      >
+                        {question.category}
+                      </span>
+                    </div>
+
                     <p className="text-[13px] leading-[18px] font-sans font-bold select-text mb-3 text-white">
                       {question.text}
                     </p>

@@ -117,7 +117,8 @@ function SubmissionModal({ team, onClose, socket }) {
                         </td>
                         <td className="p-3 text-sm">
                           {(question.answerType === "image" ||
-                            question.answerType === "video") &&
+                            question.answerType === "video" ||
+                            question.answerType === "fileUpload") &&
                           question.answerUrl ? (
                             <a
                               href={question.answerUrl}
@@ -191,7 +192,8 @@ function SubmissionModal({ team, onClose, socket }) {
                           </span>
                           <div className="text-right">
                             {(question.answerType === "image" ||
-                              question.answerType === "video") &&
+                              question.answerType === "video" ||
+                              question.answerType === "fileUpload") &&
                             question.answerUrl ? (
                               <a
                                 href={question.answerUrl}

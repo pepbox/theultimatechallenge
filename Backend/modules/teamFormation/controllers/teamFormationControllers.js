@@ -97,7 +97,7 @@ const continueToGame = async (req, res) => {
 const createPlayer = async (req, res) => {
     const { teamId, playerName, isLeader } = req.body;
 
-    console.log("Creating player with data:", req.body);
+    // console.log("Creating player with data:", req.body);
 
     if (!teamId || !playerName) {
         return res.status(400).json({

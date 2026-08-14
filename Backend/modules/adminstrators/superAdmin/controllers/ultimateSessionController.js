@@ -106,6 +106,7 @@ const createSession = async (req, res) => {
     // Create new session
     const session = new TheUltimateChallenge({
       companyName: 'Ultimate Team Challenge',
+      gameTitle: companyName || 'Ultimate Team Challenge',
       admin,
       passCode: password,
       teamFormationGame,

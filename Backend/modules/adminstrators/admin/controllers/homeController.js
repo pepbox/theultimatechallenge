@@ -153,6 +153,7 @@ const getGameSettingsData = async (req, res) => {
                 isPaused: session.isPaused,
                 adminName: session.admin,
                 sessionName: session.companyName,
+                gameTitle: session.gameTitle || session.companyName || 'Ultimate Team Challenge',
                 companyLogo: session.companyLogo || null,
                 currentLevel: session.currentLevel,
                 playerGameLink,

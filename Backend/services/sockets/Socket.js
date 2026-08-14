@@ -11,7 +11,7 @@ let ioInstance;
 
 function setupSocket(io) {
     io.on('connection', (socket) => {
-        console.log('A user connected', socket.id);
+        // console.log('A user connected', socket.id);
 
         socket.on("request-team-data", async (callback) => {
             try {
@@ -705,7 +705,7 @@ function setupSocket(io) {
                     model: "Question"
                 });
 
-                console.log("Teams",teams)
+                // console.log("Teams",teams)
 
                 if (!teams || teams.length === 0) {
                     if (callback) callback({ success: false, error: "No teams found for this session" });
@@ -921,7 +921,7 @@ function setupSocket(io) {
 
         socket.on("toggle-show-timer", async (data) => {
             try {
-                console.log("Toggling timer visibility:", data);
+                // console.log("Toggling timer visibility:", data);
                 const cookies = socket.handshake.headers.cookie;
                 if (!cookies) {
                     return socket.emit("error", "No cookies found");
@@ -962,9 +962,9 @@ function setupSocket(io) {
                     ...admins.map(a => a.socketId).filter(id => id)
                 ];
 
-                console.log("Recipient Socket IDs:", recipientSocketIds);
+                // console.log("Recipient Socket IDs:", recipientSocketIds);
                 recipientSocketIds.forEach(socketId => {
-                    console.log("Emitting to socket ID:", socketId);
+                    // console.log("Emitting to socket ID:", socketId);
                     io.to(socketId).emit("timer-visibility-toggled", {
                         message: `Timer visibility toggled to ${data.showTimer}`,
                         timerStatus: session.timer.timerStatus,
@@ -1697,7 +1697,7 @@ function setupSocket(io) {
         });
 
         socket.on('disconnect', async () => {
-            console.log('A user disconnected', socket.id);
+            // console.log('A user disconnected', socket.id);
 
             try {
                 const player = await Player.findOne({ socketId: socket.id });

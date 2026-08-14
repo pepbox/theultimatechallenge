@@ -25,12 +25,12 @@ connectDB()
 
 if (process.env.NODE_ENV === "production") {
   const buildPath = path.join(__dirname, "../Frontend/dist");
-  app.use((req, res, next) => {
-    if (!req.url.startsWith('/api')) {
-      console.log('REQUEST:', req.method, req.url);
-    }
-    next();
-  });
+  // app.use((req, res, next) => {
+  //   if (!req.url.startsWith('/api')) {
+  //     console.log('REQUEST:', req.method, req.url);
+  //   }
+  //   next();
+  // });
   
   // Serve static files FIRST - try multiple approaches
   app.use(express.static(buildPath));

@@ -8,7 +8,7 @@ const getTeamData = async (req, res) => {
   try {
     // Verify JWT from cookie
     const token = req.cookies.token
-    console.log(req.cookies)
+    // console.log(req.cookies)
     if (!token) {
       return res.status(401).json({ error: 'No token provided' });
     }

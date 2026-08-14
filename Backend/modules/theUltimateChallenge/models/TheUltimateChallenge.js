@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 
 const theUltimateChallengeSchema = new mongoose.Schema({
   companyName: { type: String, required: true },
+  gameTitle: { type: String, default: 'Ultimate Team Challenge' },
   companyLogo: { type: String, default: null },
   admin: { type: String, required: true },
   passCode: { type: String, required: true },

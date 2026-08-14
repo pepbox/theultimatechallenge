@@ -161,6 +161,7 @@ function Layout() {
           numQuestionsSelected,
           numTeamsCreated,
           numTeamsJoined,
+          gameTitle,
         } = response.data.data;
         gameStatus.current = isPaused;
         setDisplayStatus(isPaused);
@@ -174,6 +175,7 @@ function Layout() {
           sessionId: sessionId,
           adminName: adminName || "Admin",
           sessionName: sessionName || "Session",
+          gameTitle: gameTitle || sessionName || "Ultimate Team Challenge",
           companyLogo: companyLogo || "",
           playerGameLink: playerGameLink || "",
           adminGameLink: adminGameLink || "",
@@ -458,7 +460,7 @@ function Layout() {
         <div className="md:col-span-2 bg-[#FCA61E]/10 p-4 sm:p-6 rounded-2xl flex flex-col justify-between">
           <div>
             <h1 className="text-center text-xl sm:text-2xl font-bold">
-              {sessionInfo.sessionName}
+              {sessionInfo.gameTitle || sessionInfo.sessionName || "Ultimate Team Challenge"}
             </h1>
             <h2 className="text-center text-sm sm:text-base mt-2">
               Admin : {sessionInfo.adminName}

@@ -111,6 +111,7 @@ const createSession = async (req, res) => {
         // Create new session
         const session = new TheUltimateChallenge({
             companyName: 'Ultimate Team Challenge',
+            gameTitle: companyName || 'Ultimate Team Challenge',
             admin,
             passCode: password,
             teamFormationGame,
@@ -123,7 +124,7 @@ const createSession = async (req, res) => {
 
         // Save session
         const savedSession = await session.save();
-        console.log("Session created successfully:", savedSession._id);
+        // console.log("Session created successfully:", savedSession._id);
         let playerGameLink = `${process.env.FRONTEND_URL}/theultimatechallenge/login/${savedSession._id.toString()}`;
         let adminGameLink = `${process.env.FRONTEND_URL}/admin/${savedSession._id.toString()}/login`;
 
@@ -209,10 +210,10 @@ const createSession = async (req, res) => {
 const updateSession = async (req, res) => {
     const { sessionId, name, adminName, adminPin } = req.body;
 
-    console.log("SessionId", sessionId);
-    console.log("Name", name);
-    console.log("AdminName", adminName);
-    console.log("AdminPin", adminPin);
+    // console.log("SessionId", sessionId);
+    // console.log("Name", name);
+    // console.log("AdminName", adminName);
+    // console.log("AdminPin", adminPin);
 
     try {
         if (!sessionId || !name || !adminName || !adminPin) {

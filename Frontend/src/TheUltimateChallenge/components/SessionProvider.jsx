@@ -11,14 +11,27 @@ export const SessionProvider = ({ children }) => {
   const [isConnected, setIsConnected] = useState(false);
 
   useEffect(() => {
+    let activeSocket;
     connectSocket()
       .then((socketInstance) => {
         setSocket(socketInstance);
         setIsConnected(true);
+        activeSocket = socketInstance;
+        
+        socketInstance.on("player-removed", () => {
+          document.cookie = "token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+          window.location.reload();
+        });
       })
       .catch((error) => {
         console.error("Socket connection failed:", error);
       });
+
+    return () => {
+      if (activeSocket) {
+        activeSocket.off("player-removed");
+      }
+    };
   }, []);
 
   if (!isConnected) {

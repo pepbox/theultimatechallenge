@@ -393,4 +393,154 @@ const getTeamPlayersInfo=async(req,res)=>{
   }
 }
 
-module.exports = { updateQuestionStatus,updateTeamScore,getTeamPlayersInfo };
+const removePlayerFromSession = async (req, res) => {
+  try {
+    const io = req.app.get("socketService");
+    const { playerId } = req.body;
+
+    if (!playerId) {
+      return res.status(400).json({ success: false, error: "Player ID is required" });
+    }
+
+    // 1. Find the player to get team & session details
+    const player = await Player.findById(playerId);
+    if (!player) {
+      return res.status(404).json({ success: false, error: "Player not found" });
+    }
+
+    const { team: teamId, session: sessionId, isCaption } = player;
+
+    // 2. Delete the player
+    await Player.findByIdAndDelete(playerId);
+
+    // 3. Promote another player to captain if the deleted player was a captain
+    const remainingPlayers = await Player.find({ team: teamId });
+    if (isCaption && remainingPlayers.length > 0) {
+      // Check if there is already another captain
+      const hasCaptain = remainingPlayers.some(p => p.isCaption);
+      if (!hasCaptain) {
+        remainingPlayers[0].isCaption = true;
+        await remainingPlayers[0].save();
+      }
+    }
+
+    // 4. Notify the deleted player via socket and disconnect them
+    if (player.socketId && io) {
+      io.to(player.socketId).emit("player-removed");
+      const clientSocket = io.sockets.sockets.get(player.socketId);
+      if (clientSocket) {
+        clientSocket.disconnect(true);
+      }
+    }
+
+    // 5. Update team and session details for other users
+    const team = await Team.findById(teamId).populate({
+      path: "questionStatus.question",
+      model: "Question"
+    });
+
+    const session = await TheUltimateChallenge.findById(sessionId);
+
+    if (team && session) {
+      // Broadcast updated team-data to remaining team members
+      const teamPlayers = await Player.find({ team: teamId });
+      const teamSocketIds = teamPlayers.map(p => p.socketId).filter(id => id);
+
+      const questionData = team.questionStatus.map(q => ({
+        id: q.question._id,
+        text: q.question.text,
+        level: q.question.level,
+        category: q.question.category,
+        answerType: q.question.answerType,
+        questionImageUrl: q.question.questionImageUrl,
+        points: q.question.points,
+        difficulty: q.question.difficulty,
+        status: q.status,
+        currentPlayer: q.currentPlayer,
+        pointsEarned: q.pointsEarned,
+        answerUrl: q.answerUrl,
+        submittedAnswer: q.submittedAnswer
+      }));
+
+      const teamPayload = {
+        teamInfo: {
+          id: team._id,
+          name: team.name,
+          currentLevel: session.currentLevel,
+          teamScore: team.teamScore,
+          caption: team.caption,
+          isPaused: session.isPaused,
+          companyName: session.companyName,
+          companyLogo: session.companyLogo || null,
+          showScorecard: session.showScorecard || false
+        },
+        questions: questionData
+      };
+
+      teamSocketIds.forEach(sid => {
+        io.to(sid).emit("team-data", teamPayload);
+      });
+
+      // Broadcast all-teams-data to Admin
+      const allTeams = await Team.find({ session: sessionId }).populate({
+        path: "questionStatus.question",
+        model: "Question"
+      });
+
+      const allTeamsData = await Promise.all(allTeams.map(async (t) => {
+        const teamMembers = await Player.find({ team: t._id });
+        const qData = t.questionStatus.map(q => ({
+          id: q.question._id,
+          text: q.question.text,
+          level: q.question.level,
+          category: q.question.category,
+          answerType: q.question.answerType,
+          questionImageUrl: q.question.questionImageUrl,
+          points: q.question.points,
+          difficulty: q.question.difficulty,
+          status: q.status,
+          currentPlayer: q.currentPlayer,
+          pointsEarned: q.pointsEarned,
+          answerUrl: q.answerUrl,
+          submittedAnswer: q.submittedAnswer
+        }));
+
+        return {
+          teamInfo: {
+            id: t._id,
+            name: t.name,
+            currentLevel: session.currentLevel,
+            teamScore: t.teamScore,
+            caption: t.caption,
+            isPaused: session.isPaused
+          },
+          players: teamMembers.map(p => ({
+            id: p._id,
+            name: p.name,
+            isCaption: p.isCaption
+          })),
+          questions: qData
+        };
+      }));
+
+      const allTeamsPayload = {
+        sessionId,
+        isPaused: session.isPaused,
+        currentLevel: session.currentLevel,
+        teams: allTeamsData
+      };
+
+      const admin = await Admin.findOne({ session: sessionId });
+      if (admin && admin.socketId) {
+        io.to(admin.socketId).emit("all-teams-data", allTeamsPayload);
+      }
+    }
+
+    return res.status(200).json({ success: true, message: "Player removed successfully" });
+  } catch (error) {
+    console.error("Error removing player:", error);
+    return res.status(500).json({ success: false, error: error.message || "Failed to remove player" });
+  }
+};
+
+module.exports = { updateQuestionStatus, updateTeamScore, getTeamPlayersInfo, removePlayerFromSession };

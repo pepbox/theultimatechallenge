@@ -2,20 +2,19 @@ import { useState, useEffect } from "react";
 import { ExternalLink, X } from "lucide-react";
 
 function SubmissionModal({ team, onClose, socket }) {
-  const [selectedLevel, setSelectedLevel] = useState("all"); // Default to show all levels
-  const [filteredQuestions, setFilteredQuestions] = useState(team.questions); // Initialize with all questions
-
   // Get available levels from team data
   const availableLevels = [
     ...new Set(team.questions.map((q) => q.level)),
   ].sort();
-  const levelOptions = [
-    { value: "all", label: "All Levels" },
-    ...availableLevels.map((level) => ({
-      value: level.toString(),
-      label: `Level ${level}`,
-    })),
-  ];
+  const levelOptions = availableLevels.map((level) => ({
+    value: level.toString(),
+    label: `Level ${level}`,
+  }));
+
+  const [selectedLevel, setSelectedLevel] = useState(
+    availableLevels[0]?.toString() || ""
+  );
+  const [filteredQuestions, setFilteredQuestions] = useState([]);
 
   useEffect(() => {
     console.log(
@@ -23,10 +22,19 @@ function SubmissionModal({ team, onClose, socket }) {
       team.id,
       team.questions.length
     );
-    const updatedQuestions =
-      selectedLevel === "all"
-        ? team.questions
-        : team.questions.filter((q) => q.level === parseInt(selectedLevel));
+    let currentLevel = selectedLevel;
+    const isLevelAvailable = team.questions.some(q => q.level.toString() === selectedLevel);
+    if (!isLevelAvailable) {
+      const activeLevels = [...new Set(team.questions.map((q) => q.level))].sort();
+      if (activeLevels.length > 0) {
+        currentLevel = activeLevels[0].toString();
+        setSelectedLevel(currentLevel);
+      }
+    }
+
+    const updatedQuestions = currentLevel
+      ? team.questions.filter((q) => q.level === parseInt(currentLevel))
+      : [];
     setFilteredQuestions(updatedQuestions);
   }, [team, selectedLevel]);
 

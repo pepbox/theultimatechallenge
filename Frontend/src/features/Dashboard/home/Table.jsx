@@ -278,9 +278,17 @@ const Table = forwardRef(
       setShowTeamInfoModal(true);
     };
 
+    const totalPlayersJoined = teamData.reduce((acc, team) => acc + (team.players || 0), 0);
+
     console.log(sortedTeamData);
     return (
       <>
+        <div className="flex items-center gap-2.5 mb-4 px-1 font-sans">
+          <span className="text-sm font-bold text-[#111111]/70">Players Joined:</span>
+          <span className="bg-[#FCA61E]/10 text-[#FCA61E] border border-[#FCA61E]/20 text-xs font-bold px-3 py-1 rounded-full shadow-sm">
+            {totalPlayersJoined} {totalPlayersJoined === 1 ? 'player' : 'players'}
+          </span>
+        </div>
         <div className="w-full max-w-full overflow-hidden font-sans">
           {/* Desktop/Tablet Table View */}
           <div className="hidden md:block overflow-x-auto">

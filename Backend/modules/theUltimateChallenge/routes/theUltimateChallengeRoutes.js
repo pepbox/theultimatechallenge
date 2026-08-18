@@ -5,7 +5,7 @@ const { addQuestion, addMultipleQuestions, getAllQuestions } = require('../contr
 const { joinSession, getNumberOfTeams, updateSocketId, restoreCookie } = require('../controllers/loginController');
 const { getGameCompletionData, logoutPlayer, getLeaderboard } = require('../controllers/gameCompletionController');
 const { getTeamData } = require('../controllers/quizSectionController');
-const { uploadFileAnswer, submitTextAnswer } = require('../controllers/taskCompleteController');
+const { uploadFileAnswer, submitTextAnswer, requestManualVerification } = require('../controllers/taskCompleteController');
 const { getTimerStatus } = require('../controllers/timerController');
 const {
   getQuestions, createQuestion, updateQuestion, deleteQuestion, uploadQuestionImage,
@@ -35,6 +35,7 @@ router.post("/updatesocketid", updateSocketId)
 
 router.post('/uploadanswer', upload.single('answerFile'), uploadFileAnswer);
 router.post('/uploadtextanswer', upload.single('answerFile'), submitTextAnswer);
+router.post('/request-manual-verification', requestManualVerification);
 
 
 router.get('/quizsectioninit', getTeamData)

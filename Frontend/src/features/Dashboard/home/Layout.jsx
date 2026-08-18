@@ -195,8 +195,28 @@ function Layout() {
       );
     }
   };
+
+  const fetchPendingVerifications = async () => {
+    try {
+      const response = await axios.get(
+        `${
+          import.meta.env.VITE_BACKEND_BASE_URL
+        }/api/v1/admin/pending-verifications/${sessionId}`,
+        {
+          withCredentials: true,
+        }
+      );
+      if (response.data?.success) {
+        setPendingVerifications(response.data.pendingRequests);
+      }
+    } catch (error) {
+      console.error("Error fetching pending verifications:", error);
+    }
+  };
+
   useEffect(() => {
     fetchGameSettingsData();
+    fetchPendingVerifications();
   }, [sessionId]);
 
   const handleLevelChange = (increment) => {

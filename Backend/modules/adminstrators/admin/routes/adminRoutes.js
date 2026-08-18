@@ -1,7 +1,7 @@
 const express = require('express');
 const multer = require('multer');
 const { loginAdmin, updateSocketId, logoutAdmin, validateAdminSession, restoreCookie, loginWithSuperadminPasscode } = require("../controllers/loginController")
-const { changeTeamLevels, getGameSettingsData, downloadSessionData, updateSessionBranding, getPopulatedQuestionsForSession, createTeams } = require("../controllers/homeController")
+const { changeTeamLevels, getGameSettingsData, downloadSessionData, updateSessionBranding, getPopulatedQuestionsForSession, createTeams, getPendingVerifications } = require("../controllers/homeController")
 const { updateQuestionStatus, updateTeamScore, getTeamPlayersInfo, removePlayerFromSession } = require("../controllers/teamData");
 const { endSession } = require('../controllers/sessionController');
 
@@ -27,6 +27,7 @@ router.post("/create-teams", createTeams);
 router.post("/remove-player", removePlayerFromSession);
 
 router.get("/session/:sessionId/populated-questions", getPopulatedQuestionsForSession);
+router.get("/pending-verifications/:sessionId", getPendingVerifications);
 router.get("/download-session-data/:sessionId", downloadSessionData)
 
 router.post("/restore-cookie", restoreCookie)

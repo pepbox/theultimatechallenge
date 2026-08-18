@@ -4,6 +4,8 @@ import { useNavigate, useLocation, useParams } from "react-router-dom";
 import { getSocket } from "../../../services/sockets/theUltimateChallenge";
 import UserTimer from "../../../features/user/timer/components/UserTimer";
 
+import axios from "axios";
+
 function ManualGame() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -124,21 +126,29 @@ function ManualGame() {
     }
   };
 
-  const handleRequestVerification = () => {
+  const handleRequestVerification = async () => {
     if (isRequesting || isRequested) return;
 
     setIsRequesting(true);
     setRequestError(null);
     setIsRejected(false);
 
-    socket.emit("request-manual-verification", { questionId: cardData.id }, (response) => {
+    try {
+      const response = await axios.post(
+        `${import.meta.env.VITE_BACKEND_BASE_URL}/api/v1/theultimatechallenge/request-manual-verification`,
+        { questionId: cardData.id },
+        { withCredentials: true }
+      );
       setIsRequesting(false);
-      if (response?.success) {
+      if (response.data?.success) {
         setIsRequested(true);
       } else {
-        setRequestError(response?.error || "Failed to send request. Please try again.");
+        setRequestError(response.data?.error || "Failed to send request. Please try again.");
       }
-    });
+    } catch (err) {
+      setIsRequesting(false);
+      setRequestError(err.response?.data?.error || "Failed to send request. Please try again.");
+    }
   };
 
   if (!cardData) return null;

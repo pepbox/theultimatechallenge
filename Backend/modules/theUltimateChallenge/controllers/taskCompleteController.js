@@ -368,4 +368,71 @@ const submitTextAnswer = async (req, res) => {
   }
 };
 
-module.exports = { uploadFileAnswer, submitTextAnswer };
+const requestManualVerification = async (req, res) => {
+  try {
+    const token = req.cookies.token;
+    if (!token) return res.status(401).json({ error: 'No token provided' });
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const playerId = decoded.playerId;
+    const { questionId } = req.body;
+
+    if (!questionId) {
+      return res.status(400).json({ error: 'questionId is required' });
+    }
+
+    const player = await Player.findById(playerId);
+    if (!player) return res.status(404).json({ error: 'Player not found' });
+
+    const team = await Team.findById(player.team).populate({
+      path: 'questionStatus.question',
+      model: 'Question'
+    });
+    if (!team) return res.status(404).json({ error: 'Team not found' });
+
+    const session = await TheUltimateChallenge.findById(team.session);
+    if (!session) return res.status(404).json({ error: 'Session not found' });
+
+    const questionStatus = team.questionStatus.find(
+      qs => qs.question._id.toString() === questionId
+    );
+    if (!questionStatus) return res.status(404).json({ error: 'Question not found for team' });
+    if (questionStatus.status === 'done') {
+      return res.status(400).json({ error: 'Question already completed' });
+    }
+
+    // Update status and track requesting player
+    questionStatus.status = 'pending_verification';
+    questionStatus.currentPlayer = playerId;
+    await team.save();
+
+    const questionDoc = questionStatus.question;
+    const io = req.app.get("socketService");
+
+    if (io) {
+      // Emit all-teams-data and manual-verification-request to admin
+      await emitAllTeamsData(session._id, io);
+
+      const admin = await Admin.findOne({ session: session._id });
+      if (admin && admin.socketId) {
+        io.to(admin.socketId).emit('manual-verification-request', {
+          teamId: team._id,
+          teamName: team.name,
+          questionId: questionDoc._id,
+          questionText: questionDoc.text,
+          points: questionDoc.points,
+        });
+      }
+
+      // Emit updated team data to players in the team
+      await emitTeamDataToPlayers(team._id, session._id, io);
+    }
+
+    return res.status(200).json({ success: true });
+  } catch (err) {
+    console.error('Error requesting manual verification:', err);
+    return res.status(500).json({ error: err.message || 'Failed to request manual verification' });
+  }
+};
+
+module.exports = { uploadFileAnswer, submitTextAnswer, requestManualVerification };

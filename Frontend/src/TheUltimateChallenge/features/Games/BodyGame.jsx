@@ -628,16 +628,26 @@ function BodyGame() {
                   ? 'bg-purple-700/60 border-2 border-purple-400/40 cursor-not-allowed'
                   : 'bg-[#5B2DC8] border-2 border-purple-400/30 hover:bg-[#4a22a8] active:scale-95 cursor-pointer'
               }`}
-              onClick={() => {
+              onClick={async () => {
                 if (verificationRequested || isRequestingVerification) return;
                 setIsRequestingVerification(true);
                 setVerificationRejected(false);
-                socket.emit('request-manual-verification', { questionId: cardData.id }, (response) => {
+                try {
+                  const response = await axios.post(
+                    `${import.meta.env.VITE_BACKEND_BASE_URL}/api/v1/theultimatechallenge/request-manual-verification`,
+                    { questionId: cardData.id },
+                    { withCredentials: true }
+                  );
                   setIsRequestingVerification(false);
-                  if (response?.success) {
+                  if (response.data?.success) {
                     setVerificationRequested(true);
+                  } else {
+                    alert(response.data?.error || "Failed to request verification.");
                   }
-                });
+                } catch (err) {
+                  setIsRequestingVerification(false);
+                  alert(err.response?.data?.error || "Failed to request verification.");
+                }
               }}
               disabled={verificationRequested || isRequestingVerification}
             >

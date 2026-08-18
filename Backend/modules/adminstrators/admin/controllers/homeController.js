@@ -614,11 +614,61 @@ const createTeams = async (req, res) => {
     }
 };
 
+const getPendingVerifications = async (req, res) => {
+    try {
+        const token = req.cookies.adminToken;
+        if (!token) {
+            return res.status(401).json({ error: 'Admin token missing' });
+        }
+
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const { sessionId } = req.params;
+
+        if (!sessionId) {
+            return res.status(400).json({ error: 'sessionId is required' });
+        }
+
+        const session = await TheUltimateChallenge.findById(sessionId);
+        if (!session) {
+            return res.status(404).json({ error: 'Session not found' });
+        }
+
+        const teams = await Team.find({ session: sessionId }).populate({
+            path: 'questionStatus.question',
+            model: 'Question'
+        });
+
+        const pendingRequests = [];
+        teams.forEach(t => {
+            t.questionStatus.forEach(qs => {
+                if (qs.status === 'pending_verification') {
+                    pendingRequests.push({
+                        teamId: t._id,
+                        teamName: t.name,
+                        questionId: qs.question._id,
+                        questionText: qs.question.text,
+                        points: qs.question.points
+                    });
+                }
+            });
+        });
+
+        return res.status(200).json({
+            success: true,
+            pendingRequests
+        });
+    } catch (error) {
+        console.error('getPendingVerifications error:', error);
+        return res.status(500).json({ error: error.message || 'Failed to get pending verifications' });
+    }
+};
+
 module.exports = { 
     getGameSettingsData, 
     changeTeamLevels, 
     downloadSessionData, 
     updateSessionBranding, 
     getPopulatedQuestionsForSession,
-    createTeams
+    createTeams,
+    getPendingVerifications
 };

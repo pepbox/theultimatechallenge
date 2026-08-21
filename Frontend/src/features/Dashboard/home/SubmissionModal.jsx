@@ -1,6 +1,13 @@
 import { useState, useEffect } from "react";
 import { ExternalLink, X } from "lucide-react";
 
+const statusLabels = {
+  available: "Available",
+  attending: "In Progress",
+  pending_verification: "Requested Verification",
+  done: "Completed",
+};
+
 function SubmissionModal({ team, onClose, socket }) {
   // Get available levels from team data
   const availableLevels = [
@@ -76,7 +83,7 @@ function SubmissionModal({ team, onClose, socket }) {
 
   return (
     <div className="fixed inset-0 flex items-center justify-center z-[1000] bg-black/75 p-4">
-      <div className="bg-gradient-to-b from-[#D4E5FF]/30 to-[#E5FFD4]/30 border-2 border-white/20 rounded-2xl p-4 sm:p-6 w-full max-w-4xl flex flex-col backdrop-blur-3xl shadow-2xl max-h-[95vh]">
+      <div className="bg-gradient-to-b from-[#D4E5FF]/30 to-[#E5FFD4]/30 border-2 border-white/20 rounded-2xl p-4 sm:p-6 w-full max-w-5xl flex flex-col backdrop-blur-3xl shadow-2xl max-h-[95vh]">
         {/* Header */}
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-white text-lg sm:text-2xl font-bold font-sans tracking-tight">
@@ -118,7 +125,7 @@ function SubmissionModal({ team, onClose, socket }) {
           {filteredQuestions.length > 0 ? (
             <>
               {/* Desktop/Tablet Table View */}
-              <div className="hidden lg:block max-h-[60vh] overflow-y-auto scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent">
+              <div className="hidden lg:block max-h-[70vh] overflow-y-auto scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent">
                 <table className="w-full border-collapse text-white">
                   <thead className="sticky top-0 bg-gradient-to-b from-[#828a90] to-[#848e87] z-10">
                     <tr className="text-center">
@@ -135,7 +142,10 @@ function SubmissionModal({ team, onClose, socket }) {
                         Submitted Answer
                       </th>
                       <th className="p-3 text-sm font-medium text-white/80">
-                        Points
+                        Task Points
+                      </th>
+                      <th className="p-3 text-sm font-medium text-white/80">
+                        Points Earned
                       </th>
                       <th className="p-3 text-sm font-medium text-white/80">
                         Status
@@ -178,11 +188,24 @@ function SubmissionModal({ team, onClose, socket }) {
                             <span className="text-white/50">N/A</span>
                           )}
                         </td>
-                        <td className="p-3 text-sm">
-                          {question.pointsEarned || 0}
+                        <td className="p-3 text-sm font-bold text-yellow-400">
+                          {question.points}
                         </td>
-                        <td className="p-3 text-sm capitalize">
-                          {question.status}
+                        <td className="p-3 text-sm font-bold text-green-400">
+                          {question.status === "done" ? (question.pointsEarned || question.points) : 0}
+                        </td>
+                        <td className="p-3 text-sm">
+                          <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${
+                            question.status === "done"
+                              ? "bg-green-500/20 text-green-300 border border-green-500/30"
+                              : question.status === "pending_verification"
+                              ? "bg-amber-500/20 text-amber-300 border border-amber-500/30"
+                              : question.status === "attending"
+                              ? "bg-blue-500/20 text-blue-300 border border-blue-500/30"
+                              : "bg-gray-500/20 text-gray-300 border border-gray-500/30"
+                          }`}>
+                            {statusLabels[question.status] || question.status}
+                          </span>
                         </td>
                         <td className="p-3 text-sm text-center">
                           {question.status === "done" ? (
@@ -227,14 +250,23 @@ function SubmissionModal({ team, onClose, socket }) {
                             {question.answerType}
                           </span>
                         </div>
-                        <div className="flex items-center space-x-2">
-                          <span className="text-[#F5A623] text-sm font-semibold">
-                            {question.pointsEarned || 0} pts
+                        <div className="flex flex-col items-end gap-1">
+                          <span className="text-white/50 text-[11px]">
+                            Task: <strong className="text-yellow-400">{question.points} pts</strong>
                           </span>
-                          <span
-                            className={`text-xs px-2 py-1 rounded-full capitalize text-white `}
-                          >
-                            {question.status}
+                          <span className="text-white/50 text-[11px]">
+                            Earned: <strong className="text-green-400">{question.status === "done" ? (question.pointsEarned || question.points) : 0} pts</strong>
+                          </span>
+                          <span className={`px-2 py-0.5 mt-1 rounded-full text-[10px] font-semibold border ${
+                            question.status === "done"
+                              ? "bg-green-500/20 text-green-300 border-green-500/30"
+                              : question.status === "pending_verification"
+                              ? "bg-amber-500/20 text-amber-300 border-amber-500/30"
+                              : question.status === "attending"
+                              ? "bg-blue-500/20 text-blue-300 border-blue-500/30"
+                              : "bg-gray-500/20 text-gray-300 border-gray-500/30"
+                          }`}>
+                            {statusLabels[question.status] || question.status}
                           </span>
                         </div>
                       </div>

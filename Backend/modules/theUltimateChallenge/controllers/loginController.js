@@ -389,6 +389,13 @@ const updateSocketId = async (req, res) => {
     player.socketId = socketId;
     await player.save();
 
+    // Fetch team data and emit "team-data" to this player's team
+    const io = req.app.get("socketService");
+    if (io) {
+      const { emitTeamDataToPlayers } = require('./taskCompleteController');
+      await emitTeamDataToPlayers(player.team, player.session, io);
+    }
+
     return res.status(200).json({
       success: true,
       message: 'Socket ID updated successfully',

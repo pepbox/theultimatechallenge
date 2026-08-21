@@ -35,6 +35,24 @@ function ManualGame() {
     const onTeamData = (data) => {
       if (data.teamInfo.currentLevel !== cardData?.level) {
         navigate(`/theultimatechallenge/quizsection/${sessionId}`);
+        return;
+      }
+
+      const currentQ = data.questions?.find(q => q.id?.toString() === cardData?.id?.toString());
+      if (currentQ) {
+        if (currentQ.status === "done") {
+          navigate(`/theultimatechallenge/taskcomplete/${sessionId}`, {
+            state: {
+              pointsEarned: currentQ.pointsEarned || cardData.points,
+              message: "Manual verification approved!",
+              isCorrect: true,
+            },
+          });
+        } else if (currentQ.status === "attending" && isRequestedRef.current) {
+          setIsRequested(false);
+          setIsRejected(true);
+          setRequestError(null);
+        }
       }
     };
 

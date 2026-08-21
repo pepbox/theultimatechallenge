@@ -29,6 +29,20 @@ export const connectSocket = () => {
           resolve(socket);
         } catch (error) {
           console.error('Error updating socket ID:', error.response?.data || error.message);
+          // If player was deleted/removed (404) or token is invalid/missing (401), clear session (only if not on the login page)
+          if (
+            !window.location.pathname.includes('/login/') &&
+            (error.response?.status === 404 ||
+              error.response?.status === 401 ||
+              error.response?.data?.message === 'Player not found')
+          ) {
+            document.cookie = "token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+            const pathParts = window.location.pathname.split('/');
+            const sessionId = pathParts[pathParts.length - 1];
+            window.location.href = `/theultimatechallenge/login/${sessionId}`;
+            reject(error);
+            return;
+          }
           // Still resolve even if socket ID update fails
           resolve(socket);
         }
@@ -56,8 +70,8 @@ export const connectSocket = () => {
 };
 
 export const getSocket = () => {
-  if (!socket || !socket.connected) {
-    throw new Error('Socket not initialized or not connected');
+  if (!socket) {
+    throw new Error('Socket not initialized');
   }
   return socket;
 };

@@ -390,6 +390,13 @@ function Layout() {
   useEffect(() => {
     if (!socket) return;
 
+    const handleConnect = () => {
+      console.log("Admin socket connected/reconnected. Fetching settings and pending verifications...");
+      fetchGameSettingsData();
+      fetchPendingVerifications();
+      socket.emit("request-all-teams-data");
+    };
+
     const onVerificationRequest = (data) => {
       setPendingVerifications((prev) => {
         // Avoid duplicates
@@ -415,10 +422,12 @@ function Layout() {
       );
     };
 
+    socket.on('connect', handleConnect);
     socket.on('manual-verification-request', onVerificationRequest);
     socket.on('all-teams-data', onAllTeamsData);
 
     return () => {
+      socket.off('connect', handleConnect);
       socket.off('manual-verification-request', onVerificationRequest);
       socket.off('all-teams-data', onAllTeamsData);
     };

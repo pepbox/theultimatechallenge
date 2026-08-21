@@ -435,4 +435,4 @@ const requestManualVerification = async (req, res) => {
   }
 };
 
-module.exports = { uploadFileAnswer, submitTextAnswer, requestManualVerification };
+module.exports = { uploadFileAnswer, submitTextAnswer, requestManualVerification, emitTeamDataToPlayers };

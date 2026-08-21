@@ -100,6 +100,22 @@ function BodyGame() {
         handleNavigation(() =>
           navigate(`/theultimatechallenge/quizsection/${sessionId}`)
         );
+        return;
+      }
+
+      const currentQ = data.questions?.find(q => q.id?.toString() === cardData?.id?.toString());
+      if (currentQ) {
+        if (currentQ.status === "done") {
+          handleNavigation(() =>
+            navigate(`/theultimatechallenge/taskcomplete/${sessionId}`, {
+              state: { pointsEarned: currentQ.pointsEarned || cardData.points, message: "Verification approved!", isCorrect: true },
+            })
+          );
+        } else if (currentQ.status === "attending" && verificationRequestedRef.current) {
+          setVerificationRequested(false);
+          setVerificationRejected(true);
+          setIsRequestingVerification(false);
+        }
       }
     };
 

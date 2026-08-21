@@ -47,7 +47,13 @@ function Layout() {
 
     const onError = (err) => {
       console.error("Socket error:", err);
-      setError(err.message || "Socket error occurred");
+      const errMsg = err?.message || err || "";
+      if (errMsg === "Player not found" || errMsg.includes("Player not found")) {
+        document.cookie = "token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+        navigate(`/theultimatechallenge/login/${sessionId}`);
+        return;
+      }
+      setError(errMsg || "Socket error occurred");
     };
 
     const onPauseUpdated = (data) => {
@@ -71,6 +77,11 @@ function Layout() {
           setShowScorecard(response.data.teamInfo.showScorecard);
         }
       } else {
+        if (response.error === "Player not found" || (response.error && response.error.includes("Player not found"))) {
+          document.cookie = "token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+          navigate(`/theultimatechallenge/login/${sessionId}`);
+          return;
+        }
         setError(response.error || "Failed to fetch team data");
       }
     });

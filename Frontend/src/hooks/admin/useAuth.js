@@ -10,16 +10,19 @@ const useAdminAuth = () => {
 
     const handleLogout = async () => {
     try {
-      const response = await axios.get(
+      const adminToken = localStorage.getItem('admin_token');
+      await axios.get(
         `${import.meta.env.VITE_BACKEND_BASE_URL}/api/v1/admin/logout`,
-        { withCredentials: true }
+        {
+          withCredentials: true,
+          headers: adminToken ? { Authorization: `Bearer ${adminToken}` } : {},
+        }
       );
-      if (response.status === 200) {
-        dispatch(resetAdminState());
-        navigate(`/admin/${sessionId}/login`);
-      }
     } catch (error) {
       console.error("Logout error:", error);
+    } finally {
+      localStorage.removeItem('admin_token');
+      dispatch(resetAdminState());
       navigate(`/admin/${sessionId}/login`);
     }
   };

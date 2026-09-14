@@ -9,25 +9,50 @@ const Admin = require("../../modules/adminstrators/admin/models/adminSchema");
 
 let ioInstance;
 
+const extractToken = (socket, type = 'player') => {
+    if (socket.handshake && socket.handshake.auth) {
+        if (type === 'admin' && socket.handshake.auth.adminToken) {
+            return socket.handshake.auth.adminToken;
+        }
+        if (socket.handshake.auth.token) {
+            return socket.handshake.auth.token;
+        }
+        if (socket.handshake.auth.adminToken) {
+            return socket.handshake.auth.adminToken;
+        }
+    }
+    if (socket.handshake && socket.handshake.query) {
+        if (type === 'admin' && socket.handshake.query.adminToken) {
+            return socket.handshake.query.adminToken;
+        }
+        if (socket.handshake.query.token) {
+            return socket.handshake.query.token;
+        }
+    }
+    const cookies = socket.handshake && socket.handshake.headers ? socket.handshake.headers.cookie : null;
+    if (cookies) {
+        try {
+            const parsedCookies = cookie.parse(cookies);
+            if (type === 'admin') {
+                return parsedCookies.adminToken || parsedCookies.token;
+            }
+            return parsedCookies.token || parsedCookies.adminToken;
+        } catch (_) {}
+    }
+    return null;
+};
+
 function setupSocket(io) {
     io.on('connection', (socket) => {
         // console.log('A user connected', socket.id);
 
         socket.on("request-team-data", async (callback) => {
             try {
-                // 1. Extract JWT from cookie
-                const cookies = socket.handshake.headers.cookie;
-                if (!cookies) {
-                    if (callback) callback({ success: false, error: "No cookies found" });
-                    return socket.emit("error", "No cookies found");
-                }
-
-                const parsedCookies = cookie.parse(cookies);
-                const token = parsedCookies.token;
-
+                // 1. Extract JWT from auth / cookies
+                const token = extractToken(socket, 'player');
                 if (!token) {
-                    if (callback) callback({ success: false, error: "JWT token missing in cookie" });
-                    return socket.emit("error", "JWT token missing in cookie");
+                    if (callback) callback({ success: false, error: "JWT token missing" });
+                    return socket.emit("error", "JWT token missing");
                 }
 
                 // 2. Verify JWT
@@ -102,19 +127,11 @@ function setupSocket(io) {
 
         socket.on("start-question", async (data, callback) => {
             try {
-                // 1. Extract JWT from cookie
-                const cookies = socket.handshake.headers.cookie;
-                if (!cookies) {
-                    if (callback) callback({ success: false, error: "No cookies found" });
-                    return socket.emit("error", "No cookies found");
-                }
-
-                const parsedCookies = cookie.parse(cookies);
-                const token = parsedCookies.token;
-
+                // 1. Extract JWT from auth / cookies
+                const token = extractToken(socket, 'player');
                 if (!token) {
-                    if (callback) callback({ success: false, error: "JWT token missing in cookie" });
-                    return socket.emit("error", "JWT token missing in cookie");
+                    if (callback) callback({ success: false, error: "JWT token missing" });
+                    return socket.emit("error", "JWT token missing");
                 }
 
                 // 2. Verify JWT
@@ -268,19 +285,11 @@ function setupSocket(io) {
 
         socket.on("reset-question-status", async (data, callback) => {
             try {
-                // 1. Extract JWT from cookie
-                const cookies = socket.handshake.headers.cookie;
-                if (!cookies) {
-                    if (callback) callback({ success: false, error: "No cookies found" });
-                    return socket.emit("error", "No cookies found");
-                }
-
-                const parsedCookies = cookie.parse(cookies);
-                const token = parsedCookies.token;
-
+                // 1. Extract JWT from auth / cookies
+                const token = extractToken(socket, 'player');
                 if (!token) {
-                    if (callback) callback({ success: false, error: "JWT token missing in cookie" });
-                    return socket.emit("error", "JWT token missing in cookie");
+                    if (callback) callback({ success: false, error: "JWT token missing" });
+                    return socket.emit("error", "JWT token missing");
                 }
 
                 // 2. Verify JWT
@@ -438,14 +447,7 @@ function setupSocket(io) {
         socket.on("toggle-session-pause", async (data, callback) => {
             try {
                 // 1. Verify admin token
-                const cookies = socket.handshake.headers.cookie;
-                if (!cookies) {
-                    return callback({ success: false, error: "No cookies found" });
-                }
-
-                const parsedCookies = cookie.parse(cookies);
-                const token = parsedCookies.adminToken;
-
+                const token = extractToken(socket, 'admin');
                 if (!token) {
                     return callback({ success: false, error: "Admin token missing" });
                 }
@@ -568,14 +570,7 @@ function setupSocket(io) {
         socket.on("toggle-scorecard-visibility", async (data, callback) => {
             try {
                 // 1. Verify admin token
-                const cookies = socket.handshake.headers.cookie;
-                if (!cookies) {
-                    return callback({ success: false, error: "No cookies found" });
-                }
-
-                const parsedCookies = cookie.parse(cookies);
-                const token = parsedCookies.adminToken;
-
+                const token = extractToken(socket, 'admin');
                 if (!token) {
                     return callback({ success: false, error: "Admin token missing" });
                 }
@@ -674,16 +669,8 @@ function setupSocket(io) {
 
         socket.on("request-all-teams-data", async (callback) => {
             try {
-                // 1. Extract JWT from cookie
-                const cookies = socket.handshake.headers.cookie;
-                if (!cookies) {
-                    if (callback) callback({ success: false, error: "No cookies found" });
-                    return socket.emit("error", "No cookies found");
-                }
-
-                const parsedCookies = cookie.parse(cookies);
-                const token = parsedCookies.adminToken;
-
+                // 1. Extract JWT from auth / cookies
+                const token = extractToken(socket, 'admin');
                 if (!token) {
                     if (callback) callback({ success: false, error: "Admin token missing" });
                     return socket.emit("error", "Admin token missing");
@@ -779,12 +766,7 @@ function setupSocket(io) {
         //   },
         socket.on("pause-timer", async () => {
             try {
-                const cookies = socket.handshake.headers.cookie;
-                if (!cookies) {
-                    return socket.emit("error", "No cookies found");
-                }
-                const parsedCookies = cookie.parse(cookies);
-                const token = parsedCookies.adminToken;
+                const token = extractToken(socket, 'admin');
                 if (!token) {
                     return socket.emit("error", "Admin token missing");
                 }
@@ -823,12 +805,7 @@ function setupSocket(io) {
 
         socket.on("timer-start", async () => {
             try {
-                const cookies = socket.handshake.headers.cookie;
-                if (!cookies) {
-                    return socket.emit("error", "No cookies found");
-                }
-                const parsedCookies = cookie.parse(cookies);
-                const token = parsedCookies.adminToken;
+                const token = extractToken(socket, 'admin');
                 if (!token) {
                     return socket.emit("error", "Admin token missing");
                 }
@@ -877,12 +854,7 @@ function setupSocket(io) {
         // New reset timer handler
         socket.on("reset-timer", async () => {
             try {
-                const cookies = socket.handshake.headers.cookie;
-                if (!cookies) {
-                    return socket.emit("error", "No cookies found");
-                }
-                const parsedCookies = cookie.parse(cookies);
-                const token = parsedCookies.adminToken;
+                const token = extractToken(socket, 'admin');
                 if (!token) {
                     return socket.emit("error", "Admin token missing");
                 }
@@ -921,13 +893,7 @@ function setupSocket(io) {
 
         socket.on("toggle-show-timer", async (data) => {
             try {
-                // console.log("Toggling timer visibility:", data);
-                const cookies = socket.handshake.headers.cookie;
-                if (!cookies) {
-                    return socket.emit("error", "No cookies found");
-                }
-                const parsedCookies = cookie.parse(cookies);
-                const token = parsedCookies.adminToken;
+                const token = extractToken(socket, 'admin');
                 if (!token) {
                     return socket.emit("error", "Admin token missing");
                 }
@@ -982,13 +948,7 @@ function setupSocket(io) {
         // ─── Manual Verification: Admin approves ────────────────────────────────
         socket.on('approve-manual-verification', async (data, callback) => {
             try {
-                const cookies = socket.handshake.headers.cookie;
-                if (!cookies) {
-                    if (callback) callback({ success: false, error: 'No cookies found' });
-                    return;
-                }
-                const parsedCookies = cookie.parse(cookies);
-                const adminToken = parsedCookies.adminToken;
+                const adminToken = extractToken(socket, 'admin');
                 if (!adminToken) {
                     if (callback) callback({ success: false, error: 'Admin token missing' });
                     return;
@@ -1134,13 +1094,7 @@ function setupSocket(io) {
         // ─── Manual Verification: Admin rejects ─────────────────────────────────
         socket.on('reject-manual-verification', async (data, callback) => {
             try {
-                const cookies = socket.handshake.headers.cookie;
-                if (!cookies) {
-                    if (callback) callback({ success: false, error: 'No cookies found' });
-                    return;
-                }
-                const parsedCookies = cookie.parse(cookies);
-                const adminToken = parsedCookies.adminToken;
+                const adminToken = extractToken(socket, 'admin');
                 if (!adminToken) {
                     if (callback) callback({ success: false, error: 'Admin token missing' });
                     return;
@@ -1247,13 +1201,7 @@ function setupSocket(io) {
         // ─── Admin override: Mark as done ───────────────────────────────────
         socket.on('admin-mark-question-done', async (data, callback) => {
             try {
-                const cookies = socket.handshake.headers.cookie;
-                if (!cookies) {
-                    if (callback) callback({ success: false, error: 'No cookies found' });
-                    return;
-                }
-                const parsedCookies = cookie.parse(cookies);
-                const adminToken = parsedCookies.adminToken;
+                const adminToken = extractToken(socket, 'admin');
                 if (!adminToken) {
                     if (callback) callback({ success: false, error: 'Admin token missing' });
                     return;
@@ -1406,13 +1354,7 @@ function setupSocket(io) {
         // ─── Admin override: Mark as undone ─────────────────────────────────
         socket.on('admin-mark-question-undone', async (data, callback) => {
             try {
-                const cookies = socket.handshake.headers.cookie;
-                if (!cookies) {
-                    if (callback) callback({ success: false, error: 'No cookies found' });
-                    return;
-                }
-                const parsedCookies = cookie.parse(cookies);
-                const adminToken = parsedCookies.adminToken;
+                const adminToken = extractToken(socket, 'admin');
                 if (!adminToken) {
                     if (callback) callback({ success: false, error: 'Admin token missing' });
                     return;

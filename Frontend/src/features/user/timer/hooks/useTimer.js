@@ -14,11 +14,13 @@ const useTimer = ({ sessionId, mode = "ADMIN" }) => {
 
     const handleFetchTimerStatus = async () => {
         try {
+            const token = mode === "ADMIN" ? localStorage.getItem('admin_token') : localStorage.getItem('player_token');
             const response = await axios.get(
                 `${import.meta.env.VITE_BACKEND_BASE_URL}/api/v1/theultimatechallenge/get-timer-status`,
                 {
                     params: { sessionId },
-                    withCredentials: true
+                    withCredentials: true,
+                    headers: token ? { Authorization: `Bearer ${token}` } : {},
                 }
             );
 

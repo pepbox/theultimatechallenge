@@ -222,6 +222,7 @@ const joinSession = async (req, res) => {
             return res.status(200).json({
               success: true,
               message: 'Rejoined session with existing player',
+              token: newToken,
               player: {
                 _id: player._id,
                 name: player.name,
@@ -344,6 +345,7 @@ const joinSession = async (req, res) => {
     // Return player and team info
     res.status(201).json({
       success: true,
+      token: newToken,
       player: {
         _id: player._id,
         name: player.name,
@@ -368,8 +370,9 @@ const joinSession = async (req, res) => {
 
 const updateSocketId = async (req, res) => {
   try {
-    // Extract JWT token from cookie
-    const token = req.cookies?.token;
+    // Extract JWT token from cookie or Authorization header or body
+    const authHeader = req.headers.authorization;
+    const token = req.cookies?.token || (authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : authHeader) || req.body?.token;
     if (!token) {
       return res.status(401).json({ success: false, message: 'No token provided' });
     }
@@ -454,6 +457,7 @@ const restoreCookie = async (req, res) => {
     return res.status(200).json({
       success: true,
       message: 'Cookie restored successfully',
+      token: token,
       sessionId: player.session,
       player: {
         id: player._id,

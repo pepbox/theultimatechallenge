@@ -102,6 +102,10 @@ export default function AdminLogin() {
         throw new Error(data.error || 'Login failed');
       }
 
+      if (data.token) {
+        localStorage.setItem('admin_token', data.token);
+      }
+
       dispatch(setAdmin({ authenticated: true, sessionId }));
       navigate(`/admin/${sessionId}`);
 

@@ -92,6 +92,7 @@ const loginAdmin = async (req, res) => {
     // Return success response
     return res.status(200).json({
       success: true,
+      token,
       data: {
         adminName: admin.adminName,
         sessionId: session._id,
@@ -149,8 +150,9 @@ const updateSocketId = async (req, res) => {
       });
     }
 
-    // Get JWT token from cookie
-    const token = req.cookies.adminToken;
+    // Get JWT token from cookie or Authorization header
+    const authHeader = req.headers.authorization;
+    const token = req.cookies?.adminToken || (authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : authHeader) || req.body?.token;
     if (!token) {
       return res.status(401).json({
         success: false,
@@ -205,8 +207,9 @@ const updateSocketId = async (req, res) => {
 // Additional helper function to validate admin session
 const validateAdminSession = async (req, res) => {
   try {
-    // Get JWT token from cookie
-    const token = req.cookies.adminToken;
+    // Get JWT token from cookie or Authorization header
+    const authHeader = req.headers.authorization;
+    const token = req.cookies?.adminToken || (authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : authHeader) || req.query?.token;
 
     const { sessionId: adminSessionId } = req.query;
 
@@ -344,6 +347,7 @@ const loginWithSuperadminPasscode = async (req, res) => {
 
     return res.status(200).json({
       success: true,
+      token,
       message: 'Authenticated successfully'
     });
   } catch (error) {

@@ -48,6 +48,9 @@ function AdminRoutes() {
       );
       console.log("Response from restore-cookie:", response.data);
       if (response.status === 200 && response.data.success) {
+        if (token) {
+          localStorage.setItem('admin_token', token);
+        }
         dispatch(
           setAdmin({
             authenticated: true,
@@ -79,11 +82,16 @@ function AdminRoutes() {
   const handleValidateAdminSession = async () => {
     console.log("Validating admin session with ID:", sessionId);
     try {
+      const adminToken = localStorage.getItem('admin_token');
       const response = await axios.get(
         `${
           import.meta.env.VITE_BACKEND_BASE_URL
         }/api/v1/admin/validate-admin-session/`,
-        { params: { sessionId: sessionId }, withCredentials: true }
+        {
+          params: { sessionId: sessionId },
+          withCredentials: true,
+          headers: adminToken ? { Authorization: `Bearer ${adminToken}` } : {},
+        }
       );
       if (response.data.success) {
         dispatch(

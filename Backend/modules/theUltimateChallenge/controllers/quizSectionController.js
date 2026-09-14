@@ -6,9 +6,9 @@ const jwt = require('jsonwebtoken');
 
 const getTeamData = async (req, res) => {
   try {
-    // Verify JWT from cookie
-    const token = req.cookies.token
-    // console.log(req.cookies)
+    // Verify JWT from cookie, header, or query
+    const authHeader = req.headers.authorization;
+    const token = req.cookies?.token || (authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : authHeader) || req.query?.token;
     if (!token) {
       return res.status(401).json({ error: 'No token provided' });
     }

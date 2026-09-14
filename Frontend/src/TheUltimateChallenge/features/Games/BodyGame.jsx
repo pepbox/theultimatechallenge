@@ -344,9 +344,13 @@ function BodyGame() {
     setUploadProgress(0);
 
     try {
+      const playerToken = localStorage.getItem('player_token');
       const formData = new FormData();
       formData.append("answerFile", selectedFile);
       formData.append("questionId", cardData.id);
+      if (playerToken) {
+        formData.append("token", playerToken);
+      }
 
       const response = await axios.post(
         `${
@@ -356,6 +360,7 @@ function BodyGame() {
         {
           headers: {
             "Content-Type": "multipart/form-data",
+            ...(playerToken ? { Authorization: `Bearer ${playerToken}` } : {})
           },
           withCredentials: true,
           onUploadProgress: (progressEvent) => {
@@ -649,10 +654,14 @@ function BodyGame() {
                 setIsRequestingVerification(true);
                 setVerificationRejected(false);
                 try {
+                  const playerToken = localStorage.getItem('player_token');
                   const response = await axios.post(
                     `${import.meta.env.VITE_BACKEND_BASE_URL}/api/v1/theultimatechallenge/request-manual-verification`,
-                    { questionId: cardData.id },
-                    { withCredentials: true }
+                    { questionId: cardData.id, token: playerToken },
+                    {
+                      withCredentials: true,
+                      headers: playerToken ? { Authorization: `Bearer ${playerToken}` } : {},
+                    }
                   );
                   setIsRequestingVerification(false);
                   if (response.data?.success) {

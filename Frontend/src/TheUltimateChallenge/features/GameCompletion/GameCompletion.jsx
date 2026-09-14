@@ -40,9 +40,11 @@ const GameCompletion = () => {
 
   const fetchData = async () => {
     try {
+      const playerToken = localStorage.getItem('player_token');
       const res = await axios.get(`${import.meta.env.VITE_BACKEND_BASE_URL}/api/v1/theultimatechallenge/game-completion-data`,{
         params:{sessionId},
-        withCredentials:true
+        withCredentials:true,
+        headers: playerToken ? { Authorization: `Bearer ${playerToken}` } : {},
       });
       if(res.data.success){
         setData(res.data);
@@ -59,7 +61,19 @@ const GameCompletion = () => {
   useEffect(()=>{ fetchData(); /* eslint-disable-next-line */ },[sessionId]);
 
   const handleLogout = async () => {
-    try { await axios.post(`${import.meta.env.VITE_BACKEND_BASE_URL}/api/v1/theultimatechallenge/logout`,{}, {withCredentials:true}); } catch(_) {}
+    try {
+      const playerToken = localStorage.getItem('player_token');
+      await axios.post(
+        `${import.meta.env.VITE_BACKEND_BASE_URL}/api/v1/theultimatechallenge/logout`,
+        {},
+        {
+          withCredentials: true,
+          headers: playerToken ? { Authorization: `Bearer ${playerToken}` } : {},
+        }
+      );
+    } catch(_) {}
+    document.cookie = "token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+    localStorage.removeItem('player_token');
     navigate(`/theultimatechallenge/login/${sessionId}`);
   };
 

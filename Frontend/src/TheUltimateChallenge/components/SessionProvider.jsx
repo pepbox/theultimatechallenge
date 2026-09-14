@@ -35,6 +35,7 @@ export const SessionProvider = ({ children }) => {
         
         socketInstance.on("player-removed", () => {
           document.cookie = "token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+          localStorage.removeItem('player_token');
           const pathParts = window.location.pathname.split('/');
           const sId = pathParts[pathParts.length - 1];
           window.location.href = `/theultimatechallenge/login/${sId}`;

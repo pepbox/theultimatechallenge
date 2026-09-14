@@ -3,8 +3,9 @@ const SuperAdmin = require('../models/superAdminSchema'); // Assuming the schema
 
 const superAdminAuthMiddleware = async (req, res, next) => {
   try {
-    // Get the token from the cookie named 'token'
-    const superAdminToken = req.cookies.token;
+    // Get the token from cookie or Authorization header
+    const authHeader = req.headers.authorization;
+    const superAdminToken = req.cookies?.token || (authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : authHeader);
 
     if (!superAdminToken) {
       return res.status(401).json({ message: 'No token provided, authorization denied' });

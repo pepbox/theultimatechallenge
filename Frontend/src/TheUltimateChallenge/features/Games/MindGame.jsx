@@ -114,6 +114,7 @@ function MindGame() {
     setSubmitError(null);
 
     try {
+      const playerToken = localStorage.getItem('player_token');
       const response = await axios.post(
         `${
           import.meta.env.VITE_BACKEND_BASE_URL
@@ -121,9 +122,11 @@ function MindGame() {
         {
           questionId: cardData.id,
           answer: answer.trim(),
+          token: playerToken,
         },
         {
           withCredentials: true,
+          headers: playerToken ? { Authorization: `Bearer ${playerToken}` } : {},
         }
       );
 

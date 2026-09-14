@@ -152,10 +152,14 @@ function ManualGame() {
     setIsRejected(false);
 
     try {
+      const playerToken = localStorage.getItem('player_token');
       const response = await axios.post(
         `${import.meta.env.VITE_BACKEND_BASE_URL}/api/v1/theultimatechallenge/request-manual-verification`,
-        { questionId: cardData.id },
-        { withCredentials: true }
+        { questionId: cardData.id, token: playerToken },
+        {
+          withCredentials: true,
+          headers: playerToken ? { Authorization: `Bearer ${playerToken}` } : {},
+        }
       );
       setIsRequesting(false);
       if (response.data?.success) {

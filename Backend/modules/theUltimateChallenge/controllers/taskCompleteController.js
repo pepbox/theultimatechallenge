@@ -181,7 +181,8 @@ const emitTeamDataToPlayers = async (teamId, sessionId, io) => {
 const uploadFileAnswer = async (req, res) => {
   try {
     // Verify token
-    const token = req.cookies.token;
+    const authHeader = req.headers.authorization;
+    const token = req.cookies?.token || (authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : authHeader) || req.body?.token;
     if (!token) return res.status(401).json({ error: 'No token provided' });
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
@@ -296,7 +297,8 @@ const uploadFileAnswer = async (req, res) => {
 const submitTextAnswer = async (req, res) => {
   try {
     // Verify token
-    const token = req.cookies.token;
+    const authHeader = req.headers.authorization;
+    const token = req.cookies?.token || (authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : authHeader) || req.body?.token;
     if (!token) return res.status(401).json({ error: 'No token provided' });
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
@@ -370,7 +372,8 @@ const submitTextAnswer = async (req, res) => {
 
 const requestManualVerification = async (req, res) => {
   try {
-    const token = req.cookies.token;
+    const authHeader = req.headers.authorization;
+    const token = req.cookies?.token || (authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : authHeader) || req.body?.token;
     if (!token) return res.status(401).json({ error: 'No token provided' });
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);

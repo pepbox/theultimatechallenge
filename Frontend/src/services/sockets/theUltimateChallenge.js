@@ -11,19 +11,30 @@ export const connectSocket = () => {
 
   connectionPromise = new Promise((resolve, reject) => {
     if (!socket) {
+      const playerToken = localStorage.getItem('player_token');
       socket = io(import.meta.env.VITE_BACKEND_BASE_URL, {
         transports: ['websocket', 'polling'],
         withCredentials: true,
-        autoConnect: false
+        autoConnect: false,
+        auth: {
+          token: playerToken,
+        },
+        query: {
+          token: playerToken,
+        },
       });
 
       socket.on('connect', async () => {
         console.log('Connected to socket server with ID:', socket.id);
         try {
+          const token = localStorage.getItem('player_token');
           const response = await axios.post(
             `${import.meta.env.VITE_BACKEND_BASE_URL}/api/v1/theultimatechallenge/updatesocketid`,
-            { socketId: socket.id },
-            { withCredentials: true }
+            { socketId: socket.id, token },
+            {
+              withCredentials: true,
+              headers: token ? { Authorization: `Bearer ${token}` } : {},
+            }
           );
           console.log('Socket ID updated:', response.data);
           resolve(socket);
@@ -37,6 +48,7 @@ export const connectSocket = () => {
               error.response?.data?.message === 'Player not found')
           ) {
             document.cookie = "token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+            localStorage.removeItem('player_token');
             const pathParts = window.location.pathname.split('/');
             const sessionId = pathParts[pathParts.length - 1];
             window.location.href = `/theultimatechallenge/login/${sessionId}`;

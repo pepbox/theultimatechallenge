@@ -5,10 +5,15 @@ const jwt = require('jsonwebtoken');
 const archiver = require('archiver');
 const { listObjects, getFileStream, uploadFile } = require('../../../../services/s3/s3Service');
 
+const getAdminToken = (req) => {
+    const authHeader = req.headers.authorization;
+    return req.cookies?.adminToken || (authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : authHeader) || req.query?.token;
+};
+
 const changeTeamLevels = async (req, res) => {
     try {
         // 1. Verify admin token
-        const token = req.cookies.adminToken;
+        const token = getAdminToken(req);
         if (!token) {
             return res.status(401).json({ error: 'Admin token missing' });
         }
@@ -109,7 +114,7 @@ const changeTeamLevels = async (req, res) => {
 
 const getGameSettingsData = async (req, res) => {
     try {
-        const token = req.cookies.adminToken;
+        const token = getAdminToken(req);
         if (!token) {
             return res.status(401).json({ error: 'Admin token missing' });
         }
@@ -176,7 +181,7 @@ const getGameSettingsData = async (req, res) => {
 const updateSessionBranding = async (req, res) => {
     try {
         // 1. Verify admin token
-        const token = req.cookies.adminToken;
+        const token = getAdminToken(req);
         if (!token) {
             return res.status(401).json({ error: 'Admin token missing' });
         }
@@ -283,7 +288,7 @@ const downloadSessionData = async (req, res) => {
         const sessionId = req.params.sessionId;
 
         // Verify admin token
-        const token = req.cookies.adminToken;
+        const token = getAdminToken(req);
         if (!token) {
             return res.status(401).json({ error: 'Admin token missing' });
         }
@@ -437,7 +442,7 @@ const getBase64Image = async (url) => {
 
 const getPopulatedQuestionsForSession = async (req, res) => {
     try {
-        const token = req.cookies.adminToken;
+        const token = getAdminToken(req);
         if (!token) {
             return res.status(401).json({ error: 'Admin token missing' });
         }
@@ -511,7 +516,7 @@ const getPopulatedQuestionsForSession = async (req, res) => {
 
 const createTeams = async (req, res) => {
     try {
-        const token = req.cookies.adminToken;
+        const token = getAdminToken(req);
         if (!token) {
             return res.status(401).json({ error: 'Admin token missing' });
         }
@@ -616,7 +621,7 @@ const createTeams = async (req, res) => {
 
 const getPendingVerifications = async (req, res) => {
     try {
-        const token = req.cookies.adminToken;
+        const token = getAdminToken(req);
         if (!token) {
             return res.status(401).json({ error: 'Admin token missing' });
         }

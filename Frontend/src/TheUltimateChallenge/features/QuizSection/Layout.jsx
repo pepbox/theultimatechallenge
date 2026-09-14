@@ -50,6 +50,7 @@ function Layout() {
       const errMsg = err?.message || err || "";
       if (errMsg === "Player not found" || errMsg.includes("Player not found")) {
         document.cookie = "token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+        localStorage.removeItem('player_token');
         navigate(`/theultimatechallenge/login/${sessionId}`);
         return;
       }
@@ -79,6 +80,7 @@ function Layout() {
       } else {
         if (response.error === "Player not found" || (response.error && response.error.includes("Player not found"))) {
           document.cookie = "token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+          localStorage.removeItem('player_token');
           navigate(`/theultimatechallenge/login/${sessionId}`);
           return;
         }
@@ -109,11 +111,13 @@ function Layout() {
     if (showScorecard) {
       const fetchLeaderboard = async () => {
         try {
+          const playerToken = localStorage.getItem('player_token');
           const res = await axios.get(
             `${import.meta.env.VITE_BACKEND_BASE_URL}/api/v1/theultimatechallenge/leaderboard`,
             {
               params: { sessionId },
               withCredentials: true,
+              headers: playerToken ? { Authorization: `Bearer ${playerToken}` } : {},
             }
           );
           if (res.data && res.data.success) {

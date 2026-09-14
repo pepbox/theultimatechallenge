@@ -42,7 +42,8 @@ const getGameCompletionData = async (req,res) => {
     if(!session.sessionEnded) return res.status(403).json({success:false,message:'Session not ended yet'});
 
     let player = null;
-    const token = req.cookies?.token;
+    const authHeader = req.headers.authorization;
+    const token = req.cookies?.token || (authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : authHeader) || req.query?.token;
     if(token){
       try { const decoded = jwt.verify(token, process.env.JWT_SECRET); player = await Player.findById(decoded.playerId); } catch(_){}
     }

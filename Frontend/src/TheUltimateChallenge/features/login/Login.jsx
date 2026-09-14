@@ -121,6 +121,9 @@ function Login() {
       const data = await response.json();
 
       if (data.success) {
+        if (data.token) {
+          localStorage.setItem("player_token", data.token);
+        }
         // Disconnect any lingering socket so SessionProvider creates a clean authenticated connection
         disconnectSocket();
         window.location.assign(

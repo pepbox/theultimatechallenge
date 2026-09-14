@@ -8,7 +8,8 @@ const { v4: uuidv4 } = require('crypto');
 
 // ─── Auth helper ─────────────────────────────────────────────────────────────
 const verifyAdminToken = (req) => {
-  const token = req.cookies?.adminToken;
+  const authHeader = req.headers.authorization;
+  const token = req.cookies?.adminToken || (authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : authHeader);
   if (!token) throw new Error('No admin token');
   return jwt.verify(token, process.env.JWT_SECRET);
 };

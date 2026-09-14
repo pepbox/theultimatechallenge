@@ -1,5 +1,5 @@
 import React from "react";
-import { Route, Routes } from "react-router-dom";
+import { Route, Routes, Outlet } from "react-router-dom";
 import Login from "../features/login/Login";
 import QuizCardSection from "../features/QuizSection/Layout";
 import TeamGames from "../features/Games/TeamGame";
@@ -12,10 +12,18 @@ import { SessionProvider } from "../components/SessionProvider";
 
 function TheUltimateChallengeRouter() {
   return (
-    <SessionProvider>
-      <div>
-        <Routes>
-          <Route path="/login/:sessionId" element={<Login />} />
+    <div>
+      <Routes>
+        <Route path="/login/:sessionId" element={<Login />} />
+        
+        {/* Authenticated Game Routes wrapped inside SessionProvider */}
+        <Route
+          element={
+            <SessionProvider>
+              <Outlet />
+            </SessionProvider>
+          }
+        >
           <Route path="/quizsection/:sessionId" element={<QuizCardSection />} />
           <Route path="/teamgame/:sessionId" element={<TeamGames />} />
           <Route path="/mindgame/:sessionId" element={<MindGame />} />
@@ -23,9 +31,9 @@ function TheUltimateChallengeRouter() {
           <Route path="/manualgame/:sessionId" element={<ManualGame />} />
           <Route path="/taskcomplete/:sessionId" element={<TaskComplete />} />
           <Route path="/completion/:sessionId" element={<GameCompletion />} />
-        </Routes>
-      </div>
-    </SessionProvider>
+        </Route>
+      </Routes>
+    </div>
   );
 }
 

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { CircularProgress } from "@mui/material";
-import { getSocket } from "../../../services/sockets/theUltimateChallenge";
+import { disconnectSocket } from "../../../services/sockets/theUltimateChallenge";
 import defaultLogo from "../../../assets/images/dashboard/Ultimate Team Challenge_Game Logo.webp";
 
 function Login() {
@@ -99,9 +99,6 @@ function Login() {
       setLoading(true);
       setError("");
 
-      // Get the current socket instance
-      const socket = getSocket();
-
       const response = await fetch(
         `${
           import.meta.env.VITE_BACKEND_BASE_URL
@@ -117,7 +114,6 @@ function Login() {
             lastName,
             sessionId,
             teamName: teamNumber,
-            socketId: socket.id, // Use the current socket ID
           }),
         }
       );
@@ -125,6 +121,8 @@ function Login() {
       const data = await response.json();
 
       if (data.success) {
+        // Disconnect any lingering socket so SessionProvider creates a clean authenticated connection
+        disconnectSocket();
         window.location.assign(
           `/theultimatechallenge/quizsection/${sessionId}`
         );

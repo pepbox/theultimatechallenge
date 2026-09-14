@@ -12,7 +12,7 @@ export const connectSocket = () => {
   connectionPromise = new Promise((resolve, reject) => {
     if (!socket) {
       socket = io(import.meta.env.VITE_BACKEND_BASE_URL, {
-        transports: ['websocket'],
+        transports: ['websocket', 'polling'],
         withCredentials: true,
         autoConnect: false
       });

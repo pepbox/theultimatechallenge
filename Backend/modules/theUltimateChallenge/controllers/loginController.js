@@ -16,6 +16,7 @@ const getCookieOptions = (req) => {
     httpOnly: true,
     secure: isSecure,
     sameSite: isSecure ? 'none' : 'lax',
+    path: '/',
     maxAge: 24 * 60 * 60 * 1000 // 1 day
   };
 };

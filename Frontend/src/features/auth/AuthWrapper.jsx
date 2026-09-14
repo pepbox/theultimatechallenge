@@ -1,9 +1,10 @@
 import React from "react";
 import { useSelector } from "react-redux";
-import { Navigate, useParams } from "react-router-dom";
+import { Navigate, useParams, useLocation } from "react-router-dom";
 
 const AuthWrapper = ({ children, role }) => {
   const { sessionId } = useParams();
+  const location = useLocation();
   const { authenticated: adminAuthenticated, sessionId: adminSessionId } =
     useSelector((state) => state.admin);
 
@@ -13,7 +14,7 @@ const AuthWrapper = ({ children, role }) => {
     if (adminAuthenticated && sessionId === adminSessionId) {
       return children;
     } else {
-      return <Navigate to={`/admin/${sessionId}/login`} />;
+      return <Navigate to={`/admin/${sessionId}/login${location.search || ''}`} replace />;
     }
   }
 
@@ -21,7 +22,7 @@ const AuthWrapper = ({ children, role }) => {
     if (superAdminAuthenticated) {
       return children;
     } else {
-      return <Navigate to={`/superadmin/login/`} />;
+      return <Navigate to={`/superadmin/login/${location.search || ''}`} replace />;
     }
   }
 

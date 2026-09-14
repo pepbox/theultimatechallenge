@@ -11,14 +11,56 @@ const cookieParser = require('cookie-parser');
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server);
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://localhost:5174',
+  'http://localhost:5175',
+  'http://localhost:4173',
+  'http://localhost:3000',
+  'http://localhost:5000',
+  'http://localhost:8080',
+  'http://localhost:8081',
+  'https://theultimatechallenge.techteamactivity.com',
+  'https://teamformation.techteamactivity.com',
+  'https://techteamactivity.com',
+  'https://theultimatechallenge.pages.dev'
+];
+
+const isOriginAllowed = (origin) => {
+  if (!origin) return true; // Allow non-browser requests (server-to-server, curl, etc.)
+  if (allowedOrigins.includes(origin)) return true;
+  if (/^http:\/\/localhost:\d+$/.test(origin) || /^http:\/\/127\.0\.0\.1:\d+$/.test(origin)) return true;
+  if (origin.endsWith('.pages.dev')) return true;
+  if (origin.endsWith('.techteamactivity.com')) return true;
+
+  if (process.env.FRONTEND_URL && origin === process.env.FRONTEND_URL.replace(/\/$/, '')) return true;
+  if (process.env.TEAM_FORMATION_LINK && origin === process.env.TEAM_FORMATION_LINK.replace(/\/$/, '')) return true;
+  if (process.env.ALLOWED_ORIGINS) {
+    const customList = process.env.ALLOWED_ORIGINS.split(',').map(s => s.trim().replace(/\/$/, ''));
+    if (customList.includes(origin)) return true;
+  }
+  return false;
+};
+
+const corsOptions = {
+  origin: (origin, callback) => {
+    if (isOriginAllowed(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error(`CORS blocked for origin: ${origin}`));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin']
+};
+
+const io = new Server(server, {
+  cors: corsOptions
+});
 
 app.use(cookieParser());
-
-app.use(cors({
-  origin: ['http://localhost:5174','http://localhost:4173'],
-  credentials: true // if you plan to send cookies or auth headers
-}));
+app.use(cors(corsOptions));
 
 app.use(express.json())
 connectDB()

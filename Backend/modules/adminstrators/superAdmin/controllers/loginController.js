@@ -3,6 +3,20 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const SuperAdmin = require("../models/superAdminSchema")
 
+const getCookieOptions = (req) => {
+  const host = req.get('host') || req.hostname || '';
+  const origin = req.get('origin') || '';
+  const isLocalhost = host.includes('localhost') || host.includes('127.0.0.1') || origin.includes('localhost') || origin.includes('127.0.0.1');
+  const isSecure = !isLocalhost && (req.secure || req.headers['x-forwarded-proto'] === 'https' || process.env.NODE_ENV === 'production');
+
+  return {
+    httpOnly: true,
+    secure: isSecure,
+    sameSite: isSecure ? 'none' : 'lax',
+    maxAge: 24 * 60 * 60 * 1000 // 1 day
+  };
+};
+
 // Login controller for SuperAdmin
 const loginSuperAdmin = async (req, res) => {
   try {
@@ -33,12 +47,7 @@ const loginSuperAdmin = async (req, res) => {
     );
 
     // Set token in a secure cookie
-    res.cookie("token", token, {
-      httpOnly: true, // Prevents client-side JavaScript access
-      secure: process.env.NODE_ENV === "production", // Use secure cookies in production
-      sameSite: "strict", // Mitigates CSRF attacks
-      maxAge: 24 * 60 * 60 * 1000 // Cookie expires in 1 day (in milliseconds)
-    });
+    res.cookie("token", token, getCookieOptions(req));
 
     // Send success response
     return res.status(200).json({
@@ -128,11 +137,7 @@ const validateSuperAdmin = async (req, res) => {
 const logoutSuperAdmin = (req, res) => {
   try {
     // Clear the adminToken cookie
-    res.clearCookie('token', {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict'
-    });
+    res.clearCookie('token', getCookieOptions(req));
 
     return res.status(200).json({
       success: true,

@@ -6,6 +6,20 @@ const TheUltimateChallenge = require('../../../theUltimateChallenge/models/TheUl
 const JWT_SECRET = process.env.JWT_SECRET || 'your-very-secure-secret-key';
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '1d';
 
+const getCookieOptions = (req) => {
+  const host = req.get('host') || req.hostname || '';
+  const origin = req.get('origin') || '';
+  const isLocalhost = host.includes('localhost') || host.includes('127.0.0.1') || origin.includes('localhost') || origin.includes('127.0.0.1');
+  const isSecure = !isLocalhost && (req.secure || req.headers['x-forwarded-proto'] === 'https' || process.env.NODE_ENV === 'production');
+
+  return {
+    httpOnly: true,
+    secure: isSecure,
+    sameSite: isSecure ? 'none' : 'lax',
+    maxAge: 24 * 60 * 60 * 1000 // 1 day
+  };
+};
+
 const loginAdmin = async (req, res) => {
   try {
     const { sessionId, passCode } = req.body;
@@ -69,12 +83,7 @@ const loginAdmin = async (req, res) => {
     });
 
     // Set cookie options
-    const cookieOptions = {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: 24 * 60 * 60 * 1000 // 1 day
-    };
+    const cookieOptions = getCookieOptions(req);
 
     // Set the JWT as HTTP-only cookie
     res.cookie('adminToken', token, cookieOptions);
@@ -110,12 +119,9 @@ const loginAdmin = async (req, res) => {
 
 const logoutAdmin = (req, res) => {
   try {
+    const cookieOptions = getCookieOptions(req);
     // Clear the adminToken cookie
-    res.clearCookie('adminToken', {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict'
-    });
+    res.clearCookie('adminToken', cookieOptions);
 
     return res.status(200).json({
       success: true,
@@ -290,12 +296,7 @@ const restoreCookie = async (req, res) => {
       });
     }
 
-    const cookieOptions = {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: 24 * 60 * 60 * 1000 // 1 day
-    };
+    const cookieOptions = getCookieOptions(req);
 
     // Set the JWT as HTTP-only cookie
     res.cookie('adminToken', token, cookieOptions);
@@ -336,12 +337,7 @@ const loginWithSuperadminPasscode = async (req, res) => {
       expiresIn: JWT_EXPIRES_IN
     });
 
-    const cookieOptions = {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: 24 * 60 * 60 * 1000 // 1 day
-    };
+    const cookieOptions = getCookieOptions(req);
 
     res.cookie('adminToken', token, cookieOptions);
 

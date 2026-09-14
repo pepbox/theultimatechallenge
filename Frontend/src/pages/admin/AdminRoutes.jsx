@@ -121,25 +121,35 @@ function AdminRoutes() {
   };
 
   useEffect(() => {
+    let isMounted = true;
     const initializeConnection = async () => {
       try {
         const sessionValid = await handleValidateAdminSession();
-        if (sessionValid) {
+        if (sessionValid && isMounted) {
           await handleSocketConnection();
         }
       } catch (error) {
         console.error("Initialization error:", error);
-        setInitializationError("Failed to initialize connection");
+        if (isMounted) {
+          setInitializationError("Failed to initialize connection");
+        }
       }
     };
 
     initializeConnection();
 
     return () => {
+      isMounted = false;
       disconnectSocket();
       setSocketConnected(false);
     };
-  }, [sessionId, authenticated]);
+  }, [sessionId]);
+
+  useEffect(() => {
+    if (authenticated && !socketConnected) {
+      handleSocketConnection();
+    }
+  }, [authenticated]);
 
   // Show error if initialization failed
   if (initializationError) {

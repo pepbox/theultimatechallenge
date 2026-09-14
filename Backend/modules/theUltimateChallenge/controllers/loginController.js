@@ -6,6 +6,20 @@ const Question = require('../models/questionSchema');
 const Admin = require('../../adminstrators/admin/models/adminSchema');
 const axios = require('axios');
 
+const getCookieOptions = (req) => {
+  const host = req.get('host') || req.hostname || '';
+  const origin = req.get('origin') || '';
+  const isLocalhost = host.includes('localhost') || host.includes('127.0.0.1') || origin.includes('localhost') || origin.includes('127.0.0.1');
+  const isSecure = !isLocalhost && (req.secure || req.headers['x-forwarded-proto'] === 'https' || process.env.NODE_ENV === 'production');
+
+  return {
+    httpOnly: true,
+    secure: isSecure,
+    sameSite: isSecure ? 'none' : 'lax',
+    maxAge: 24 * 60 * 60 * 1000 // 1 day
+  };
+};
+
 const getNumberOfTeams = async (req, res) => {
   try {
     const { sessionId } = req.body;
@@ -199,11 +213,7 @@ const joinSession = async (req, res) => {
             );
 
             // Set new cookie
-            res.cookie('token', newToken, {
-              httpOnly: true,
-              secure: process.env.NODE_ENV === 'production',
-              maxAge: 24 * 60 * 60 * 1000 // 1 day
-            });
+            res.cookie('token', newToken, getCookieOptions(req));
 
             // Emit all-team-data to admin
             await emitAllTeamsData(team.session, io);
@@ -325,11 +335,7 @@ const joinSession = async (req, res) => {
     );
 
     // Set cookie
-    res.cookie('token', newToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      maxAge: 24 * 60 * 60 * 1000 // 1 day
-    });
+    res.cookie('token', newToken, getCookieOptions(req));
 
     // Emit all-team-data to admin
     await emitAllTeamsData(sessionId, io);
@@ -442,11 +448,7 @@ const restoreCookie = async (req, res) => {
       });
     }
 
-    res.cookie('token', token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      maxAge: 24 * 60 * 60 * 1000
-    });
+    res.cookie('token', token, getCookieOptions(req));
 
     return res.status(200).json({
       success: true,

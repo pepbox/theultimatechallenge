@@ -26,6 +26,9 @@ function UserRoutes() {
       );
       console.log("Response from restore-cookie:", response.data);
       if (response.status === 200 && response.data.success) {
+        if (token) {
+          localStorage.setItem("player_token", token);
+        }
         navigate(`/theultimatechallenge/quizsection/${response.data.sessionId}`);
       } else {
         console.error("Failed to restore cookie:", response.data.error);

@@ -9,6 +9,8 @@ const cors = require('cors');
 const path = require("path");
 const cookieParser = require('cookie-parser');
 
+const { connectRedis, redis } = require("./config/redis.js");
+
 const app = express();
 const server = http.createServer(app);
 const allowedOrigins = [
@@ -56,29 +58,21 @@ const corsOptions = {
 };
 
 const io = new Server(server, {
-  cors: corsOptions
+  cors: corsOptions,
+  transports: ['websocket', 'polling']
 });
 
 app.use(cookieParser());
 app.use(cors(corsOptions));
-
-app.use(express.json())
-connectDB()
+app.use(express.json());
 
 if (process.env.NODE_ENV === "production") {
   const buildPath = path.join(__dirname, "../Frontend/dist");
-  // app.use((req, res, next) => {
-  //   if (!req.url.startsWith('/api')) {
-  //     console.log('REQUEST:', req.method, req.url);
-  //   }
-  //   next();
-  // });
   
   // Serve static files FIRST - try multiple approaches
   app.use(express.static(buildPath));
   app.use('/assets', express.static(path.join(buildPath, 'assets')));
   
-  // Additional debugging for static files
   app.use(express.static(buildPath, {
     setHeaders: (res, filePath) => {
       if (filePath.endsWith('.js')) {
@@ -93,10 +87,11 @@ if (process.env.NODE_ENV === "production") {
 }
 
 // API routes AFTER static files
-app.use("/api/v1", v1Router)
+app.use("/api/v1", v1Router);
 
 setupSocket(io);
 app.set('socketService', io);
+app.set('redisClient', redis);
 
 if (process.env.NODE_ENV === "production") {
   const buildPath = path.join(__dirname, "../Frontend/dist");
@@ -113,9 +108,16 @@ if (process.env.NODE_ENV === "production") {
   });
 }
 
-const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+const startServer = async () => {
+  await connectDB();
+  await connectRedis(io);
+
+  const PORT = process.env.PORT || 3000;
+  server.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
+};
+
+startServer();
 
 

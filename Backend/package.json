@@ -11,6 +11,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@socket.io/redis-adapter": "^8.3.0",
     "archiver": "^7.0.1",
     "aws-sdk": "^2.1692.0",
     "axios": "^1.10.0",
@@ -22,6 +23,7 @@
     "dotenv": "^16.5.0",
     "express": "^5.1.0",
     "http": "^0.0.1-security",
+    "ioredis": "^6.0.0",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.15.0",
     "multer": "^2.0.0",
